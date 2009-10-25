@@ -1,0 +1,23 @@
+eigsol.m	used by hgeig
+hgaleat.m	used by hgransac
+hgcalc.m	used by hgaleat hgransac
+
+hgeig.m		homography by eigenvalue
+hglsqsvd.m	 " by SVD
+hgpsi.m		 " by pseudo inverse
+hgpsisvd.m	 " by SVD + PI
+
+hgransac.m
+hgteste.m	count points that match homography
+
+homog.m		pic's wrapper
+
+hx.m		apply homography to image plane points
+
+invhomog.m	inverse homography, decomposition by Faugeras method
+lsqsvd.m
+numaleat.m	used by hgaleat (random stuff for RANSAC)
+psinvsol.m
+psinvsvd.m
+
+test.m		test of homog + inv homog

@@ -1,0 +1,53 @@
+\begin{thebibliography}{10}
+
+\bibitem{Sutherland74}
+I.~E. Sutherland, ``Three-dimensional data input by tablet,'' {\em Proc. IEEE},
+  vol.~62, pp.~453--461, Apr. 1974.
+
+\bibitem{Tsai86}
+R.~Tsai, ``An efficient and accurate camera calibration technique for {3D}
+  machine vision,'' in {\em Proc. IEEE Conf. Computer Vision and Pattern
+  Recognition}, pp.~364--374, 1986.
+
+\bibitem{Fischler81}
+M.~A. Fischler and R.~C. Bolles, ``Random sample consensus: a paradigm for
+  model fitting with applications to image analysis and automated
+  cartography,'' {\em Communications of the ACM}, vol.~24, pp.~381--395, June
+  1981.
+
+\bibitem{Faugeras93}
+O.~Faugeras, {\em Three-dimensional computer vision}.
+\newblock MIT Press, 1993.
+
+\bibitem{Harris88}
+C.~G. Harris and M.~J. Stephens, ``A {C}ombined {C}orner and {E}dge
+  {D}etector,'' in {\em Proceedings of the Fourth Alvey Vision Conference,
+  Manchester}, pp.~147--151, 1988.
+
+\bibitem{Ganapathy84b}
+S.~Ganapathy, ``Camera location determination problem,'' Technical Memorandum
+  11358-841102-20-TM, AT\&T Bell Laboratories, Nov. 1984.
+
+\bibitem{Ganapathy84}
+S.~Ganapathy, ``Decomposition of transformation matrices for robot vision,'' in
+  {\em Proc. IEEE Int. Conf. Robotics and Automation}, pp.~130--139, 1984.
+
+\bibitem{Faugeras88}
+O.~Faugeras and F.~Lustman, ``Motion and structure from motion in a piecewise
+  planar environment,'' {\em Int. J. Pattern Recognition and Artificial
+  Intelligence}, no.~3, pp.~485--508, 1988.
+
+\bibitem{Wilf79}
+J.~Wilf and R.~Cunningham, ``Computing region moments from boundary
+  representations,'' JPL 79-45, NASA JPL, Nov. 1979.
+
+\bibitem{Corke96c}
+P.~I. Corke, {\em Visual Control of Robots: High-Performance visual servoing}.
+\newblock Mechatronics, Research Studies Press (John Wiley), 1996.
+
+\bibitem{Hutchinson96}
+S.~Hutchinson, G.~Hager, and P.~Corke, ``A tutorial on visual servo control,''
+  {\em IEEE Transactions on Robotics and Automation}, vol.~12, pp.~651--670,
+  Oct. 1996.
+
+\end{thebibliography}

@@ -1,0 +1,3841 @@
+\documentclass{article}
+\usepackage{fancybox}
+\usepackage{fancyheadings}
+%\documentstyle[titlepage,ref,twoside,fancybox]{article}
+
+\newcommand{\unit}[1]{\mbox{$\rm \,#1$}}
+\newcommand{\Hz}{\unit{Hz}}
+\newcommand{\ms}{\unit{ms}}
+\newcommand{\us}{\unit{\mu s}}
+\renewcommand{\deg}{${}^\circ$}
+
+\setlength{\topmargin}{0mm}      % top header - top paper
+\setlength{\textheight}{230mm} % height of body, not head and footer
+\setlength{\textwidth}{128mm}  % width of text
+\setlength{\evensidemargin}{36.6mm} % even page - left paper edge to text
+\setlength{\oddsidemargin}{36.6mm}  % odd page - left paper edge to text 
+\setlength{\headsep}{12mm} %distance bet. header & body text
+\setlength{\footskip}{12mm}%distance bet. body of text & baseline of footer
+\setlength{\parindent}{0pt} %don't indent paragraphs
+\setlength{\parskip}{2mm} %distance between paragraphs
+\setlength{\hfuzz}{10pt} %allow for slight overflow to right margin
+
+% Include font file: either NFSS or PostScript:
+
+\def\ds{\displaystyle\strut}
+\def\fl{{\lambda}}      % Focal Length
+
+
+%\include{postfont}
+\include{nfssfont}
+
+% Define reference page commands.
+%
+%	\mdes	Description
+%	\msa	See also
+%	\mex	Examples
+%	\mlim	Limitations
+%	\mdia	Diagnostics
+%	\msyn	Synopsis
+%	\mpur	Purpose
+%	\malg	Algorithm
+%	\mcau	Caution
+%	\mref	References
+%
+\newcommand{\mdes}[1]{\hskip -1.25in 
+{\hbox{\makebox[1.25in][l]{\Refon Description}}}{#1}\vskip 0.25in}
+
+\newcommand{\msa}[1]{\hskip -1.25in 
+{\hbox{\makebox[1.25in][l]{\Refon See Also}}}{#1}\vskip 0.25in}
+
+\newcommand{\mex}[1]{\hskip -1.25in 
+{\hbox{\makebox[1.25in][l]{\Refon Examples}}}{#1}\vskip 0.25in}
+
+\newcommand{\mlim}[1]{\hskip -1.25in 
+{\hbox{\makebox[1.25in][l]{\Refon Limitations}}}{#1}\vskip 0.25in}
+
+\newcommand{\mdia}[1]{\hskip -1.25in 
+{\hbox{\makebox[1.25in][l]{\Refon Diagnostics}}}{#1}\vskip 0.25in}
+
+\newcommand{\msyn}[1]{\hskip -1.25in 
+{\hbox{\makebox[1.25in][l]{\Refon Synopsis}}}{\parbox[t]{10cm}{\Cfon #1}}\vskip 0.25in}
+
+\newcommand{\mpur}[1]{\hskip -1.25in 
+{\hbox{\makebox[1.25in][l]{\Refon Purpose}}}{#1}\vskip 0.25in}
+
+\newcommand{\malg}[1]{\hskip -1.25in 
+{\hbox{\makebox[1.25in][l]{\Refon Algorithm}}}{#1}\vskip 0.25in}
+
+\newcommand{\mcau}[1]{\hskip -1.25in 
+{\hbox{\makebox[1.25in][l]{\Refon Cautionary}}}{#1}\vskip 0.25in}
+
+\newcommand{\mref}[1]{\hskip -1.25in 
+{\hbox{\makebox[1.25in][l]{\Refon References}}}{#1}\vskip 0.25in}
+
+\newcommand{\mauthor}[1]{\hskip -1.25in 
+{\hbox{\makebox[1.25in][l]{\Refon Author}}}{#1}\vskip 0.25in}
+
+
+\newcommand{\function}[1]{\section*{\kern -1.25in\tms #1\hfill\markboth{#1}{#1}}
+\vspace*{-4mm}
+\moveleft 1.25in\vbox{\makebox[6.25in][l]{\vrule height .01 in width 6.25 true in}}
+\vskip .25 true in}
+
+\newcommand{\vvar}[1]{{\vtt #1}}
+
+
+\newcommand{\var}[1]{{\vtt #1}}
+%\newcommand{\newblock}{}
+
+\newcommand{\namelistlabel}[1]{\mbox{#1}\hfil}
+\newenvironment{namelist}[1]{%
+\begin{list}{}
+{
+\let\makelabel\namelistlabel
+\settowidth{\labelwidth}{#1}
+\setlength{\leftmargin}{1.1\labelwidth}
+}
+}{%
+\end{list}}
+
+\renewcommand{\hom}{homogeneous transform}
+\newcommand{\Hom}{Homogeneous transform}
+\renewcommand{\vec}[1]{\underline{#1}}
+\input{psfig}
+
+
+\pagestyle{empty}
+\begin{document}
+\thispagestyle{empty}
+\vspace*{\fill}
+{\Headingi Machine Vision}
+
+\vspace{2mm}
+{\Heading TOOLBOX\\}
+
+\vspace*{2cm}
+{\Afon Release 2\ }
+\vspace*{2cm}
+{\Afon for use with MATLAB}
+%% \vspace{1cm}
+%% {\Afon Author: Peter I. Corke CSIRO ICT Centre\\
+\vspace{4cm}
+\hrule
+{\Large
+\parbox{80mm}{\textbf{Peter I. Corke} \\
+%%CSIRO ICT Centre} \hfill {\copyright~CSIRO 2005}
+}
+%% \hrule
+%% \parbox{50mm}{{\Afon Peter I. Corke} \\
+%% peter.corke@csiro.au} \hfill {\Afon November 2005}
+\newpage
+\vspace*{\fill}
+\setlength{\fboxsep}{10pt}%
+\begin{Bflushleft}[b]
+\School Peter I. Corke
+%CSIRO\\
+%Division of Manufacturing Science and Technology\\
+%Queensland Center for Advanced Technology\\
+%PO Box 883\\
+%Kenmore 4069\\
+%1999
+\end{Bflushleft}
+\vspace*{\fill}
+
+%%\copyright~CSIRO 2005.
+%% \noindent
+%% %Please note that whilst CSIRO has taken care to ensure that all data included in this material is accurate, no warranties or assurances can be given about 
+%% %the accuracy of the contents of this publication.
+%% %CSIRO Manufacturing Science and Technolgy makes no warranties, other than 
+%% %those required by law, and excludes all liability (including liability for 
+%% %negligence) in relation to the opinions, advice or information contained 
+%% %in this publication or for any consequences arising from the use of such 
+%% %opinion, advice or information.  You should rely on your own independent 
+%% %professional advice before acting upon any opinion, advice or information 
+%% %contained in this publication.
+%% Please note that whilst all care has been taken to ensure that all data included in this material is accurate, no warranties or assurances can be given about 
+%% the accuracy of the contents of this publication.
+%% Neither CSIRO nor the author makess any warranties, other than 
+%% those required by law, and excludes all liability (including liability for 
+%% negligence) in relation to the opinions, advice or information contained 
+%% in this publication or for any consequences arising from the use of such 
+%% opinion, advice or information.  You should rely on your own independent 
+%% professional advice before acting upon any opinion, advice or information 
+%% contained in this publication.
+\noindent
+mex- files are based on code which was part of the package VISTA Copyright 1993, 1994 University of British Columbia.
+\cleardoublepage
+
+\newcommand{\Mlab}{M\eightTR ATLAB}
+\newcommand{\under}[1]{\underline{\rule[-.70ex]{0cm}{4mm}#1}}
+
+
+{\School
+
+%\pagestyle{headings}        % Gives page headings at top of page
+\pagestyle{fancyplain}
+\rhead{\rm\thepage}
+\lhead{}
+\lfoot{Machine Vision Toolbox Release 2}
+\rfoot{Copyright (c) Peter Corke 2005}
+\cfoot{}
+\setlength{\headrulewidth}{0pt}
+
+
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand{\bea}{\begin{eqnarray}}
+\newcommand{\eea}{\end{eqnarray}}
+\newcommand{\bi}{\begin{itemize}}
+\newcommand{\ei}{\end{itemize}}
+\newcommand{\ii}{\item}
+
+
+\renewcommand{\baselinestretch}{1.2}        % Expands inter-line spacing
+
+\newpage
+\rightline{\NNfon Preface}
+\vskip 2mm
+\moveleft 1.25in\vbox{\makebox[6.25in][l]
+{\vrule height .01 in width 6.25 true in}}
+\markboth{Introduction}{{}}
+\addcontentsline{toc}{section}{Introduction}
+\vskip 5mm
+
+\section{Introduction}
+The Machine Vision Toolbox (MVT) provides many 
+functions that 
+are useful in machine vision and vision-based control.
+It is a somewhat eclectic collection reflecting the author's personal interest in
+areas of photometry, photogrammetry, colorimetry.
+It includes over 90 functions spanning operations such as
+image file reading and writing, acquisition, display, filtering,
+blob, point and line feature extraction,  mathematical morphology, 
+homographies, visual Jacobians,
+camera calibration and color space conversion.
+The Toolbox, combined with Matlab and a modern workstation computer,
+is a useful and convenient environment for investigation of machine
+vision algorithms.  For modest image sizes the processing rate can
+be sufficiently ``real-time'' to allow for closed-loop control.  Focus of
+attention methods such as dynamic windowing (not provided) can be
+used to increase the processing rate.
+With input from a firewire or web camera (support provided) and 
+output to a robot
+(not provided) it would be possible to implement a visual servo system
+entirely in Matlab.
+
+An image is usually treated as a rectangular array of scalar values representing
+intensity or perhaps range.
+The matrix is the natural datatype for Matlab and thus makes the manipulation
+of images easily expressible in terms of arithmetic statements in Matlab
+language.
+Many image operations such as thresholding, filtering and statistics can
+be achieved with existing Matlab functions.
+The Toolbox extends this core functionality with M-files that
+implement functions and classes, and mex-files for some compute
+intensive operations.
+It is possible to use mex-files to interface with image acquisition
+hardware ranging from simple framegrabbers to robots.
+Examples for firewire cameras under Linux are provided.
+
+The routines are written in a straightforward manner which allows
+for easy understanding.  Matlab vectorization has been used as much as
+possible to improve efficiency, however some algorithms are not amenable
+to vectorization.
+If you have the Matlab compiler available then this can be used to compile
+bottleneck functions.
+Some particularly compute intensive functions are provided as mex-files and
+may need to be compiled for the particular platform.
+This toolbox considers images generally as arrays of double precision
+numbers.  This is extravagant on storage, though this is much less
+significant today than it was in the past.
+
+This toolbox is not a clone of the Mathwork's own Image Processing 
+Toolbox (IPT) although there are many functions in common.
+This toolbox predates IPT by many years, is open-source, contains many 
+functions that are useful for image feature extraction and control.
+It was developed under Unix and Linux systems and some functions
+rely on tools and utilities that exist only in that environment.
+
+
+\subsection{How to obtain the Toolbox}
+The Machine Vision Toolbox is available subject to the License
+Agreement from the Toolbox home page at
+\begin{quote}
+http://www.petercorke.com
+\end{quote}
+
+The files are available in either gzipped tar format (.gz) or zip
+format (.zip).  The web page requests some information from you
+regarding such as your country, type of organization and application.
+This is just a means for me to gauge interest and to help convince 
+myself that this is a worthwhile activity.
+
+\section{Support}
+%% There is none!  This software is free to use and you get what you pay for.
+%% I'm always happy to correspond with people who have found genuine
+No support is provided.  The author is happy to correspond with people who have found genuine
+bugs or deficiencies, and 
+to accept contributions for inclusion in future versions of the
+toolbox, and you will be suitably acknowledged.
+
+I can't guarantee that I respond to your email and I will junk any
+requests asking for help with assignments or homework.
+
+
+\section{Right to use}
+Use of the Toolbox is subject to the License Agreement.
+Many people are using the Toolbox for teaching and this is something that
+the author encourages.  If you plan to duplicate the documentation for class
+use then every copy must include the front page.
+
+If you want to cite the Toolbox please use
+\begin{verbatim}
+@article{Corke05f,
+    Author = {P.I. Corke},
+    Journal = {IEEE Robotics and Automation Magazine},
+    Title = {Machine Vision Toolbox},
+    Month = nov,
+    Volume = {12},
+    Number = {4},
+    Year = {2005},
+    Pages = {16-25}
+}
+\end{verbatim}
+or
+\begin{quote}
+"\textit{Machine Vision Toolbox}", P.I. Corke, IEEE Robotics and Automation Magazine, 12(4), pp 16--25, November 2005.
+\end{quote}
+which is also given in electronic form in the CITATION file.
+
+\subsection{Acknowledgments}
+This release includes functions for computing image plane homographies and
+the fundamental matrix, contributed by Nuno Alexandre Cid Martins of 
+I.S.R., Coimbra.
+
+\section{MATLAB version issues}
+The Toolbox works with {\Mlab} version  6 and later.
+It has been developed and tested under Suse Linux and Mac OS 10.3.
+It has not been tested under Windows.
+
+%\newcommand{\Mlab}{{\School M}{\eightTR ATLAB}}
+\newcommand{\MLAB}{{\emph M}{\eightIT ATLAB}}
+\newcommand{\undersec}[1]{\underline{\rule[-.70ex]{0cm}{0cm}#1}}
+
+
+{\School
+%\pagestyle{headings}        % Gives page headings at top of page
+
+\newpage   % Starts introduction on RH page
+\def\be{\begin{equation}}
+\def\ee{\end{equation}}
+%\newcommand{\under}[1]{\underline{\rule[-.70ex]{0cm}{0cm}#1}}
+\renewcommand{\baselinestretch}{1.2}           % Stretches line spacing
+\tolerance=10000
+
+
+\rightline{\NNNfon 2}
+\vskip 4mm
+\rightline{\NNfon Reference}
+\vskip 2mm
+\moveleft 1.25in\vbox{\makebox[6.25in][l]
+{\vrule height .01 in width 6.25 true in}}
+
+\vskip 5mm
+
+
+\addcontentsline{toc}{section}{Introduction}
+
+\markboth{Introduction}{Introduction}
+
+%%SUMMARY_START
+%\begin{tabular}{|p{1.25in}p{3.25in}|}
+%\cline{1-2} &\\
+%\multicolumn{2}{|c|}{\tmsss Reference Page Commands}\\
+%\hline
+%&\\
+%{\Mono ml\_demo1,clc} & User-written function to convert parameter
+%vector into a state-space system model.\\
+%{\Mono wersum} & Variable augmented with a-priori weighting term.\\
+%&\\
+%\cline{1-2}
+%\end{tabular}
+
+\begin{tabular} {|p{1.25in}p{3.25in}|}
+\cline{1-2} &\\
+\multicolumn{2}{|c|}{\tmsss Camera modeling and calibration} \\ \hline
+{\Mono camcald} & Camera calibration from non-coplanar 3D point data\\
+{\Mono camcalp} & Camera calibration from intrinsic and extrinsic parameters\\
+{\Mono camcalp\_c} & Camera calibration from intrinsic and extrinsic parameters for
+central projection imaging model\\
+{\Mono camcalt} & Camera calibration Tsai's method\\
+{\Mono camera} & Camera imaging model \\
+{\Mono gcamera} & Graphical camera imaging model \\
+{\Mono invcamcal} & Inverse camera calibration by Ganapathy's method \\ 
+{\Mono pulnix} & Calibration data form Pulnix TN6 camera \\ \hline
+\end{tabular}
+
+\begin{tabular}{|p{1.25in}p{3.25in}|}
+\cline{1-2} &\\
+\multicolumn{2}{|c|}{\tmsss Image plane points and motion} \\ \hline
+{\Mono examples/fmtest} & Example of \var{fmatrix()}\\
+{\Mono examples/homtest} & Example of \var{homography()}\\
+{\Mono epidist} & Distance of points from epipolar lines\\
+{\Mono epiline} & Display epipolar lines\\
+{\Mono fmatrix}$\ddagger$ & Estimate the fundamental matrix\\
+{\Mono frefine}$\ddagger$ & Refine fundamental matrix\\
+{\Mono homography}$\ddagger$ & Estimate homography between 2 sets of points\\
+{\Mono homtrans} & Transform points by an homography\\
+{\Mono invhomog} & Invert an homography\\
+{\Mono visjac\_p} & Image Jacobian matrix from points\\ \hline
+\end{tabular}
+
+\begin{tabular} {|p{1.25in}p{3.25in}|}
+\cline{1-2} &\\
+\multicolumn{2}{|c|}{\tmsss Image filtering} \\ \hline
+%{\Mono icanny}$\ddagger$ & Canny edge detector\\
+{\Mono ismooth} & Gaussian smoothing\\
+{\Mono ilaplace} & Laplace filtering\\
+{\Mono isobel} & Sobel edge detector\\
+{\Mono ipyramid} & Pyramid decomposition\\ 
+{\Mono ishrink} & Image smoothing and  shrinking \\ \hline
+\end{tabular}
+
+\begin{tabular} {|p{1.25in}p{3.25in}|}
+\cline{1-2} &\\
+\multicolumn{2}{|c|}{\tmsss Monadic filtering} \\ \hline
+{\Mono igamma} & gamma correction\\
+{\Mono imono} & convert color to greyscale \\
+{\Mono inormhist} & histogram normalization\\ 
+{\Mono istretch} & linear normalization\\\hline
+\end{tabular}
+
+\begin{tabular} {|p{1.25in}p{3.25in}|}
+\cline{1-2} &\\
+\multicolumn{2}{|c|}{\tmsss Non-linear filtering} \\ \hline
+{\Mono iclose} & greyscale morphological closing\\
+{\Mono imorph$\dagger$} & greyscale morphological operations\\
+{\Mono iopen} & greyscale morphological opening\\
+{\Mono irank$\dagger$} & neighbourhood rank filter\\
+{\Mono ivar$\dagger$} & neighbourhood statistics\\
+{\Mono iwindow$\dagger$} & generalized neighbourhood operations\\
+{\Mono pnmfilt} & Pipe image through Unix utility\\
+{\Mono zcross} & zero-crossing detector\\\hline
+\end{tabular}
+
+\begin{tabular} {|p{1.25in}p{3.25in}|}
+\cline{1-2} &\\
+\multicolumn{2}{|c|}{\tmsss Image kernels and structuring elements} \\ \hline
+{\Mono kdgauss} & Derivative of 2D Gaussian kernel\\
+{\Mono kgauss} & 2D Gaussian kernel\\
+
+{\Mono kdog} & Difference of Gaussians \\
+{\Mono klaplace} & Laplacian kernel\\
+{\Mono klog} & Laplacian of 2D Gaussian \\
+{\Mono kcircle} & Circular mask\\ \hline
+\end{tabular}
+
+\begin{tabular} {|p{1.25in}p{3.25in}|}
+\cline{1-2} &\\
+\multicolumn{2}{|c|}{\tmsss Image segmentation} \\ \hline
+{\Mono trainseg} & Return blob features\\
+{\Mono colorseg} & Display histogram\\
+{\Mono ilabel$\dagger$} & Label an image\\
+{\Mono colordistance} & Distance in rg-colorspace\\ 
+{\Mono kmeans} & k-means clustering \\
+\hline
+\end{tabular}
+
+\begin{tabular} {|p{1.25in}p{3.25in}|}
+\cline{1-2} &\\
+\multicolumn{2}{|c|}{\tmsss Image feature extraction} \\ \hline
+{\Mono iblobs} & Return blob features\\
+{\Mono ihist} & Display histogram\\
+{\Mono ilabel$\dagger$} & Label an image\\
+{\Mono imoments} & Compute image moments\\ 
+{\Mono iharris} & Harris interest point operator\\ 
+{\Mono ihough} & Hough transform (image)\\
+{\Mono ihough\_xy} & Hough transform (list of edge points)\\
+{\Mono houghoverlay} & overlay Hough line segments\\ \hline
+{\Mono houghpeaks} & find peaks in Hough accumulator\\ 
+{\Mono houghshow} & show Hough accumulator \\ 
+{\Mono max2d} & find largest element in image\\
+{\Mono mpq} & compute moments of polygon\\
+{\Mono npq} & compute normalized central moments of polygon\\
+{\Mono markcorners} & show corner points\\
+{\Mono upq} & compute central moments of polygon\\ \hline
+\end{tabular}
+
+\begin{tabular} {|p{1.25in}p{3.25in}|}
+\cline{1-2} &\\
+\multicolumn{2}{|c|}{\tmsss Feature tracking} \\ \hline
+{\Mono imatch} & Image template search\\
+{\Mono isimilarity} & Image window similarity\\
+{\Mono subpixel} & Subpixel interpolation of peak\\
+{\Mono zncc} & Region similarity\\
+\hline
+\end{tabular}
+
+\begin{tabular} {|p{1.25in}p{3.25in}|}
+\cline{1-2} &\\
+\multicolumn{2}{|c|}{\tmsss Image utilities} \\ \hline
+{\Mono idisp} & Interactive image browser \\
+{\Mono idisp2} & Non-interactive image browser \\
+{\Mono iroi} & Extract region of interest\\
+{\Mono xv} & Display image using the XV tool\\ \hline
+\end{tabular}
+
+\begin{tabular} {|p{1.25in}p{3.25in}|}
+\cline{1-2} &\\
+\multicolumn{2}{|c|}{\tmsss Color space/photometry} \\ \hline
+{\Mono blackbody} & Blackbody radiation \\
+{\Mono ccdresponse} & CCD spectral response \\
+{\Mono ccxyz} & CIE XYZ chromaticity coordinate\\
+{\Mono cmfxyz} & CIE XYZ color matching function \\
+%{\Mono rgb2hsi} & RGB color space to HSI\\
+{\Mono rgb2xyz} & RGB color space to CIE XYZ \\
+{\Mono rluminos} & relative photopic luminosity (human eye response)\\
+{\Mono solar} & solar irradiance spectra \\ \hline
+\end{tabular}
+
+\begin{tabular} {|p{1.25in}p{3.25in}|}
+\cline{1-2} &\\
+\multicolumn{2}{|c|}{\tmsss Image file input/output} \\ \hline
+{\Mono firewire}$\dagger$ & read an image from a firewire camera\\
+{\Mono loadpgm} & read a PGM format file\\
+{\Mono loadppm} & read a PPM format file\\
+{\Mono savepnm} & write a PNM format file\\
+{\Mono loadinr} & read INRIA INRIMAGE format file\\
+{\Mono saveinr} & write INRIA INRIMAGE format file\\ 
+%{\Mono video4linux}$\dagger$ & read an image from the Video4Linux driver\\
+{\Mono webcam} & read an image from a webcamera\\
+{\Mono yuvopen} & open a yuv4mpeg image stream\\
+{\Mono yuvread} & read a frame from a yuv4mpeg stream\\
+{\Mono yuvr2rgb} & convert a YUV frame to RGB \\
+\hline
+\end{tabular}
+
+\begin{tabular} {|p{1.25in}p{3.25in}|}
+\cline{1-2} &\\
+\multicolumn{2}{|c|}{\tmsss Test patterns} \\ \hline
+{\Mono lena.pgm} & a famous test image\\
+{\Mono mkcube} & return vertices of a cube\\
+{\Mono mkcube2} & return edges of a cube\\
+{\Mono testpattern} & create range of testpatterns\\
+ \hline
+\end{tabular}
+
+%%SUMMARY_END
+Functions marked with $\ddagger$ are written by others, and their
+support of the toolbox is gratefully acknowledged.
+Functions marked with $\dagger$ are mex-files and are currently only distributed in
+binary form for Linux x86 architecture and as source.
+\vfil\eject
+
+
+%\section*{\kern -1.25in\tms mmle.m\hfill\markboth{mmle.m}{mmle.m}}
+%\vspace*{-4mm}
+%\moveleft 1.25in\vbox{\makebox[6.25in][l]{\vrule height .01 in width 6.25 true in}}
+%\vskip .25 true in
+%\mpur{Handle models with known or unknown measurement and/or state noise.}
+%
+%\synopsis{\Cfon
+%{\obeylines
+%format compact
+%
+%load ml\_demo1,clc}
+%} 
+%
+%\mdes{A simple user-written function is created to convert
+%the parameter vector into a state-space system model, some input
+%options are defined and {\vtt mmle.m} executed.}
+%
+%\mex{Use standard {\Mlab} \ commands to plot any of the above inputs
+%and outputs.
+%The innovations can be plotted using :
+%\begin{center}
+%{\vtt plot(dt$\times$[0:ndp-1], uydata(:,ym)-yest) }
+%\end{center}}
+%
+%\malg{The variable, {\vtt wersum} is
+%augmented with the a-priori weighting term to give, using program variable
+%names, 
+%\be \mbox{wersum}
+% =
+%\frac{1}{Nm} \left[ \sum_{i=1}^N \mbox{inov}^T \mbox{gg}^{-1} \mbox{inov} + 
+%(\mbox{p} - \mbox{pref})^T \mbox{wapriori} (\mbox{p} - \mbox{pref})  \right] 
+%\ee
+%
+%Variable {\vtt inov} is the innovations sequence from the Kalman filter,
+%{\vtt gg} is the assumed innovations covariance,
+%{\vtt p} is the parameter vector,
+%{\vtt pref} is the reference value, and
+%{\vtt wapriori} is the a-priori weighting.
+%The a-priori weighting can be used to bias the estimated parameters
+%in a (possibly wrong) direction favored by the analyst.
+%
+%The Maximum Likelihood Estimate at the minimum of the LLF  (Log-Likelihood Funct
+%ion) is achieved by making
+%{\vtt wapriori}  zero and by using the correct value for {\vtt gg}, i.e., \be
+%\mbox{gg} \Leftarrow \mbox{rr} \equiv \frac{1}{N} \sum_{i=1}^{N}
+%\mbox{\ inov} \mbox{\ inov}^T \label{samcov}
+%\ee}
+%
+%\mcau{Beware of special cases.}
+%
+%\mlim{Assume a linear time-independent noise model.} 
+%
+%\msa{\Cfon ml\_p2ss3.m}
+%
+%\mdia{At each parameter optimization step {\vtt mmle.m} prints :
+%\begin{center}
+%\begin{tabular}{lcl}
+% {\vtt STEP}       &  :& step number \\
+%{\vtt PIDF\und nsum}   & :& sum of new {\vtt p(pidf)}, where  {\vtt p} = parameter vector \\
+% {\vtt GG\und osum}     & :& old sum of innovations cov. used during the step \\
+% {\vtt RR\und nsum}     & :& sum of innovations cov. with new parameters \\
+% {\vtt MAXGRAD}    &  :& max(abs(grad)) for {\si old} parameter values \\
+% {\vtt MAX$|$dP$|$}   &   :& largest parameter change \\
+% {\vtt LLF}      &    :& LLF with new parameter values \\
+% {\vtt WERSUM}  &   :& See the {\si Tutorial} and Equation 1. \\
+% {\vtt ppid}    &    : & {\vtt p(pid)} = latest identified parameter values \\
+%\end{tabular}
+%\end{center}}
+%
+%\mref{Information on references is in the {\si Tutorial}.} 
+%
+%\vfil\eject 
+%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{blackbody}
+\mpur{Compute emission spectrum for blackbody radiator}
+
+\msyn{
+qdd = blackbody(lambda, T)
+}
+\mdes{Returns the blackbody radiation in ($\rm W/m^3$) given lambda in (m) and temperature in (K).
+If \var{lambda} is a column vector, then \var{E} is a column vector whose elements correspond to
+to those in \var{lambda}.}
+
+\mex{To compute the spectrum of a tungsten lamp at 2500K and compare that
+with human photopic response.
+}
+\begin{verbatim}
+>> l = [380:10:700]'*1e-9;        % visible spectrum
+>> e = blackbody(l, 2500);
+>> r = rluminos(l);
+>> plot(l*1e9, [e r*1e11])
+>> xlabel('Wavelength (nm)')
+\end{verbatim}
+\noindent
+which has the energy concentrated at the red-end (longer
+wavelength) of the spectrum.
+
+\psfig{figure=figs/bb-lamp.eps,width=8cm}
+\msa{solar}
+
+\vfil\eject 
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{camcald}
+\mpur{Camera calibration matrix from calibration data}
+
+\msyn{
+C = camcald(D)\\[0pt]
+[C,resid] = camcald(D);
+}
+
+\mdes{\var{camcald} returns a $3 \times 4$ camera calibration
+matrix derived from a least squares fit of the data in the matrix
+\var{D}.
+Each row of \var{D} is of the form \var{[x y z u v]} where
+$(x,y,z)$ is the world coordinate of a world point and $(u,v)$ is
+the image plane coordinate of the corresponding point.
+An optional residual, obtained by back substitution of the calibration data,
+can give an indication of the calibration quality.
+
+At least 6 points are required and the points must not be coplanar.
+}
+
+\msa{camcalp, camcalt, camera, invcamcal}
+\mref{\nocite{Sutherland74}
+I.~E. Sutherland, ``Three-dimensional data input by tablet,'' {\em Proc. IEEE},
+  vol.~62, pp.~453--461, Apr. 1974.
+}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{camcalp}
+\mpur{Camera calibration matrix from camera parameters}
+
+\msyn{
+C = camcalp(cp, Tcam)\\[0pt]
+C = camcalp(cp, pC, x, z)\\[6pt]
+C = camcalp\_c(cp, Tcam)\\[0pt]
+C = camcalp\_c(cp, pC, x, z)
+}
+
+\mdes{Returns a $3 \times 4$ camera calibration
+matrix derived from the given camera parameters.
+The camera parameter object \var{cp} has elements:
+
+\begin{tabular}{lp{10cm}}
+\var{cp.f} & focal length (m) \\
+\var{cp.u0} & principal point u-coordinate (pix) \\
+\var{cp.v0} & principal point v-coordinate (pix) \\
+\var{cp.px} & horizontal pixel pitch (pix/m) \\
+\var{cp.py} & vertical pixel pitch (pix/m)
+\end{tabular}
+
+The pose of the camera (extrinsic calibration) can be specified 
+by the homogeneous transformation
+\var{Tcam} or  by specifying the coordinates
+of the center, \var{pC}, and unit vectors for the camera's x-axis and 
+z-axis (optical axis).
+
+This camera model assumes that the focal point is at $z=0$ and the
+image plane is at $z=-f$.  This means that the image is inverted on
+the image plane.  Now in a real camera some of these inversions
+are undone by the manner in which pixels are rasterized so that
+generally increasing X in the world is increasing X on the image plane
+and increasing Y in the world (down) is increasing Y on the image
+plane.  This has to be handled by setting the sign on the pixel
+scale factors to be negative.
+
+\var{camcalp\_c} is a variant for the central projection imaging model,
+as opposed to the thin lens model (which includes image inversion).
+Such a model is commonly used in computer vision literature where the 
+focal point is at $z=0$, and rays pass through the image plane at $z=f$.
+This model has no image inversion.
+}
+
+\centerline{\psfig{figure=figs/lens.eps,width=6cm}\hfill\psfig{figure=figs/central.eps,width=6cm}}
+\centerline{Lens projection model\hfill Central projection model}
+
+\msa{camcald, camcalt, camera, pulnix, invcamcal}
+\vfil\eject 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{camcalt}
+\mpur{Camera calibration matrix by Tsai's method}
+
+\msyn{
+[Tcam,f,k1] = camcalt(D, PAR)
+}
+
+\mdes{Returns a $3 \times 4$ camera calibration
+matrix derived from from planar calibration data using Tsai's method.
+Each row of \var{D} is of the form \var{[x y z u v]} where
+$(x,y,z)$ is the world coordinate of a world point and $(u,v)$ is
+the image plane coordinate of the corresponding point.
+\var{PAR} is a vector of apriori known camera parameters
+\var{[Ncx Nfx dx dy Cx Cy]} where \var{Ncx} is 
+the number of sensor elements in camera's x direction (in sels),
+\var{Nfx} is the number of pixels in frame grabber's x direction (in pixels), 
+and \var{(Cx, Cy)} is the 
+image plane coordinate of the principal point.
+
+The output is an estimate of the camera's pose, \var{Tcam},
+ the focal length, \var{f}, and a lens
+ radial distortion coefficient \var{k1}.
+}
+
+\mcau{I've never had much luck getting this method to work.  It could be
+me, the type of images I take (oblique images are good), or the 
+implementation.  The Camera Calibration Toolbox 
+\texttt{http://www.vision.caltech.edu/bouguetj/calib\_doc/} gives nice
+results.}
+
+\msa{camcalp, camcald, camera, invcamcal}
+\mref{\nocite{Tsai86}
+R.~Tsai, ``An efficient and accurate camera calibration technique for {3D}
+  machine vision,'' in {\em Proc. IEEE Conf. Computer Vision and Pattern
+  Recognition}, pp.~364--374, 1986.
+}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{camera}
+\mpur{Camera projection model}
+
+\msyn{
+uv = CAMERA(C, p)\\[0pt]
+uv = CAMERA(C, p, Tobj)\\[0pt]
+uv = CAMERA(C, p, Tobj, Tcam)
+}
+
+\mdes{This function  computes
+the transformation from 3D object coordinates to image plane coordinates.
+\var{C} is a $3 \times 4$ camera calibration matrix, \var{p} is a matrix
+of 3D points, one point per row in X, Y, Z order.
+The points are optionally transformed by \var{Tobj}, and the camera is 
+optionally transformed by \var{Tcam}, prior to imaging.
+The return is a matrix of image plane coordinates, where each row corresponds
+to the the row of \var{p}.
+}
+
+\mex{Compute the image plane coordinates of a point at $(10,\, 5,\, 30)$
+with respect to the standard camera located at the origin.}
+\begin{verbatim}
+    >> C = camcalp(pulnix)	% create camera calibration matrix
+    C =
+      1.0e+05 *
+
+      -0.7920         0   -0.3513    0.0027
+            0   -1.2050   -0.2692    0.0021
+            0         0   -0.0013    0.0000
+    >> camera(C, [10 5 30])
+    ans =
+      479.9736  366.6907
+
+    >> 
+\end{verbatim} 
+
+
+\msa{gcamera, camcalp, camcald}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{ccdresponse}
+\mpur{CCD spectral response}
+
+\msyn{
+r = ccdresponse(lambda)
+}
+
+\mdes{Return a vector of relative response (0 to 1) for a CCD
+sensor for the specified wavelength \var{lambda}.
+\var{lambda} may be a vector.
+}
+
+\psfig{figure=figs/ccd.eps,width=5cm}
+
+\mex{Compare the spectral response of a CCD sensor and the human eye.  We
+can see that the CCD sensor is much more sensitive in the red and 
+infra-red region than the eye.}
+\begin{verbatim}
+    >> l = [380:10:700]'*1e-9;
+    >> eye = rluminos(l);
+    >> ccd = ccdresponse(l);
+    >> plot(l*1e9, [eye ccd])
+    >> xlabel('Wavelength (nm)')
+\end{verbatim}
+
+
+\mlim{Data is taken from an old Fairchild CCD data book but is somewhat
+characteristic of silicon CCD sensors in general.}
+
+\msa{rluminos} 
+
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{ccxyz}
+\mpur{
+Compute the CIE XYZ chromaticity coordinates}
+
+\msyn{
+cc = ccxyz(lambda)\\[0pt]
+cc = ccxyz(lambda, e)
+}
+\mdes{\var{ccxyz} computes the CIE 1931 XYZ chromaticity coordinates
+for the wavelength \var{lambda}.
+Chromaticity can be computed for an arbitrary spectrum given by the
+equal length vectors \var{lambda} and amplitude \var{e}.}
+
+\psfig{figure=figs/locus.eps,width=8cm}
+
+\mex{The chromaticity coordinates of peak green (550\unit{nm}) is}
+\begin{verbatim}
+>> ccxyz(550e-9)
+ans =
+    0.3016    0.6924    0.0061
+\end{verbatim}
+\noindent
+and the chromaticity coordinates of a standard tungsten illuminant (color
+temperature of 2856\unit{K}) is
+\begin{verbatim}
+>> lambda = [380:2:700]'*1e-9;        % visible spectrum
+>> e = blackbody(lambda, 2856);
+>> ccxyz(lambda, e)
+ans =
+    0.4472    0.4077    0.1451
+\end{verbatim}
+
+The spectral locus can be drawn by plotting the chromaticity y-coordinate
+against the x-coordinate
+\begin{verbatim}
+>> xyz = ccxyz(lambda);
+>> plot(xyz(:,1), xyz(:,2));
+>> xlabel('x'); ylabel('y')
+\end{verbatim}
+
+The blackbody locus can be superimposed by
+\begin{verbatim}
+>> for T=1000:1000:10000,	% from 1,000K to 10,000K
+>>   e = blackbody(lambda, T);
+>>   xyz = ccxyz(lambda, e);
+>>   plot(xyz(1), xyz(2), '*')
+>> end
+\end{verbatim}
+\noindent
+which shows points moving from red to white hot (center of the locus) as temperature
+increases.
+
+
+\msa{cmfxyz, blackbody}
+\vfil\eject 
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{cmfxyz}
+\mpur{Color matching function}
+
+\msyn{
+xyz = cmfxyz(lambda)
+}
+
+\mdes{\var{ccxyz} computes the CIE 1931 color matching functions
+for the wavelength \var{lambda} which is returned as a row vector.
+If \var{lambda} is a vector then the rows of \var{xyz}
+contains the color matching function for the corresponding row of
+\var{lambda}.}
+
+\psfig{figure=figs/cmfxyz.eps,width=8cm}
+\mex{Plot the X, Y and Z color matching functions as a function
+of wavelength.}
+\begin{verbatim}
+  >> lambda = [350:10:700]'*1e-9;
+  >> xyz = cmfxyz(lambda);
+  >> for i=1:3,
+  >>      subplot(310+i); plot(lambda, xyz(:,i));
+  >>   end
+\end{verbatim}
+
+\msa{ccxyz}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{colordistance}
+\mpur{Distance in rg-colorspace}
+
+\msyn{
+r = colordistance(rgb, rg)
+}
+
+\mdes{Each pixel of the input color image \var{rgb} is converted to 
+normalized $(r,g)$ coordinates 
+\begin{eqnarray}
+r &=& \frac{R}{R+G+B} \\
+g &=& \frac{G}{R+G+B} 
+\end{eqnarray}
+The Euclidean distance of each pixel from the specificed coordinage \var{rg} is computed
+and returned as the corresponding pixel value.
+
+The output is an image with the same number of rows and columns as
+\var{rgb} where each pixel represents the correspoding color space distance.
+
+This output image could be thresholded to determine color similarity.
+}
+
+\begin{tabular}{cc}
+\psfig{figure=figs/targ.eps,width=5cm} &\psfig{figure=figs/colordistance.eps,width=5cm}\\
+\end{tabular}
+
+\mex{Show color distance of all targets with respect to a point,
+$(200,\, 350)$ on one of the yellow targets}
+\begin{verbatim}
+    >> targ = loadppm('target.ppm');
+    >> pix = squeeze( targ(200,350,:) );
+    >> rg = pix / sum(pix);
+    >> idisp( colordistance(targ, rg(1:2)), 0.02 )
+\end{verbatim}
+We use the clipping option of \var{idisp()} to highlight small variations,
+since the blue object has a very large color distance.
+
+
+\msa{colorseg, trainseg} 
+
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{colorseg}
+\mpur{Perform rg-space color segmentation}
+
+\msyn{
+imseg = colorseg(rgb, map)
+}
+
+\mdes{Each pixel of the input color image \var{rgb} is converted to 
+normalized $(r,g)$ coordinates 
+\begin{eqnarray}
+r &=& \frac{R}{R+G+B} \\
+g &=& \frac{G}{R+G+B} 
+\end{eqnarray}
+and these pixels are mapped through the segmentation table \var{map}
+to determine whether or not they belong to the desired pixel class.
+The map values can be crisp (0 or 1) or fuzzy, though the \var{trainseg()}
+creates crisp values.
+}
+
+\begin{tabular}{cc}
+\psfig{figure=figs/targ.eps,width=5cm} &\psfig{figure=figs/colorseg.eps,width=5cm}\\
+\end{tabular}
+
+\mex{Use a pre-trained color segmentation table to segment out the
+yellow targets}
+\begin{verbatim}
+    >> cs = colorseg(targ, map);
+    >> idisp(cs);
+\end{verbatim}
+The segmentation is spotty because the segmentation map is not solid.
+We could apply morphological closing to fill the black spots in either the
+segmentation map or the resulting segmentation.
+
+
+\msa{trainseg} 
+
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{epidist}
+\mpur{Distance from point to epipolar line}
+
+\msyn{
+d = epidist(F, Pa, Pb)
+}
+
+\mdes{Given two sets of points \var{Pa} ($n \times 2$) and \var{Pb} (
+$m \times 2$ matrix) compute the epipolar line corresponding to each
+point in \var{Pa} and the distance of each point in \var{Pb} from each
+line.
+The result, $d(i,j)$, is a $n \times m$ matrix of distance between
+the epipolar line corresponding to $Pa_i$ and the point $Pb_j$.
+
+Can be used to determine point correspondance in a stereo image pair.
+}
+
+\msa{fmatrix} 
+
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{epiline}
+\mpur{Display epipolar lines}
+
+\msyn{
+h = epiline(F, Pa)\\[0pt]
+h = epiline(F, Pa, ls)
+}
+
+\mdes{Draw epipolar lines in current figure based on points specified
+rowwise in \var{Pa} and on the fundamental matrix \var{F}.
+Optionally specify the line style \var{ls}.
+
+Adds the lines to the current plot.
+}
+
+\mex{Display epipolar lines for the example (\texttt{examples/fmtest}).}
+\begin{verbatim}
+>> fmtest
+ .
+ .
+>> Fr = frefine(F, uv0, uvf);
+>> markfeatures(uvf, 0, '*')
+>> epiline(Fr, uv0)
+>> grid
+\end{verbatim}
+
+\psfig{figure=figs/epilines.eps,width=8cm}
+
+\msa{fmatrix, epidist} 
+
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{firewire}
+\mpur{Load an image from a firewire camera}
+
+\msyn{
+h = firewire(device, color, framerate)\\[0pt]
+im = firewire(h)
+}
+
+\mdes{The first form opens the interface and returns a handle or [] on error.
+Color is one of 'mono', 'rgb' or 'yuv'.
+\var{framerate} is one of the
+standard DC1394 rates: 1.875, 3.75, 7.5, 15, 30 or 60 fps.  The
+highest rate less than or equal to rate is chosen.
+
+The second form reads an image.  For mono a 2-d matrix is returned,
+for rgb a 3-d matrix is returned.  For yuv a structure is
+returned with elements \var{.y}, \var{.u} and \var{.v}.
+
+Subsequent calls with the second call format return the next image
+from the camera in either grayscale or color format.
+
+}
+
+\mex{Open a firewire camera in rgb mode}.
+\begin{verbatim}
+>> h = firewire( 0, 'rgb', 7.5);     
+CAMERA INFO
+===============
+Node: 0
+CCR_Offset: 15728640x
+UID: 0x0814436100003da9
+Vendor: Unibrain Model: Fire-i 1.2
+
+>> im = firewire(h);
+>> whos im
+  Name      Size                   Bytes  Class
+
+  im      480x640x3              7372800  double array
+
+Grand total is 921600 elements using 7372800 bytes
+
+>> 
+\end{verbatim}
+
+\mlim{Only \texttt{FORMAT\_VGA\_NONCOMPRESSED} $640 \times 480$ images 
+are supported,
+and the camera's capabilities are not checked against the requested mode,
+for example older Point Grey Dragonflies give weird output when
+\var{'mono'} is requested which they don't support.
+
+The achievable frame rate depends on your computer.  The function waits
+for the next frame to become available from the camera.  If the function
+is called too late you may miss the next frame and have to wait for the
+one after that.}
+
+\mlim{Operates only under Linux and is a mex-file.  Requires the
+\texttt{libdc1394} and \texttt{libraw1394} libraries to be installed.}
+
+\msa{webcam}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{fmatrix}
+\mpur{Estimate the fundamental matrix}
+
+\msyn{
+F = fmatrix(Pa, Pb)\\[0pt]
+F = fmatrix(Pa, Pb, how)
+}
+
+\mdes{
+Given two sets of corresponding points \var{Pa} and \var{Pb} (each a
+$n \times 2$ matrix)
+return the fundamental matrix relating the two sets of observations.
+
+The argument \var{'how'} is used to specify the method and is one of
+\var{'eig'}, \var{'svd'}, \var{'pinv'}, \var{'lsq'} (default) or \var{'ransac'}.
+
+RANSAC provides a very robust method of dealing with incorrect
+point correspondances through outlier rejection.
+It repeatedly uses  one of the underlying methods above in order to 
+find inconsistant matches which it then eliminates from the process.
+RANSAC mode requires extra arguments:
+
+\begin{tabular}{ll}
+\var{iter}    & maximum number of iterations\\
+\var{thresh}  & a threshold \\
+\var{how} &    the underlying method to use, as above, except for
+ransac (optional).
+\end{tabular}
+Note that the results of RANSAC may vary from run to run due to the
+random subsampling performed.
+
+All methods require at least 4 points except \var{'eig'} which requires 
+at least 5.  The fundamental matrix is rank 2, ie. \var{det(F)} = 0.
+}
+
+\mex{In the following example (\texttt{examples/fmtest}) we will set up a Pulnix camera and a
+set of random point features (within a 1m cube) 4m in front of the camera.
+Then we will translate
+and rotate the camera to get another set of image plane points.  From
+the two sets of points we compute the fundamental matrix.}
+\begin{verbatim}
+>> C=camcalp(pulnix);
+>> points = rand(6,3);
+>> C = camcalp(pulnix);
+>> uv0 = camera(C, points, transl(0,0,4))
+uv0 =
+  310.7595  293.7777
+  367.1380  317.2675
+  342.7822  387.1914
+  281.4286  323.2531
+  285.9791  277.3937
+  315.6825  321.7783
+
+>> uvf = camera(C, points, transl(0,0,4), transl(1,1,0)*rotx(0.5))
+uvf =
+  169.8081  577.5535
+  214.7405  579.9254
+  207.0585  701.6012
+  145.8901  629.0040
+  144.5274  559.0554
+  154.8456  576.6023
+
+>> F = fmatrix(uv0, uvf)
+maximum residual 0.000000 pix
+
+F =
+    0.0000   -0.0000    0.0031
+    0.0000    0.0000   -0.0027
+   -0.0025   -0.0009    1.0000
+
+>> det(F)
+ans =
+   1.1616e-12
+\end{verbatim}
+We can see that the matrix is close to singular, theoretically it should
+be of rank 2.
+
+\mauthor{Nuno Alexandre Cid Martins, I.S.R.,  Coimbra}
+
+\mref{\nocite{Fischler81,Faugeras93}
+M.~A. Fischler and R.~C. Bolles, ``Random sample consensus: a paradigm for
+model fitting with applications to image analysis and automated
+cartography,'' {\em Communications of the ACM}, vol.~24, pp.~381--395, June
+1981.
+
+O.~Faugeras, {\em Three-dimensional computer vision}.
+\newblock MIT Press, 1993.
+}
+
+\msa{homography, epidist, examples/fmtest}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{frefine}
+\mpur{Refine fundamental matrix estimate}
+
+\msyn{
+Fr = frefine(F, Pa, Pb)
+}
+
+\mdes{
+Given two sets of corresponding points \var{Pa} and \var{Pb} (each a
+$n \times 2$ matrix) and an estimate of the fundamental
+matrix \var{F}, refine the estimate using non-linear optimization
+to enforce the rank 2 constraint.
+}
+
+\mex{In the following example (\texttt{examples/fmtest}) we will set up a Pulnix camera and a
+set of random point features (within a 1m cube) 4m in front of the camera.
+Then we will translate
+and rotate the camera to get another set of image plane points.  From
+the two sets of points we compute the fundamental matrix.}
+\begin{verbatim}
+>> C=camcalp(pulnix);
+>> points = rand(6,3);
+>> C = camcalp(pulnix);
+>> uv0 = camera(C, points, transl(0,0,4));
+>> uvf = camera(C, points, transl(0,0,4), transl(1,1,0)*rotx(0.5));
+>> F = fmatrix(uv0, uvf);
+maximum residual 0.000000 pix
+F =
+
+    0.0000    0.0000    0.0011
+   -0.0000    0.0000   -0.0009
+   -0.0007   -0.0016    1.0000
+
+>> det(F)
+ans =
+   1.1616e-12
+>> Fr = frefine(F, uv0, uvf)
+ .
+ .
+Fr =
+
+   -0.0000    0.0000   -0.0098
+   -0.0000    0.0000    0.0033
+    0.0106   -0.0267    1.3938
+>> det(Fr)
+ans =
+   7.8939e-19
+\end{verbatim}
+We can see that the determinant is much closer to zero.
+
+\msa{homography, epidist, examples/fmtest}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{gcamera}
+\mpur{Graphical camera projection model}
+
+\msyn{
+hcam = gcamera(name, C ,dims)\\[6pt]
+uv = gcamera(hcam, p)\\[0pt]
+uv = gcamera(hcam, p, Tobj)\\[0pt]
+uv = gcamera(hcam, p, Tobj, Tcam)
+}
+
+\mdes{This function creates and graphically displays the image plane of a virtual
+camera.
+
+The first function creates a camera display with given name and camera 
+calibration matrix.
+The size, in pixels of the image plane is given by \var{dims} and is of
+the form 
+\var{[umin umax vmin vmax]}.
+The function returns a camera handle for subsequent function calls.
+
+The second form is used to display a list of 3D points \var{p} in the 
+image plane of a previously created camera whose handle is \var{hcam}.
+The points are optionally transformed by \var{Tobj}, and the camera is 
+optionally transformed by \var{Tcam} prior to imaging.
+A single Matlab line object (with point marker style) joins those points.
+Successive calls redraw this line providing an animation.
+
+If \var{p} has 6 columns rather than 3, then it is considered to represent 
+world line
+segments, rather than points.  The first three elements of each row
+are the coordinates of the segment start, and the last three elements the coordinates
+of the end.
+Successive calls redraw the line segments providing an animation.
+}
+
+\mlim{Mixing calls in point and line mode give unpredicable results.
+}
+
+
+\mex{Create a virtual Pulnix camera situated at the origin with view axis along the world
+Zaxis.
+Create a cube of unit side and view it after translating it's centre to $(0,\, 0,\, 5)$.  Note that \var{transl} is a function from the Robotics
+Toolbox.}
+\begin{verbatim}
+      >> C = camcalp(pulnix);
+      >> h = gcamera('Pulnix', C, [0 511 0 511]);
+      >> c = mkcube2;
+      >> gcamera(h, c, transl(0, 0, 5));
+\end{verbatim}
+
+\psfig{figure=figs/gcamera.eps,width=8cm}
+
+\msa{\var{camera, camcalp, pulnix, mkcube2} 
+}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{homography}
+\mpur{Estimate an homography}
+
+\msyn{
+H = homography(Pa, Pb)\\[0pt]
+H = homography(Pa, Pb, how)
+}
+
+\mdes{
+Given two sets of corresponding points Pa and Pb (each an nx2 matrix)
+return the homography relating the two sets of observations.  The homography
+is simply a linear transformation of the initial set of points to the
+final set of points.
+
+The argument \var{'how'} is used to specify the method and is one of
+\var{'eig'}, \var{'svd'}, \var{'pinv'}, \var{'lsq'} (default) or \var{'ransac'}.
+
+RANSAC provides a very robust method of dealing with incorrect
+point correspondances through outlier rejection.
+It repeatedly uses  one of the underlying methods above in order to 
+find inconsistant matches which it then eliminates from the process.
+RANSAC mode requires extra arguments:
+
+\begin{tabular}{ll}
+\var{iter}    & maximum number of iterations\\
+\var{thresh}  & a threshold \\
+\var{how} &    the underlying method to use, as above, except for
+ransac (optional).
+\end{tabular}
+Note that the results of RANSAC may vary from run to run due to the
+random subsampling performed.
+
+All methods require at least 4 points except \var{'eig'} which requires 
+at least 5.
+The homography is only defined for points that are coplanar.
+}
+
+\mex{In the following example (\texttt{examples/homtest}) we will set up a Pulnix camera and a
+set of planar features 8m in front of the camera.  Then we will translate
+and rotate the camera to get another set of image plane points.  From
+the two sets of points we compute the homography, and then check it by
+back subsitution.}
+\begin{verbatim}
+>> C=camcalp(pulnix);
+>> points = [0 0.3 0; -1 -1 0; -1 1 0; 1 -1 0; 1 1 0];
+>> C = camcalp(pulnix);
+>> uv0 = camera(C, points, transl(0,0,8))
+uv0 =
+  274.0000  245.2806
+  196.7046   92.3978
+  196.7046  327.6022
+  351.2954   92.3978
+  351.2954  327.6022
+
+>> uvf = camera(C, points, transl(0,0,8), transl(2,1,0)*rotx(0.5))
+uvf =
+  105.8668  621.9923
+   41.5179  455.2694
+    9.7312  724.0408
+  196.5060  455.2694
+  185.9104  724.0408
+
+>> H = homography(uv0, uvf)
+H =
+    0.9573   -0.1338 -136.3047
+   -0.0000    0.7376  366.5758
+   -0.0000   -0.0005    1.0000
+
+>> homtrans(H, uv0)-uvf
+ans =
+   1.0e-09 *
+
+   -0.0876    0.0441
+   -0.0473    0.2508
+    0.1402   -0.3031
+   -0.0290   -0.0356
+    0.0715    0.2944
+\end{verbatim}
+\noindent
+
+\mauthor{Nuno Alexandre Cid Martins, I.S.R.,  Coimbra}
+\mref{\nocite{Fischler81,Faugeras93}
+M.~A. Fischler and R.~C. Bolles, ``Random sample consensus: a paradigm for
+model fitting with applications to image analysis and automated
+cartography,'' {\em Communications of the ACM}, vol.~24, pp.~381--395, June
+1981.
+
+O.~Faugeras, {\em Three-dimensional computer vision}.
+\newblock MIT Press, 1993.
+}
+
+\msa{homtrans, examples/homtest, fmatrix}
+\vfil\eject 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{homtrans}
+\mpur{Transform points by an homography}
+
+\msyn{
+ph = homtrans(H, p)
+}
+
+\mdes{
+Apply the homography H to the image-plane points \var{p}.  \var{p} is an 
+$n \times 2$ or $n \times 3$ matrix whose rows correspond to individual 
+points non-homogeneous or homogeneous form.
+
+Returns points as \var{ph}, an $n \times 3$ matrix where each row is 
+the point coordinate in homogeneous form.
+}
+
+\mex{See the example for \var{homography()}.}
+
+\msa{homography, examples/homtest}
+\vfil\eject 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{iblobs}
+\mpur{Compute image blob features}
+
+\msyn{
+F = iblobs(image)\\[0pt]
+F = iblobs(image, options, ...)
+}
+
+\mdes{Returns a vector of structures
+containing feature data and moments upto second order
+for each connected (4 or 8 way) region in the  image \var{image}.
+The image is first labelled and then features are computed for each
+region.
+
+The feature structure is an augmented version of that returned by
+\var{imoments} and contains in addition
+\var{F(i).minx},
+\var{F(i).maxx},
+\var{F(i).miny},
+\var{F(i).maxy}
+and \var{F(i).touch} which is true if the region touches the edge of the image.
+\var{F(i).shape} is the ratio of the ellipse axes in the range 0 to 1.
+
+The second form allows various options and blob filters to be applied by specifying
+name and value pairs.
+
+\begin{tabular}{lp{6cm}}
+\var{'aspect'}, \var{ratio} & specify the pixel aspect ratio (default 1) \\
+\var{'connect'}, \var{connectivity} & specficy connectivt (default 4) \\
+\var{'touch'}, \var{flag} & only return regions whose \var{touch} status matches \\
+\var{'area'}, \var{[amin amax]} & only return regions whose area lies within the
+specified bounds \\
+\var{'shape'}, \var{[smin smax]} & only return regions whose shape measures lies 
+within the specified bounds 
+\end{tabular}
+
+Note that to turn one element from a vector of structures into a vector
+use the syntax \var{[F.x]}.
+}
+
+\mex{Compute the blob features for a test pattern with a grid of 
+$5 \times 5$ dots.  26 blobs are found, each of the dots (blobs 2--26), and the 
+background (blob 1).}
+\begin{verbatim}
+  >> im = testpattern('dots', 256, 50, 10);
+  >> F = iblobs(im)
+  26 blobs in image, 26 after filtering
+  F = 
+  1x26 struct array with fields:
+    area
+    x
+    y
+    a
+    b
+    theta
+    m00
+    m01
+    m10
+    m02
+    m20
+    m11
+    minx
+    maxx
+    miny
+    maxy
+    touch
+    shape
+  >> F(1)
+  ans = 
+     area: 63511
+        x: 128.6116
+        y: 128.6116
+        a: 147.9966
+        b: 147.9857
+    theta: -0.7854
+      m00: 63511
+      m01: 8168251
+      m10: 8168251
+      m02: 1.3983e+09
+      m20: 1.3983e+09
+      m11: 1.0505e+09
+     minx: 1
+     maxx: 256
+     miny: 1
+     maxy: 256
+    touch: 1
+    shape: 0.9999
+
+  >> F(2)
+  ans = 
+     area: 81
+        x: 25
+        y: 25
+        a: 5.0966
+        b: 5.0966
+    theta: 0
+      m00: 81
+      m01: 2025
+      m10: 2025
+      m02: 51151
+      m20: 51151
+      m11: 50625
+     minx: 20
+     maxx: 30
+     miny: 20
+     maxy: 30
+    touch: 0
+    shape: 1
+  >>
+  >> idisp(im) 
+  >> markfeatures(F, 0, 'b*')
+\end{verbatim}
+The last two lines overlay the centroids onto the original image.  Note
+the centroid of the background object close to the middle dot.
+
+\psfig{figure=figs/iblobs.eps,width=8cm}
+
+\msa{imoments, markfeatures, ilabel}
+\vfil\eject 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{icanny}
+\mpur{Canny edge operator}
+
+\msyn{
+e = canny(im)\\[0pt]
+e = canny(im, sigma)\\[0pt]
+e = canny(im, sigma, th1)\\[0pt]
+e = canny(im, sigma, th1, th0)\\[0pt]
+}
+
+\mdes{
+Finds the edges in a gray scaled image \var{im} using the Canny
+method, and returns an image \var{e} where the edges of \var{im} are marked by 
+non-zero intensity values.
+This is a more sophisticated edge operator than the Sobel.
+
+The optional argument \var{sigma} is the standard deviation for the Gaussian 
+filtering phase. Default is 1 pixel.
+
+\var{th1} is the higher hysteresis threshold.
+Default is 0.5 times the strongest edge. Setting \var{th1} to zero will 
+avoid the (sometimes time consuming) hysteresis.
+\var{th0} is the lower hysteresis threshold and defaults to 0.1 times 
+the strongest edge.
+}
+
+\psfig{figure=figs/canny.eps,width=5cm}
+
+\begin{verbatim}
+  >> lena = loadpgm('lena');
+  >> ic = icanny(lena);
+\end{verbatim}
+
+\mauthor{Oded Comay, Tel Aviv University}
+\mref{J. Canny, "A computational approach to edge detection"
+IEEE Transactions on Pattern Analysis and Machine Intelligence,
+Volume 8(6), November 1986, pp 679 - 698.}
+\msa{isobel, ilaplace}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{iclose}
+\mpur{Grey scale morphological opening}
+
+\msyn{
+im2 = iclose(im)\\[0pt]
+im2 = iclose(im, se)\\[0pt]
+im2 = iclose(im, se, N)
+}
+
+\mdes{Perfoms a greyscale morphological closing on the image
+\var{im} using structuring element \var{se} which defaults to
+\var{ones(3,3)}.
+The operation comprises \var{N} (default 1) consecutive dilations followed by
+\var{N} consectutive erosions.
+
+Square structuring elements can be created conveniently using 
+\var{ones(N,N)} and circular structuring elements using \var{kcircle(N)}.
+}
+
+\begin{tabular}{cc}
+\psfig{figure=figs/colorseg.eps,width=5cm} & \psfig{figure=figs/colorseg_closed.eps,width=5cm} \\
+\end{tabular}
+
+\mex{We can use morphological closing to fill in the gaps in an
+initial segmentation.}
+\begin{verbatim}
+  >> idisp(cs)
+  >> idisp( iclose(cs, ones(5,5) ) );
+\end{verbatim}
+
+
+\msa{imorph, iopen, kcircle}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{idisp}
+\mpur{Interactive image display utility}
+
+\msyn{
+idisp(im)\\[0pt]
+idisp(im, clip)\\[0pt]
+idisp(im, clip, n)\\[6pt]
+idisp2(im)
+}
+\mdes{Displays an image browser in a new figure window 
+and allows interactive investigation of pixel values, see Figure.
+
+Buttons are created along the top of the window:
+\begin{description}
+\item[line]	Prompt for two points in the image and display a cross-section
+		in a new figure.  This shows intensity along the line between
+		the two points selected.
+\item[zoom]	Prompt for two points and rescale the image so that this region
+		fills the figure.  The zoomed image may itself be zoomed.
+\item[unzoom]	Return image scaling to original settings.
+\end{description}
+
+Clicking on a pixel displays its value and coordinate in the top row.
+Color images are supported.
+        
+The second form will limit the displayed greylevels.  If \var{clip} is a
+scalar pixels greater than this value are set to \var{clip}.  
+If \var{clip} is
+a 2-vector then pixels less than \var{clip(1)} are set to \var{clip(1)} and those
+greater than \var{clip(2)} are set to \var{clip(2)}.  
+\var{clip} can be set to [] for
+no clipping.  This option is useful to visualize image content when there
+is a very high dynamic range.
+The \var{n} argument sets the length of the greyscale color map (default 64).
+
+\var{idisp2} is a non-interactive version, that provides the same
+display functionality but has no GUI elements.
+}
+\psfig{figure=figs/idisp.eps,width=8cm}
+\msa{iroi, xv}
+\vfil\eject 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{igamma}
+\mpur{Image gamma correction}
+
+\msyn{
+hn = igamma(image, gamma)\\[0pt]
+hn = igamma(image, gamma, maxval)
+}
+
+\mdes{Returns a gamma corrected version of \var{image},
+in which all pixels
+are raised to the power \var{gamma}.
+Assumes pixels are in the range 0 to \var{maxval}, default \var{maxval} = 1.
+}
+
+\msa{inormhist}
+\vfil\eject 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{iharris}
+\mpur{Harris interest point detector}
+
+\msyn{
+P = iharris\\[6pt]
+F = iharris(im)\\[0pt]
+F = iharris(im, P)\\[0pt]
+[F,rawC] = iharris(im, P)\\[0pt]
+}
+
+\mdes{Returns a vector of structures describing the corner features
+detected in the image \var{im}.
+This is a computationally cheap and robust corner feature detector.
+The Harris corner strength measure is
+\[
+C = \hat{I^2}_x \hat{I^2}_y - \hat{I_{xy}}^2 - k (\hat{I^2}_x + \hat{I^2}_y)^2
+\]
+and the Noble corner detector is
+\[
+C = \frac{\hat{I^2}_x \hat{I^2}_y - \hat{I_{xy}}^2}{\hat{I^2}_x + \hat{I^2}_y}
+\]
+Where $\hat{I^2}_x$ and $ \hat{I^2}_y$ are the smoothed, squared,
+directional gradients, and $\hat{I_{xy}}^2$ is the smoothed gradient
+product.
+For a color image the squared gradients are computed for each plane and then summed.
+
+The feature vector contains structures with elements:
+\begin{tabular}{lp{10cm}}
+\var{F.x} & x-coordinate of the feature \\
+\var{F.y} & y-coordinate of the feature \\
+\var{F.c} & corner strength of the feature \\
+\var{F.grad} & 3-element vector comprising $[\hat{I^2}_x, \, \hat{I^2}_y, \, \hat{I_{xy}}^2]$ the smoothed gradients at the corner.
+\end{tabular}
+
+The gradients can be used as a simple signature of the corner to help
+match corners between different views.  A more robust method to match
+corners is with cross-correlation of a small surrounding region.
+
+There are many parameters available to control this detector, given
+by the second argument \var{P}.  The default value of \var{P} can be
+obtained by the first call format.
+
+\begin{tabular}{lp{8cm}}
+\var{P.k} & $k$ parameter (default 0.04) \\
+\var{P.cmin} & minimum corner strength (default 0) \\
+\var{P.cMinThresh} & minimum corner strength as a fraction of maximum
+detected corner strength (default 0.01) \\
+\var{P.deriv} & x-derivative kernel (default is $\left[ \begin{array}{rrr}
+   -1/3 & 0 & 1/3 \\
+   -1/3 & 0 & 1/3 \\
+   -1/3 & 0 & 1/3 \end{array} \right]$) \\
+\var{P.sigma} & $\sigma$ of Gaussian for smoothing step (default 1) \\
+\var{P.edgegap} & width of region around edge where features cannot be detected (default 2) \\
+\var{P.nfeat} & maximum number of features to detect (default all) \\
+\var{P.harris} & Harris (1) or Noble corner detector (default 1) \\
+\var{P.tiling} & determine strongest features in a \var{P.tiling} $\times$ 
+\var{P.tiling} tiling of the image.   Allows more even feature
+distribution (default 1).\\
+\var{P.distance} & enforce a separation between features (default 0).
+\end{tabular}
+
+Optionally returns the raw corner strength image as \var{rawC}.
+}
+
+\begin{tabular}{cc}
+\psfig{figure=figs/harris.eps,width=4cm} & \psfig{figure=figs/harris2.eps,width=4cm}\\
+\end{tabular}
+
+\mex{Find the corners in the Lena image.  Display a white diamond at the
+location of the 20 strongest corners and label them.  Enforce a separation
+of 20 pixels between features.}
+\begin{verbatim}
+  >> lena = loadpgm('lena');
+  >> P = iharris;
+  >> P.distance = 20;
+  >> F = iharris(lena, P);
+  12250 minima found (4.7%)
+  break after 629 minimas
+  >> markfeatures(F, 20, 'wd', {10, 'w'})
+  >>
+  >> P.tiling = 2;
+  >> P.nfeat = 10;
+  >> F = iharris(lena, P);
+  tile (1,1): 1399 minima found (4.8%), break after 17 minimas 6 added
+  tile (1,2): 1356 minima found (4.7%),  10 added
+  tile (1,3): 1292 minima found (4.4%),  10 added
+  tile (2,1): 1378 minima found (4.7%),  10 added
+  tile (2,2): 1307 minima found (4.5%),  10 added
+  tile (2,3): 1380 minima found (4.7%),  10 added
+  tile (3,1): 1230 minima found (4.2%),  10 added
+  tile (3,2): 1467 minima found (5.0%), break after 34 minimas 8 added
+  tile (3,3): 1344 minima found (4.6%),  10 added
+
+  >> F
+  F = 
+  1x84 struct array with fields:
+    x
+    y
+    c
+    grad
+
+  >> markfeatures(F, 0, 'wd', {10, 'w'}) 
+\end{verbatim}
+Note that in two of the tiles not enough corners could be found that
+met the criteria of inter-corner separation and corner strength.  The
+process yielded only 84 corners, not the 90 requested, however the coverage
+of the scene is greatly improved.
+
+\msa{markfeatures, zncc, isimilarity}
+\mref{\nocite{Harris88}
+C.~G. Harris and M.~J. Stephens, ``A {C}ombined {C}orner and {E}dge
+  {D}etector,'' in {\em Proceedings of the Fourth Alvey Vision Conference,
+  Manchester}, pp.~147--151, 1988.
+}\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{ihist}
+\mpur{Compute intensity histogram (fast)}
+
+\msyn{
+ihist(im)\\[0pt]
+N = ihist(im)\\[0pt]
+[N,X] = ihist(im)
+}
+
+\mdes{This function computes the intensity histogram of an image.
+
+The first form plots a graph of the histogram, while the last two forms
+simply return the histogram and bin values:
+\var{N} is the bin count and \var{X} is the bin number.
+}
+
+\psfig{figure=figs/ihist.eps,width=8cm}
+
+\mex{Display the histogram of the Lena image.}
+\begin{verbatim}
+  >> lena = loadpgm('lena');
+  >> ihist(lena)
+\end{verbatim}
+
+\mlim{Assumes that the pixels are in the range 0-255 and always computes
+256 bins.
+Some functions to interpret the histogram to find extrema or fit 
+Gaussians would be useful, see \var{fit\_ML\_normal} from Matlab file 
+exchange.}
+
+\msa{hist, kmeans}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{ihough}
+\mpur{Linear Hough transform}
+
+\msyn{
+hp0 = ihough\\[0pt]
+H = ihough(edge)\\[0pt]
+H = ihough(edge, hp)\\[0pt]
+H = ihough\_xy(xyz, drange, ntheta)\\[6pt]
+houghshow(H)\\[0pt]
+houghpeaks(H, n)\\[0pt]
+h = houghoverlay(p, ls)
+}
+
+\mdes{Computes the linear Hough transform of the image \var{image}.
+Non-zero pixels in the input edge image \var{edges} increment all pixels in the
+accumulator that lie on the line
+\begin{equation}
+        d = y \cos(\theta) + x \sin(\theta)
+\end{equation}	
+where $\theta$ is the angle the line makes to horizontal axis, and $d$ is
+the perpendicular distance between (0,0) and the line.  A horizontal
+line has $\theta = 0$, a vertical line has $\theta = \pi/2$ or $-\pi/2$.
+The accumulator array has theta across the columns and offset down
+the rows.
+The Hough accumulator cell is incremented by the
+absolute value of the pixel value if it exceeds
+\var{params.edgeThresh} times the maximum value found in \var{edges}.
+Clipping is applied so that only those points lying within the Hough
+accumulator bounds are updated.
+
+An alternative form \var{ihough\_xy()} takes a list of coordinates
+rather than an image.  \var{xyz} is either an $n \times 2$ matrix of
+$(x,y)$ coordinates, each of which is incremented by 1, or an 
+$n \times 3$ matrix where the third column is the amount to incrmement
+each cell by.
+
+The returned Hough object \var{H} has the elements:
+
+\begin{tabular}{lp{10cm}}
+\var{H.h} & Hough accumulator \\
+\var{H.theta} & vector of theta values corresponding to accumulator columns\\
+\var{H.d} & vector of offset values corresponding to accumulator rows 
+\end{tabular}
+
+Operation can be controlled by means of the parameter object \var{hp}
+which has elements:
+
+\begin{tabular}{lp{10cm}}
+\var{hp.Nd} & number of bins in the offset direction (default 64) \\
+\var{hp.Nth} & number of bins in the theta direction (default 64) \\
+\var{hp.edgeThresh} & edge threshold (default 0.10) \\
+\var{hp.border} & edge threshold (default 8) \\
+\var{hp.houghThresh} & threshold on relative peak strength (default 0.40) \\
+\var{hp.radius} & radius of accumulator cells cleared around peak after detection (default 5) \\
+\var{hp.interpWidth} &  width of region used for peak interpolation (default 5)
+\end{tabular}
+
+Pixels within \var{hp.border} of the edge will not increment, useful to
+eliminate spurious edge pixels near image border.
+
+Theta spans the range $-\pi/2$ to $\pi/2$ in \var{hp.Nth} increments. Offset is in the range
+1 to the number of rows of \var{edges} with \var{hp.Nd} steps.  
+For the \var{ihough\_xy} form the number of theta steps is given by
+\var{ntheta} and the offset is given by a vector
+\var{drange = [dmin dmax]} or 
+\var{drange = [dmin dmax Nd]}.
+
+The default parameter values can be obtained by calling \var{ihough} with
+no arguments.
+
+\var{houghshow} displays the Hough accumulator as an image.
+
+\var{houghpeaks} returns the coordinates of \var{n} peaks from the Hough
+accumulator.  The highest peak is found, refined to subpixel precision,
+then \var{hp.radius} radius around that point is zeroed so as to eliminate
+multiple close minima.  The process is repeated for all \var{n} peaks.
+\var{p} is an $n \times 3$ matrix where each row is the offset, theta and
+relative peak strength (range 0 to 1).
+The peak detection loop breaks early if the remaining peak has a relative
+strength less than \var{hp.houghThresh}.
+The peak is refined by a weighted mean over a $w \times w$ region around
+the peak where $w = $ \var{hp.interpWidth}.
+
+\var{houghoverlay} draws the lines corresponding to the rows of \var{p}
+onto the current figure using the linestyle \var{ls}.  Optionally returns
+a vector of handles \var{h} to the lines drawn.
+}
+
+\mex{Find the Hough transform of the edges of a large square, created using
+\var{mksq} and a Laplacian edge operator.  The accumulator can be displayed
+as an image which shows four bright spots, each corresponding to an edge.
+As a surface these appear as high, but quite ragged, peaks.}
+\begin{verbatim}
+  >> im=testpattern('squares', 256, 256, 128);
+  >> edges = isobel(im);
+  >> idisp(im);
+  >> H = ihough(edges)
+  H = 
+
+        h: [64x64 double]
+    theta: [64x1 double]
+        d: [64x1 double]
+
+  >> houghshow(H);
+  >> p=houghpeaks(H, 4)
+  p =
+  191.2381         0    1.0000
+  190.9003    1.5647    1.0000
+   69.8095    0.0491    0.6455
+   70.1650    1.5239    0.6455
+
+  >> idisp(im);
+  >> houghoverlay(p, 'g')
+  theta = 0.000000, d = 191.238095
+  theta = 1.564731, d = 190.900293
+  theta = 0.049087, d = 69.809524
+  theta = 1.523942, d = 70.164994
+
+\end{verbatim}
+
+\begin{tabular}{cc}
+\psfig{figure=figs/hough1.eps,width=6cm} &\psfig{figure=figs/hough2.eps,width=6cm} \\
+Edge image & Hough accumulator \\
+\psfig{figure=figs/hough3.eps,width=6cm} & \\
+Fitted line segments & \\
+\end{tabular}
+
+\vfil\eject
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{ilabel}
+\mpur{Image labelling (segmentation)}
+
+\msyn{
+L = ilabel(I)\\[0pt]
+[L, maxlabel] = ilabel(I)\\[0pt]
+[L, maxlabel, parents] = ilabel(I)
+}
+\mdes{Returns an equivalent sized image, \var{L},
+in which each pixel is the label of the region of the corresponding
+pixel in \var{I}.
+A region is a spatially contiguous region
+of pixels of the same value.
+The particular label assigned has no significance, it is an arbitrary
+label.
+
+Optionally the largest label can be returned.  All labels lie
+between 1 and \var{maxlabel}, and there are no missing values.
+Connectivity is 4-way by default, but 8-way can be selected.
+
+The third form returns an array of region hierarchy information.
+The value of \var{parents(i)} is the label of the region that fully
+encloses region \var{i}.  The outermost blob(s) will have a parent
+value of 0.
+}
+\mex{Consider the simple binary image}
+\begin{verbatim}
+>> labeltest
+ .
+ .
+>> a
+a =
+     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0
+     0     0     1     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     1     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0
+>> [L,lm,p]=ilabel(a)
+L =
+     1     1     1     1     1     1     1     1     1     1
+     1     1     1     1     1     1     1     1     1     1
+     1     1     2     1     1     1     1     1     1     1
+     1     1     1     1     1     1     1     1     1     1
+     1     1     1     1     3     1     1     1     1     1
+     1     1     1     1     1     1     1     1     1     1
+     1     1     1     1     1     1     1     1     1     1
+     1     1     1     1     1     1     1     1     1     1
+     1     1     1     1     1     1     1     1     1     1
+     1     1     1     1     1     1     1     1     1     1
+lm =
+     3
+p =
+     0
+     1
+     1
+\end{verbatim}
+\noindent
+which indicates that there are 3 labels or regions.  Region 1, the background
+has a parent of 0 (ie. it has no enclosing region).  Regions 2 and 3
+are fully enclosed by region 1.
+
+To obtain a binary image of all the pixels in region 2, for example,
+\begin{verbatim}
+>> L==2
+>> L==2
+ans =
+     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0
+     0     0     1     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0
+     0     0     0     0     0     0     0     0     0     0
+\end{verbatim}
+
+\begin{tabular}{cc}
+\psfig{figure=figs/imraw.eps,width=4cm} & \psfig{figure=figs/imlab.eps,width=4cm}\\
+Binary image & Labelled image
+\end{tabular}
+
+\msa{imoments, iblobs}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{ilaplace}
+\mpur{Laplacian filter}
+
+\msyn{
+G = ilaplace(image)
+}
+\mdes{Convolves all planes of the input image with 
+the Laplacian filter
+\[
+\left[ \begin{array}{rrr}
+0 & -1 & 0 \\
+-1 & 4 & -1 \\
+0 & -1 & 0 \end{array} \right]
+\]
+}
+
+\psfig{figure=figs/ilaplace.eps,width=5cm}
+
+\mex{Laplace filter the Lena image.}
+\begin{verbatim}
+ >> lena = loadpgm('lena');
+ >> idisp( ilaplace( lena) )
+\end{verbatim}
+
+\msa{conv2, klog, ismooth, klaplace}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{imatch}
+\mpur{Search for matching region}
+
+\msyn{
+[xm, s] = imatch(im1, im2, x, y, w2, search)
+}
+
+\mdes{Find the best matchin in \var{im2} for the square region in 
+image \var{im1} centered at \var{(x, y)} of half-width \var{w2}.
+The search is conducted over the region in \var{im2} centered at
+ \var{(x, y)} with bounds \var{search}.  
+\var{search = [xmin xmax ymin ymax]} relative to the \var{(x, y)}.
+If \var{search} is scalar it searches \var{[-s s -s s]}.
+
+Similarity is computed using the
+zero-mean normalized cross-correlation similarity measure
+\[
+ZNCC(A, B)=\frac{\sum (A_{ij}-\overline{A})(B_{ij}-\overline{B})}{\sqrt{\sum (A_{ij
+}-\overline{A})\sum (B_{ij}-\overline{B})}}
+\]
+where $\overline{A}$ and $\overline{B}$ are the mean over the region
+being matched. This measure is invariant to illumination offset.
+While computationally complex it yields
+a well bounded result, simplifying the decision process.
+Result is in the range -1 to 1, with
+1 indicating identical pixel patterns.
+
+Returns the best fit \var{xm = [dx dy cc]} where \var{(dx, dy)} are
+the coordinates of the best fit with respect to \var{(x, y)} and \var{cc}
+is the corresponding cross-correlation score.  Optionally it can return
+the cross-correlation score at every point in the search space.  This
+correlation surface can be used to interpolate the coordinate of the
+peak.
+}
+
+\psfig{figure=figs/imatch.eps,width=5cm}
+
+\mex{Search for matching region in the Lena test image.}
+\begin{verbatim}
+>> lena = loadpgm('lena');
+>> [xm,s] = imatch(lena, lena, 200, 200, 7, 7);
+>> xm
+xm =
+         0         0    1.0000
+>> idisp(s)
+\end{verbatim}
+The best match occurs as expected at coordinate $(0, \, 0)$ since the
+two images are identical.  The correlation surface is shown above.
+
+\msa{zncc, subpixel}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{imoments}
+\mpur{Compute image moments}
+
+\msyn{
+F = imoments(image)\\[0pt]
+F = imoments(rows, cols)\\[0pt]
+F = imoments(rows, cols)
+}
+
+\mdes{Returns a structure array
+containing moments upto second order
+for the non-zero pixels in the binary image \var{image}.  The non-zero
+pixels are considered as a single `blob' but no connectivity analysis
+is performed.  The actual pixel values are used as pixel weights.
+In the second form the row and column coordinates of the
+region's pixels can be given instead of an image.
+
+For a binary image the return structre \var{F} contains simple `blob' 
+features \var{F.area}, \var{F.x}, \var{F.y}, \var{F.a}, \var{F.b}
+and \var{F.theta} where \var{(xc, yc)} is the centroid coordinate,
+\var{a} and \var{b}
+are axis lengths of the ``equivalent ellipse" and \var{theta}
+is the angle of the major ellipse axis to the horizontal axis.  
+
+For a greyscale image \var{area} is actually the sum of the pixel values,
+and the centroid is weighted by the pixel values.  This can be useful for
+sub-pixel estimation of the centroid of a blob taking into account the edge
+pixels which contain components of both foreground and background object.
+
+The structure also contains the
+raw moments \var{F.m00}, \var{F.m10}, \var{F.m01}, \var{F.m20},
+\var{F.m02}, and \var{F.m11}.
+}
+
+\mex{An example is to compute the moments of a particular region label.
+First we create a test pattern of an array of large dots. }
+\begin{verbatim}
+>> image = testpattern('dots', 256, 50, 10);
+>> l = ilabel(image);
+>> binimage = (l == 3);		% look for region 3
+>> imoments(binimage)
+ans = 
+
+     area: 81
+        x: 75
+        y: 25
+        a: 5.0966
+        b: 5.0966
+    theta: 0
+      m00: 81
+      m01: 2025
+      m10: 6075
+      m02: 51151
+      m20: 456151
+      m11: 151875
+
+or
+
+>> [r,c] = find(binimage);
+>> imoments(r,c)
+     .
+     .
+
+\end{verbatim}
+
+\msa{markfeatures, ilabel, mpq}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{imono}
+\mpur{Convert color image to greyscale}
+
+\msyn{
+im = imono(rgb)
+}
+
+\mdes{Returns the greyscale information from the 3-plane RGB image
+\var{rgb}.
+}
+
+\msa{rgb2hsv}
+\vfil\eject 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{imorph}
+\mpur{Grey scale morphology}
+
+\msyn{
+Im = imorph(I, se, op)\\[0pt]
+Im = imorph(I, se, op, edge)
+}
+
+\mdes{Perform greyscale morphological filtering on
+\var{I} with the structuring element defined by the non-zero elements
+of \var{se}.  The supported operations are minimum, maximum or difference
+(maximum - minimum) specified by \var{op} values of 
+\var{`min'}, 
+\var{`max'} and
+\var{`diff'} respectively.
+
+Square structuring elements can be created conveniently using \var{ones(N,N)} and 
+circular structuring elements using \var{kcircle(N)}.
+
+Edge handling flags control what happens when the processing window
+extends beyond the edge of the image.   \var{edge} is either:
+\begin{description}
+\item[\var{'border'}] (default) the border value is replicated
+\item['\var{none'}]   pixels beyond the border are not included in the window
+\item['\var{trim'}]   output is not computed for pixels whose window crosses
+                 the border, hence the output image is reduced all around
+		 by half the window size.
+\item['\var{wrap'}]   the image is assumed to wrap around, left to right, top to
+bottom.
+\end{description}
+
+}
+
+\msa{iopen, iclose, kcircle}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{inormhist}
+\mpur{Histogram normalization}
+
+\msyn{
+hn = inormhist(image)
+}
+
+\mdes{Returns the histogram normalized version of \var{image}.
+The grey levels of the output image are spread equally over the range 0 to 255.
+This transform is commonly used to enhance contrast in a dark image.}
+
+\begin{tabular}{cc}
+\psfig{figure=figs/lena.eps,width=5cm} & \psfig{figure=figs/inormhist.eps,width=5cm} \\
+\end{tabular}
+
+\mex{Compare raw and histogram normalized images of Lena.}
+\begin{verbatim}
+  >> lena = loadpgm('lena');
+  >> idisp(lena);
+  >> idisp( inormhist(lena) );
+\end{verbatim}
+
+\msa{ihist}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{invcamcal}
+\mpur{Inverse camera calibration}
+
+\msyn{
+[P R K delta] = invcamcal(C)
+}
+
+\mdes{\var{invcamcal} estimates the camera extrinsic and intrinsic parameters
+from a $3 \times 4$ camera calibration matrix.  \var{P} is a vector of 
+estimated camera location, and \var{R} is the estimated rotation matrix.
+\var{K} is the estimated scale factors [alphax*f alphay*f] where f is 
+camera focal length and alphax and alphay are the pixel pitch in the X and
+Y directions.
+\var{delta} is an estimate of the `goodness' of the calibration matrix
+and is interpretted as the cosine of the angle between the X and Y axes,
+and is ideally 0.
+}
+
+\msa{camcalp, camcald, camcalt}
+\mref{\nocite{Ganapathy84b,Ganapathy84}
+S.~Ganapathy, ``Camera location determination problem,'' Technical Memorandum
+  11358-841102-20-TM, AT\&T Bell Laboratories, Nov. 1984.
+
+S.~Ganapathy, ``Decomposition of transformation matrices for robot vision,'' in
+  {\em Proc. IEEE Int. Conf. Robotics and Automation}, pp.~130--139, 1984.
+}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{invhomog}
+\mpur{Inverse homography}
+
+\msyn{
+s = invhomog(H)
+}
+
+\mdes{
+Estimates the rotation and translation (upto scale) of the Cartesian motion
+corresponding to the given homography H of points in a plane.
+
+There are in general multiple solutions, so the return is a structure
+array.  Disambiguating the solutions is up to the user!
+
+The elements of the structure are:
+
+\begin{tabular}{lp{5in}}
+R & $3 \times 3$ orthonormal rotation matrix \\
+t & vector translation direction \\
+n & vector normal of the plane \\
+d & distance from the plane (not to scale).
+\end{tabular}
+
+($R$, $t$) are the Cartesian transformation from the first camera position to
+the second.
+
+}
+
+\mlim{Doesn't seem to work well for cases involving rotation.}
+\mcau{Not entirely sure this is correct.  Use with caution.}
+\msa{homography}
+\mref{\nocite{Faugeras88}
+O.~Faugeras and F.~Lustman, ``Motion and structure from motion in a piecewise
+  planar environment,'' {\em Int. J. Pattern Recognition and Artificial
+    Intelligence}, no.~3, pp.~485--508, 1988.
+}
+\vfil\eject 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{iopen}
+\mpur{Grey scale morphological opening}
+
+\msyn{
+im2 = iopen(im)\\[0pt]
+im2 = iopen(im, se)\\[0pt]
+im2 = iopen(im, se, N)
+}
+
+\mdes{Perfoms a greyscale morphological opening on the image
+\var{im} using structuring element \var{se} which defaults to
+\var{ones(3,3)}.
+The operation comprises \var{N} (default 1) consecutive erosions followed by
+\var{N} consectutive dilations.
+
+Square structuring elements can be created conveniently using \var{ones(N,N)} and 
+circular structuring elements using \var{kcircle(N)}.
+}
+
+\begin{tabular}{cc}
+\psfig{figure=figs/iopen1.eps,width=5cm} & \psfig{figure=figs/iopen2.eps,width=5cm} \\
+\end{tabular}
+
+\mex{Using morphological opening to separate two blobs without changing
+their size or shape.}
+\begin{verbatim}
+      >> idisp(im);
+      >> idisp( iopen( im, kcircle(3) ) );
+\end{verbatim}
+
+\msa{imorph, iclose, kcircle}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{ipyramid}
+\mpur{Pyramid decomposition}
+
+\msyn{
+Ip = ipyramid(I)\\[0pt]
+Ip = ipyramid(I, sigma)\\[0pt]
+Ip = ipyramid(I, sigma, N)
+}
+
+\mdes{\var{pyramid} returns a pyramidal
+decomposition of the input image \var{I}.
+Gaussian smoothing with $\sigma = $ \var{sigma} (default is 1) is applied prior to
+each decimation step.  If \var{N} is specified then only \var{N} steps
+of the pyramid are computed, else decomposition continues down to a 
+$1\times 1$ image.
+
+The result is a cell array of images in reducing size order.
+}
+
+\psfig{figure=figs/pyramid.eps,width=8cm}
+\mex{Let's place each of the images horizontally adjacent and view
+the resulting image.}
+\begin{verbatim}
+    >> lena = loadpgm('lena');
+    >> p = ipyramid(lena, 5);
+    >> pi = zeros(512, 992);
+    >> w = 1;
+    >> for i=1:5,
+    >>   [nr,nc] = size(p{i});
+    >>   pi(1:nr,w:w+nc-1) = p{i};
+    >>   w = w + nc;
+    >> end
+    >> image(pi)
+\end{verbatim}
+
+\msa{ishrink, kgauss}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{irank}
+\mpur{Fast neightbourhood rank filter}
+
+\msyn{
+Ir = irank(I, order, se)\\[0pt]
+Ir = irank(I, order, se, nbins)\\[0pt]
+Ir = irank(I, order, se, edge)
+}
+
+\mdes{\var{irank()} performs a rank filter over the neighbourhood specified 
+by \var{se}.  
+The \var{order}'th value in rank (1 is lowest)
+becomes the corresponding output pixel value.
+A histogram method is used with \var{nbins} (default 256).
+
+Square neighbourhoods can be specified conveniently using \var{ones(N,N)} and 
+circular neighbourhoods using \var{kcircle(N)}.
+
+Edge handling flags control what happens when the processing window
+extends beyond the edge of the image.   \var{edge} is either:
+\begin{description}
+\item[\var{'border'}] (default) the border value is replicated
+\item['\var{none'}]   pixels beyond the border are not included in the window
+\item['\var{trim'}]   output is not computed for pixels whose window crosses
+                 the border, hence the output image is reduced all around
+		 by half the window size.
+\item['\var{wrap'}]   the image is assumed to wrap around, left to right, top to
+bottom.
+\end{description}
+
+
+}
+
+\mex{To find the median over a $5 \times 5$ square window.  
+After sorting the 25 pixels
+in the neighbourhood the median will be given by the 12th in rank.}
+\begin{verbatim}
+      >> ri = irank(lena, 12, ones(5,5));
+      image pixel values: 37.000000 to 226.000000
+      >> idisp(ri);    
+\end{verbatim}
+
+\msa{kcircle}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{iroi}
+\mpur{Select region of interest}
+
+\msyn{
+subimage = iroi(image)\\[0pt]
+[subimage,corners] = iroi(image)\\[0pt]
+subimage = iroi(image, corners)
+}
+
+\mdes{
+The first two forms display the image and a rubber band box to
+allow selection of the region of interest.
+Click on the top-left corner then stretch the
+box while holding the mouse down.
+The selected \var{subimage} is output and optionally the coordinates,
+\var{corners} of
+the region selected which is of the form [top left; bottom right].
+	
+The last form uses a previously created region matrix and outputs the
+corresponding subimage.  Useful for chopping the same region out of
+a different image.  Cropping is applied to all planes of a multiplane image.
+
+Works with color images.
+}
+
+\msa{idisp}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{ishrink}
+
+\mpur{Smooth and decmimate an image}
+
+\msyn{
+Is = ishrink(I)\\[0pt]
+Is = ishrink(I, sigma)\\[0pt]
+Is = ishrink(I, sigma, N)
+}
+
+\mdes{Return a lower resolution representation of the image \var{I}.
+The image is first smoothed by a Gaussian with $\sigma = $ \var{sigma}
+and then subsampled by a factor \var{N}.
+Default values are \var{sigma = 2} and \var{N = 2}.
+}
+
+\begin{tabular}{cc}
+\psfig{figure=figs/lena.eps,width=5cm} & \psfig{figure=figs/ishrink.eps,width=5cm} \\
+\end{tabular}
+
+\mex{}
+\begin{verbatim}
+    >> lena = loadpgm('lena');
+    >> size(lena)
+    ans =
+       512   512
+
+    >> s = ishrink(lena, 2, 4);
+    >> size(s)
+    ans =
+       128   128
+
+    >> idisp(s)
+\end{verbatim}
+
+\msa{kgauss, ipyramid}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{isimilarity}
+\mpur{Zero-mean normalized cross-correlation}
+
+\msyn{
+m = isimilarity(im1, im2, c1, c2, w)
+}
+
+\mdes{
+Compute the similarity
+between two equally sized image patches $(2w+1) \times (2w+1)$ centered
+at coordinate \var{c1} in image \var{im1}, 
+and coordinate \var{c2} in image \var{im2}.
+
+Similarity is computed using the
+zero-mean normalized cross-correlation similarity measure
+\[
+ZNCC(A, B)=\frac{\sum (A_{ij}-\overline{A})(B_{ij}-\overline{B})}{\sqrt{\sum (A_{ij
+}-\overline{A})\sum (B_{ij}-\overline{B})}}
+\]
+where $\overline{A}$ and $\overline{B}$ are the mean over the region
+being matched. This measure is invariant to illumination offset.
+While computationally complex it yields
+a well bounded result, simplifying the decision process.
+Result is in the range -1 to 1, with
+1 indicating identical pixel patterns.
+}
+\msa{zncc}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{ismooth}
+\mpur{Gaussian filter}
+
+\msyn{
+G = ismooth(image, sigma)
+}
+\mdes{Convolves all planes of the image
+with a Gaussian kernel of specified \var{sigma}.
+}
+
+\psfig{figure=figs/ismooth.eps,width=5cm}
+
+\mex{Smooth the Lena image.}
+\begin{verbatim}
+ >> lena = loadpgm('lena');
+ >> idisp( ismooth( lena, 4) )
+\end{verbatim}
+
+\msa{conv2, kgauss}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{isobel}
+\mpur{Sobel filter}
+
+\msyn{
+Is = isobel(I)\\[0pt]
+Is = isobel(I, Dx)\\[0pt]
+[ih,iv] = isobel(I)\\[0pt]
+[ih,iv] = isobel(I, Dx)
+
+}
+
+\mdes{Returns a Sobel filtered version of image
+\var{I} which is the norm of the vertical and horizontal gradients.
+If \var{Dx} is specified this x-derivative kernel is used instead 
+of the default:
+\[
+\left[ \begin{array}{ccc}
+      -1  & 0  & 1 \\
+      -2  & 0  & 2 \\
+      -1  & 0  & 1 \end{array} \right]
+\]
+With two output arguments specified the function will return the 
+vertical and horizontal gradient images.
+}
+
+\begin{tabular}{cc}
+\psfig{figure=figs/isobel.eps,width=5cm} & \psfig{figure=figs/isobel2.eps,width=5cm} \\
+\end{tabular}
+
+\mex{}
+\begin{verbatim}
+    >> lena = loadpgm('lena');
+    >> im = isobel(lena);
+    >> idisp(im)
+    >> im2 = isobel(lena, kdgauss(2));
+    >> idisp(im2)
+\end{verbatim}
+
+
+\mcau{The Sobel operator is a simple edge detector and has the disadvantage
+of giving fat double edges.}
+
+\msa{kdgauss}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{istretch}
+\mpur{Image linear normalization}
+
+
+\msyn{
+hn = istretch(image)\\[0pt]
+hn = istretch(image, newmax)
+}
+
+\mdes{Returns a  normalized image in which all pixels lie in the range
+0 to 1, or 0 to \var{newmax}.}
+
+
+\msa{inormhist}
+\vfil\eject 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{ivar}
+\mpur{Fast neighbourhood variance/kurtosis/skewness}
+
+\msyn{
+Im = ivar(I, se, op)\\[0pt]
+Im = ivar(I, se, op, edge)
+}
+
+\mdes{Computes the specified statistic over the pixel neighbourhood
+specified by \var{se} and this
+becomes the corresponding output pixel value.
+The statistic is specified by \var{op} which is either 
+\var{'var'}, \var{'kurt'}, or \var{'skew'}.
+
+
+Square neighbourhoods can be specified conveniently using \var{ones(N,N)} and 
+circular neighbourhoods using \var{kcircle(N)}.
+
+Edge handling flags control what happens when the processing window
+extends beyond the edge of the image.   \var{edge} is either:
+\begin{description}
+\item[\var{'border'}] (default) the border value is replicated
+\item['\var{none'}]   pixels beyond the border are not included in the window
+\item['\var{trim'}]   output is not computed for pixels whose window crosses
+                 the border, hence the output image is reduced all around
+		 by half the window size.
+\item['\var{wrap'}]   the image is assumed to wrap around, left to right, top to
+bottom.
+\end{description}
+
+}
+
+\mlim{This  is a very powerful and general facility but it requires that
+the MATLAB interpretter is invoked on every pixel, which impacts speed.}
+
+\msa{kcircle}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{iwindow}
+\mpur{General function of a neighbourhood}
+
+\msyn{
+Im = iwindow(I, se, func)\\[0pt]
+Im = iwindow(I, se, func, edge)
+}
+
+\mdes{For every pixel in the input image it takes all neighbours for which 
+the corresponding element in \var{se} are non-zero.  These are packed into
+a vector (in raster order from top left) and passed to the specified
+Matlab function.  The return value  becomes the corresponding output
+pixel value.
+
+Square neighbourhoods can be specified conveniently using \var{ones(N,N)} and 
+circular neighbourhoods using \var{kcircle(N)}.
+
+Edge handling flags control what happens when the processing window
+extends beyond the edge of the image.   \var{edge} is either:
+\begin{description}
+\item[\var{'border'}] (default) the border value is replicated
+\item['\var{none'}]   pixels beyond the border are not included in the window
+\item['\var{trim'}]   output is not computed for pixels whose window crosses
+                 the border, hence the output image is reduced all around
+		 by half the window size.
+\item['\var{wrap'}]   the image is assumed to wrap around, left to right, top to
+bottom.
+\end{description}
+
+}
+
+\mex{To compute the mean of an image over an annular window at each point.}
+\begin{verbatim}
+        >> se = kcircle([5 10]);
+        >> out = iwindow(image, se, 'mean');
+\end{verbatim}
+
+\mlim{This  is a very powerful and general facility but it requires that
+the MATLAB interpretter is invoked on every pixel, which impacts speed.}
+
+\msa{iopen, iclose, kcircle}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{klaplace}
+\mpur{Laplacian kernel}
+
+\msyn{
+k = klaplace
+}
+\mdes{Returns the Laplacian kernel
+\[
+\left[ \begin{array}{ccc}
+0 & -1 & 0 \\
+-1 & 4 & -1 \\
+0 & -1 & 0 \end{array} \right]
+\]
+}
+
+\mex{}
+\begin{verbatim}
+  >> klaplace
+  ans =
+     0    -1     0
+    -1     4    -1
+     0    -1     0
+\end{verbatim}
+
+\msa{conv2, klog, kgauss, ilap}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{kcircle}
+\mpur{Create a circular mask}
+
+\msyn{
+C = kcircle(r)\\[0pt]
+C = kcircle(r, w)
+}
+
+\mdes{Returns a circular mask of radius \var{r}.
+\var{C} is a $(2r+1) \times (2r+1)$ matrix, or in second case
+a $w \times w$ matrix.
+Elements are one if on or inside the circle, else zero.
+
+If \var{r} is a 2-element vector then it returns an annulus of ones, and
+the two numbers are interpretted as inner and outer radii.
+
+Useful as a circular structuring element for morphological filtering.
+}
+
+\mex{To create a circular mask of radius 3}
+\begin{verbatim}
+    >> kcircle(3)
+    ans =
+ 
+     0     0     0     1     0     0     0
+     0     1     1     1     1     1     0
+     0     1     1     1     1     1     0
+     1     1     1     1     1     1     1
+     0     1     1     1     1     1     0
+     0     1     1     1     1     1     0
+     0     0     0     1     0     0     0
+\end{verbatim}
+
+\msa{imorph, iopen, iclose}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{kdgauss}
+\mpur{Create a 2D derivative of Gaussian filter}
+
+\msyn{
+G = kgauss(sigma)\\[0pt]
+G = kgauss(sigma, w)
+}
+
+\mdes{Returns a $(2w+1) \times (2w+1)$ matrix
+containing the x-derivative of the 2D Gaussian function 
+\[
+g(x,y) = -\frac{x}{2 \pi \sigma^2} e^{\frac{x^2+y^2}{2 \sigma^2}}
+\]
+symmetric about the center pixel of the matrix.
+This kernel is useful for computing smoothed deriviatives.  The 
+y-derivative of the Gaussian is simply the transform of this function.
+
+Standard deviation is \var{sigma}.  If \var{w} is not specified 
+it defaults to $2\sigma$.
+
+This kernel can be used as an edge detector and is sensitive to
+edges in the x-direction.
+}
+
+\mex{}
+\begin{verbatim}
+    >> g = kdgauss(2, 5);
+    >> surfl([-5:5], [-5:5], g);
+\end{verbatim}
+
+\psfig{figure=figs/kdgauss.eps,width=8cm}
+
+\msa{conv2}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{kdog}
+\mpur{Create a 2D difference of Gaussian filter}
+
+\msyn{
+LG = kdog(sigma1, sigma2)\\[0pt]
+LG = kdog(sigma1, sigma2, w)
+}
+\mdes{Returns a $(2w+1) \times (2w+1)$ matrix
+containing the difference of two 2-D Gaussian functions.
+\[
+{DoG}(x,y) = \frac{1}{2\pi} \left( e^{-\frac{x^2+y^2}{2 \sigma_1^2}} 
+- e^{-\frac{x^2+y^2}{2 \sigma_2^2}} \right)
+\]
+The kernel is
+symmetric about the center pixel of the matrix.
+If \var{w} is not specified it defaults to twice the largest $\sigma$.
+
+This kernel can be used as an edge detector and is sensitive to
+edges in any direction.
+}
+
+\mex{}
+\begin{verbatim}
+    >> dog = kdog(2, 1.5, 5);
+    >> surfl([-5:5], [-5:5], dog);
+\end{verbatim}
+
+\psfig{figure=figs/kdog.eps,width=8cm} 
+
+%\begin{tabular}{cc}
+%\psfig{figure=figs/ilog.eps,width=5cm} & \psfig{figure=figs/loglena.eps,width=5cm} \\
+%\end{tabular}
+
+\msa{conv2, kgauss, klaplace, klog}
+\vfil\eject 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{kgauss}
+\mpur{Create a 2D Gaussian filter}
+
+\msyn{
+G = kgauss(sigma)\\[0pt]
+G = kgauss(sigma, w)
+}
+
+\mdes{Returns a $(2w+1) \times (2w+1)$ matrix
+containing a 2-D Gaussian function 
+\[
+G(x,y) = \frac{1}{2\pi} e^{-\frac{x^2+y^2}{2 \sigma^2}}
+\]
+symmetric about the center pixel of the matrix.
+The volume under the curve is unity.
+
+Standard deviation is \var{sigma}.  If \var{w} is not specified 
+it defaults to $2\sigma$.
+}
+
+\mex{}
+\begin{verbatim}
+    >> g = kgauss(2, 5);
+    >> surfl([-5:5], [-5:5], g);
+\end{verbatim}
+
+\psfig{figure=figs/kgauss.eps,width=8cm}
+
+\msa{conv2}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{klog}
+\mpur{Create a 2D Laplacian of Gaussian filter}
+
+\msyn{
+LG = klog(sigma)
+}
+\mdes{Returns a $(2w+1) \times (2w+1)$ matrix
+containing the Laplacian of the 2-D Gaussian function.
+\[
+{LoG}(x,y) = \frac{-1}{2\pi\sigma^4} (2 - \frac{x^2+y^2}{\sigma^2}) e^{-\frac{x^2+y^2}{2 \sigma^2}}
+\]
+The kernel is
+symmetric about the center pixel of the matrix.
+Standard deviation is \var{sigma}.  If \var{w} is not specified 
+it defaults to $2\sigma$.
+
+This kernel can be used as an edge detector and is sensitive to
+edges in any direction.
+}
+
+\mex{}
+\begin{verbatim}
+    >> lg = klog(2, 5);
+    >> surfl([-5:5], [-5:5], lg);
+    >> lena = loadpgm('lena');
+    >> loglena = conv2(lena, klog(2), 'same');
+    >> image(abs(zl))
+    >> colormap(gray(15))
+\end{verbatim}
+
+
+\begin{tabular}{cc}
+\psfig{figure=figs/ilog.eps,width=5cm} & \psfig{figure=figs/loglena.eps,width=5cm} \\
+\end{tabular}
+
+\msa{conv2, kgauss, klaplace, ilap}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{kmeans}
+\mpur{k-means clustering}
+
+\msyn{
+[c,s] = kmeans(x, N)\\[0pt]
+[c,s] = kmeans(x, N, x0)
+}
+
+\mdes{Find \var{N} clusters for the data \var{x}.
+Returns \var{c} the centers of each cluster as well as \var{s}
+which contains the cluster index for each corresponding element of \var{x}.
+
+The initial cluster centers are uniformly spread over the range of
+\var{x} but can be specified by an optional N-element vector \var{x0}.
+
+The clustering is performed only with respect to data values, not
+spatially.
+
+}
+
+\mex{Can be used for image segmentation, to find pixels with similar
+greyscale or hue values.
+Segment the Lena image into 4 greyscale bands:}
+\begin{verbatim}
+    >> [c,s] = kmeans(lena, 4);
+    >> c
+    c =
+       63.7419  108.5058  143.6484  183.0839
+    >> idisp(s);
+\end{verbatim}
+
+\psfig{figure=figs/kmeans.eps,width=8cm}
+The pixels have been clustered into 4 groups with the center values shown.
+
+\mlim{This is an iterative algorithm which is very slow as an m-file.}
+\mref{Tou and Gonzalez, Pattern Recognition Principles, pp 94}
+
+\vfil\eject 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{loadinr}
+\mpur{Load INRIMAGE format image}
+
+\msyn{
+I = loadinr(fname)
+}
+
+\mdes{Returns a matrix containing a gray scale
+image read from an INRIMAGE format file with the 
+specified name.  If no extension is
+provided an extension of \texttt{.inr} is appended.
+This is a binary floating point file format developed at INRIA.
+Returns \var{[]} if the file cannot be opened.
+
+}
+\mlim{Only simple 2D images are supported in this implementation.}
+
+\msa{saveinr}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{loadpgm}
+\mpur{Load PGM format image (P2 or P5)}
+
+\msyn{
+I = loadpgm(fname)
+}
+
+\mdes{Returns a matrix containing the gray scale
+image read from the specified file.  If no extension is
+provided an extension of \texttt{.pgm} is appended.
+
+The given \var{fname} is globbed and if it matches more than 1 file then
+the files are read sequentially and a 3-dimensional array is returned where
+the last index is the frame number.
+
+If no file is given then a GUI file browser is popped up.
+
+The header parsing is fairly complete and allows for embedded comments
+which complicate what would otherwise be a simple header to read.
+Returns \var{[]} if the file cannot be opened.
+}
+
+\mex{To compute the mean of an image over an annular window at each point.}
+\begin{verbatim}
+        >> lena = loadpgm('lena');
+        >> idisp(lena);
+\end{verbatim}
+
+\mlim{Currently does not return the comment field from the file header.}
+\msa{savepnm}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{loadppm}
+\mpur{Load PPM format image (P3 or P6)}
+
+\msyn{
+rgb = loadppm(fname)
+}
+
+\mdes{Returns a 3-dimensional matrix containing the red,
+green, and blue planes of the 
+image read from the specified file.  If no extension is
+provided an extension of \texttt{.ppm} is appended.
+
+The given \var{fname} is globbed and if it matches more than 1 file then
+the files are read sequentially and a 4-dimensional array is returned where
+the last index is the frame number.
+
+If no file is given then a GUI file browser is popped up.
+
+The header parsing is fairly complete and allows for embedded comments
+which complicate what would otherwise be a simple header to read.
+Returns \var{[]} if the file cannot be opened.
+}
+
+\mlim{Currently does not return the comment field from the file header.}
+
+\msa{savepnm, loadpgm, loadinr}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{markfeatures}
+\mpur{Mark features}
+
+\msyn{
+markfeatures(xy)\\[0pt]
+markfeatures(xy, N)\\[0pt]
+markfeatures(xy, N, marker)\\[0pt]
+markfeatures(xy, N, marker, label)\\[0pt]
+}
+
+\mdes{Mark features on the current figure.
+The features are specified by \var{xy} which can be an $n \times 2$
+matrix, with one row per feature, or a structure vector where each element
+has a \var{x} and \var{y} element.
+The second form limits the display to at most \var{N} features, if 
+\var{N} is zero, then all features are displayed.
+
+The third form allows the marker to be specified with standard Matlab
+linestyle specifiers to indicate shape and color.
+
+The fourth form causes the features to be numbered.  \var{label} is a 
+2-element cell array where \var{label{1}} is the font size and
+\var{label{2}} is the color.
+}
+
+\mlim{The feature labelling should better position the label.}
+
+\mex{See the example for \var{iharris}.}
+
+\msa{iharris}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{max2d}
+\mpur{Find maximum point in image}
+
+\msyn{
+[r,c] = max2d(image)
+}
+
+\mdes{Return the interpolated coordinates (r,c) of the greatest peak in image.
+Useful for finding peaks in a Hough transform accumulator.}
+\msa{ihough}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\function{medfilt1}
+%\mpur{Median filter, one dimensional}
+%
+%\msyn{
+%y = medfilt1(x)\\[0pt]
+%y = medfilt1(x, w)
+%}
+%
+%\mdes{Perform a one-dimensional median filter of the signal
+%\var{x} with a window of width \var{w} (default 5).  End effects
+%are handled by replicating the first and last signal values.
+%
+%Can be 
+%}
+%
+%\vfil\eject 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{mkcube}
+\mpur{Create a  cube}
+
+\msyn{
+c = mkcube\\[0pt]
+c = mkcube(s)\\[0pt]
+c = mkcube(s, center)\\[6pt]
+c = mkcube2\\[0pt]
+c = mkcube2(s)\\[0pt]
+c = mkcube2(s, center)
+}
+
+\mdes{\var{mkcube} returns an $8\times 3$ matrix where each row
+is the coordinates of a vertex of the cube.
+
+\var{mkcube2} returns a $12 \times 6$ matrix where each row
+corresponds to one edge of the cube.
+The first three elements of each row are the start coordinate of the edge 
+and the last three are the end coordinate.
+
+The cube has a side length \var{s} (default 1) and is centered at \var{center}
+(default $[0\, 0\, 0]$).
+}
+\msa{camera}
+\vfil\eject 
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{mpq, upq, npq}
+\mpur{Compute moments of a polygon}
+
+\msyn{
+m = mpq(iv, p, q)\\[0pt]
+m = upq(iv, p, q)\\[0pt]
+m = npq(iv, p, q)
+}
+
+\mdes{\var{mpq} computes the pq'th moment of the polygon whose vertices are iv.
+
+\var{upq} and \var{npq} compute the central and normalized-central
+moments respectively.}
+ 
+\mcau{Note that the points must be sorted such that they follow the 
+perimeter in sequence (either clockwise or anti-clockwise).}
+
+\msa{imoments}
+\mref{\nocite{Wilf79}
+J.~Wilf and R.~Cunningham, ``Computing region moments from boundary
+  representations,'' JPL 79-45, NASA JPL, Nov. 1979.
+}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{pnmfilt}
+\mpur{Pipe an image through Unix filter}
+
+\msyn{
+im2 = pnmfilt(image, cmd)
+}
+
+\mdes{Pipes the image through a Unix filter 
+program.
+The image is written in PGM (P5) format or PPM (P6) format to stdin of
+the specified command, and its
+output on stdout (assumed
+to be PNM format) is returned by this function.
+Provides access to many preexisting image program functions that are
+part of the PBMplus, ImageMagick and Khoros suites.
+}
+
+\mex{To rotate an image we can make use of the 
+\texttt{pnmrotate} utility}
+\begin{verbatim}
+>> lena = loadpgm('lena');
+>> rlena = pnmfilt(lena, 'pnmrotate 30');  % rotate by 30 deg
+>> image(rlena);
+>> colormap(gray(256))
+\end{verbatim}
+
+\psfig{figure=figs/pgmfilt.eps,width=8cm}
+
+\mlim{The mechanism is not quick, but it is convenient.  Unfortunately
+MATLAB doesn't support proper pipes (could be done with a mex-file...) so
+temporary files are used.}
+
+\msa{idisp, xv, savepnm}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{pulnix}
+\mpur{Model for Pulnix camera and Digimax digitizer}
+
+\msyn{
+cp = pulnix
+}
+
+\mdes{Returns the camera calibration matrix for a Pulnix TN-6 camera with
+an 8mm lense and a Datacube Digimax digitizer.
+
+The camera parameter object \var{cp} has elements:
+
+\begin{tabular}{lp{10cm}}
+\var{cp.f} & focal length (m) \\
+\var{cp.u0} & principal point u-coordinate (pix) \\
+\var{cp.v0} & principal point v-coordinate (pix) \\
+\var{cp.px} & horizontal pixel pitch (pix/m) \\
+\var{cp.py} & vertical pixel pitch (pix/m)
+\end{tabular}
+}
+
+\mex()
+\begin{verbatim}
+  >> pulnix
+  ans = 
+
+     f: 0.0078
+    px: -79200
+    py: -120500
+    u0: 274
+    v0: 210
+\end{verbatim}
+
+\mref{\nocite{Corke96c}P.~I. Corke, {\em Visual Control of Robots: High-Performance visual servoing}.
+\newblock Mechatronics, Research Studies Press (John Wiley), 1996.
+}
+\msa{camcalp}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\function{rgb2hsi}
+%\mpur{RGB color space to hue/saturation/intensity}
+%
+%\msyn{
+%hsi = rgb2hsi(r, g, b)\\[0pt]
+%hsi = rgb2hsi(rgb)
+%}
+%\mdes{Returns a row vector of the HSI values corresponding to 
+%the color components \var{r}, \var{g}, and \var{b} which can also
+%be given as a 3-element row vector \var{rgb}.  If the components have more
+%than one row, the result will be a matrix with one row corresponding to
+%each input row.}
+%
+%\mlim{See also the Matlab builtin function \var{rgb2hsv()}.}
+%\mref{An excellent introduction to color spaces can be found at \linebreak
+%\texttt{http://www.faqs.org/faqs/graphics/colorspace-faq}}
+%\msa{rgb2xyz}
+%\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{rgb2xyz}
+\mpur{RGB color space to CIE XYZ}
+
+\msyn{
+xyz = rgb2xyz(r, g, b)\\[0pt]
+xyz = rgb2xyz(rgb)
+}
+\mdes{Returns a row vector of the CIE 1931 XYZ values corresponding to 
+the color components \var{r}, \var{g}, and \var{b} which can also
+be given as a 3-element row vector \var{rgb}.  If the components have more
+than one row, the result will be a matrix with one row corresponding to
+each input row.}
+
+\msa{rgb2hsv}
+\mref{An excellent introduction to color spaces can be found at \linebreak
+\texttt{http://www.faqs.org/faqs/graphics/colorspace-faq}}
+
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{rluminos}
+\mpur{Relative photopic luminosity}
+
+\msyn{
+rluminos(lambda)
+}
+\mdes{\var{rluminos} returns the relative photopic (light adjusted
+cone response) luminosity response of the human eye.
+CIE luminosity is obtained by multiplying by 673\unit{lumens/W}.
+}
+
+\mex{To show this response over visible wavelengths
+}
+\begin{verbatim}
+>> l = [380:10:700]'*1e-9;        % visible spectrum
+>> r = rluminos(l);
+>> plot(l*1e9, r)
+>> xlabel('Wavelength (nm)')
+\end{verbatim}
+\noindent
+which peaks at around 555\unit{nm}.
+
+\psfig{figure=figs/rlum.eps,width=8cm}
+
+\malg{Evaluated using the Y component of the CIE XYZ color matching
+function.}
+\msa{cmfxyz}
+
+\vfil\eject 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{saveinr}
+\mpur{Save INRIMAGE format image}
+
+\msyn{
+saveinr(fname, I)
+}
+
+\mdes{\var{saveinr} saves a matrix containing a gray scale
+image in an INRIMAGE format file with the 
+specified name.  If no extension is
+provided an extension of \texttt{.inr} is appended.
+This is a binary floating point file format developed at INRIA.
+}
+\mlim{Only simple 2D images are supported in this implemenation.}
+
+\msa{loadinr}
+\vfil\eject 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{savepnm}
+\mpur{Save PNM format image}
+
+\msyn{
+savepnm(fname, I)\\[0pt]
+savepnm(fname, I, comment)
+}
+
+\mdes{\var{savepnm} saves a matrix containing an image in binary
+greyscale (P5) or RGB color (P6) format to the
+file with the specified name.  
+The optional comment will be embedded in the image header consistant
+with the PBM file format.
+}
+
+\msa{loadpgm, loadppm}
+\vfil\eject 
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{solar}
+\mpur{Solar irrandiance spectrum}
+
+\msyn{
+p = solar(lambda)
+}
+
+\mdes{Return solar irradiance in \unit{W/m^2/nm} for wavelength \var{lambda}.  
+\var{lambda} maybe a vector.
+
+}
+\mref{{\tt http://www.asdi.com/apps/arm.html}, figure 1.}
+\mlim{Solar irrandiance depends on many things: cloud, time, location etc. and this
+should be taken as a rough guide only.}
+
+\mex{To show solar irradiance response over visible and
+infra-red wavelengths.
+}
+\begin{verbatim}
+>> l = [380:10:1500]'*1e-9;        % visible and IR spectrum
+>> s = solar(l);
+>> r = rluminos(l);
+>> plot(l*1e9, [s r])
+>> xlabel('Wavelength (nm)')
+>> ylabel('Solar irradiance (W/m^2/nm)')
+\end{verbatim}
+\noindent
+along with the human visible (photopic) response.
+
+\psfig{figure=figs/solar.eps,width=8cm}
+
+
+\msa{blackbody}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{subpixel}
+\mpur{Subpixel interpolation of peak}
+
+\msyn{
+[dxr, dyr] = subpixel(surf)\\[0pt]
+[dxr, dyr] = subpixel(surf, dx, dy)
+
+}
+
+\mdes{
+Given a 2-d surface \var{surf} refine the estimate of the peak to 
+subpixel precision using first-order differences.
+The peak may be given by \var{(dx, dy)} or searched for.
+
+To find a minimum, call the function with \var{-surf}.
+
+Useful to find peaks in correlation surfaces or Hough accumulator
+peaks.
+
+}
+
+\msa{max2d, imatch, ihough}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{testpattern}
+\mpur{Create a variety of useful test patterns}
+
+\msyn{
+im = testpattern('rampx', w, ncycles)\\[0pt]
+im = testpattern('rampy', w, ncycles)\\[6pt]
+im = testpattern('sinx', w, ncycles)\\[0pt]
+im = testpattern('siny', w, ncycles)\\[6pt]
+im = testpattern('dots', w, pitch, diam)\\[6pt]
+im = testpattern('squares', w, pitch, s)\\[6pt]
+im = testpattern('line', w, theta, c)
+}
+
+\mdes{Returns an image of size $w \times w$ containing
+a testpattern.  If \var{w} is 2-dimensional it specifies the number of
+rows and colums of \var{im}.
+
+
+With no output arguments the testpattern is displayed using 
+\var{idisp()}.
+
+The first four forms create greyscale images with triangular or 
+sinusoidal patterns.  For the ramp values are in the range $[0, \, 1]$
+and for the sinuoids in the range $[-1, \, 1]$.
+If not specified \var{ncycles} corresponds to 1.
+
+The dot and square test patterns are binary images with pixels either
+0 or 1.  They are specified in terms of pitch, distance between centres,
+and diameter \var{diam} or side length \var{s}.
+
+The line is described by
+\[
+v = \tan \theta u + c
+\]
+where $v$ and $u$ are row and column respectively, and \var{theta} is
+specified in radians.
+Pixels on the line are set to one, elsewhere to zero.
+}
+
+\begin{tabular}{cc}
+\psfig{figure=figs/tp1.eps,width=5cm} & \psfig{figure=figs/tp2.eps,width=5cm} \\
+\psfig{figure=figs/tp3.eps,width=5cm} & \psfig{figure=figs/tp4.eps,width=5cm} \\
+\end{tabular}
+
+\mex{}
+\begin{verbatim}
+>> testpattern('rampx', 256, 2)
+>> testpattern('siny', 256, 2)
+>> testpattern('dots', 256, 50, 20)
+>> testpattern('squares', 256, 64, 16)
+\end{verbatim}
+
+
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{trainseg}
+\mpur{Train an rg-space color segmentation table}
+
+\msyn{
+map = trainseg(rgb)
+}
+
+\mdes{Each pixel of the input color image \var{rgb} is converted to 
+normalized $(r,g)$ coordinates 
+\begin{eqnarray}
+r &=& \frac{R}{R+G+B} \\
+g &=& \frac{G}{R+G+B} 
+\end{eqnarray}
+
+The function displays a new figure with two windows, the left-hand
+is the original color image and the right-hand is the color
+segmentation map.
+The user clicks on pixels in the left-hand window that belong to the target
+set and the corresponding values in rg-space are set in the right-hand image.
+The right-hand image is used subsequently for segmentation.
+
+The output is a $256 \times 256$  image with pixel values that are either
+0 or 1.  Typically the output image would be further processed with 
+morphological closing to create a solid region in rg-space that
+represents the range of target colors.
+}
+
+\psfig{figure=figs/trainseg.eps,width=8cm}
+
+\mex{Train a color segmentation table of the yellow targets}
+\begin{verbatim}
+    >> targ = loadppm('target.ppm');
+    >> map = trainseg(targ);
+\end{verbatim}
+Every mouse click in the left-hand window adds a point to the right-hand
+window.  By clicking on many points within the target regions we can
+build up a generalization of its color, as shown by the finite sized
+region in the right-hand window.
+
+
+
+\msa{colorseg,imorph} 
+
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{visjac\_p}
+\mpur{Visual Jacobian matrix}
+
+\msyn{
+J = visjac\_p(uv, z)\\[0pt]
+J = visjac\_p(uv, z, f)\\[0pt]
+J = visjac\_p(uv, z, cp)\\[0pt]
+}
+
+
+\mdes{Returns a $2 \times 6$ visual motion Jacobian
+that maps relative camera motion 
+\[
+\left[ \begin{array}{c}
+	\dot{u} \\ \dot{v} \end{array} \right] = {\bf J}
+\left[ \begin{array}{c} T_{x} \cr T_{y} \cr T_{z} \cr \omega_{x}
+ \cr \omega_{y} \cr \omega_{z} \end{array} \right]
+\]
+to image plane velocity for the point \var{uv} = $(u,v)$, 
+where the image Jacobian is
+\begin{equation}
+{\bf J} =\left[  \begin{array}{cccccc}
+   {\ds \fl \over \ds z}  &  0  & - {\ds u} \over {\ds z}  &
+           - {\ds u v} \over {\ds \fl}  &
+           {\ds \fl^2 + u^2 } \over {\ds \fl} &
+           -v \\
+   0 &  {\ds \fl \over \ds z} & - {\ds v} \over {\ds z}  &
+           {\ds - \fl^2 -  v^2 } \over {\ds \fl} &
+           {\ds u v} \over {\ds \fl}  &
+           u \\
+   \end{array} \right] 
+\end{equation}
+
+For 3 or more points the Jacobians can be stacked and used to solve for
+relative motion given observed image plane motion.
+
+The Jacobian is a function of the camera parameters which can be given as
+just a focal length in pixels \var{f}, or as a full camera parameter
+object \var{cp}:
+
+\begin{tabular}{lp{10cm}}
+\var{cp.f} & focal length (m) \\
+\var{cp.u0} & principal point u-coordinate (pix) \\
+\var{cp.v0} & principal point v-coordinate (pix) \\
+\var{cp.px} & horizontal pixel pitch (pix/m) \\
+\var{cp.py} & vertical pixel pitch (pix/m)
+\end{tabular}
+}
+
+\mex{}
+\begin{verbatim}
+>> visjac_p([0 0], 2, pulnix)
+
+  ans =
+
+   1.0e+11 *
+
+   -0.0000         0   -0.0001    5.8425   -7.6231   -0.0002
+         0   -0.0000   -0.0001    6.8129   -8.8892    0.0003
+\end{verbatim}
+Which indicates that visual motion will be dominated by $\omega_x$ and
+$\omega_y$ camera motion.
+
+\msa{camera, pulnix}
+\mref{\nocite{Hutchinson96}
+S.~Hutchinson, G.~Hager, and P.~Corke, ``A tutorial on visual servo control,''
+  {\em IEEE Transactions on Robotics and Automation}, vol.~12, pp.~651--670,
+  Oct. 1996.}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{xv}
+\mpur{Display image using XV}
+
+\msyn{
+xv(image)
+}
+
+\mdes{\var{xv} ships the image off to a background XV process.
+XV is a great shareware X program  
+for image viewing, manipulation and
+format conversion.
+This script can be easily edited to use your favourite image browser,
+such as \texttt{display}, \texttt{eog}, \texttt{kview} etc.}
+}
+
+\mref{XV is available from \texttt{http://www.trilon.com/xv/}}
+\msa{pnmfilt}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\function{video4linux}
+%\mpur{Load an image from a Video4Linux source}
+%
+%\msyn{
+%h = video4linux(device)\\[0pt]
+%im = video4linux(h)
+%}
+%
+%\mdes{Video4Linux is a versatile interface to many video sources
+%including frame grabbers and firewire sources.
+%The first call format is used to open the video source.
+%
+%Subsequent calls with the second call format return the next image
+%from the camera in either grayscale or color format.
+%
+%}
+%
+%\mlim{Operates only under Linux and is a mex-file.}
+%
+%\msa{firewire, webcam}
+%\vfil\eject 
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{webcam}
+\mpur{Load an image from a web camera}
+
+\msyn{
+im = webcam(url)
+}
+
+\mdes{Returns an image from the web camera with the specified URL.
+Note that web cameras vary widely in the way they are communicated with.
+Some allow for control of many camera parameters such as pan, tilt and zoom
+by extra arguments in the URL.
+}
+
+\mex{Read an image from a Canon web camera}
+\begin{verbatim}
+      >> im = webcam('http://10.0.0.80/-wvhttp-01-/GetStillImage?p=5');
+      >>
+      >> im = webcam('http://www.thesurfclub.com.au/Webcam/image.jpg');
+      >> idisp(im);
+\end{verbatim}
+The first example also sets the pan angle to 5.  The second example
+loads an image from a webcam at a beach 100km from my lab!  Not a good day
+for the beach today...
+
+\psfig{figure=figs/beach.eps,width=8cm}
+
+
+\msa{firewire}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{yuvopen}
+\mpur{Open a YUV4MPEG format file}
+
+\msyn{
+h = yuvopen(file)
+}
+
+\mdes{Opens a file organized in YUV4MPEG format.  This is a raw
+uncompressed file in 4:2:0 format with YUV color encoding.
+Returns a handle to the stream that is used for subsequent read operations.
+
+This file format is used as a precursor to mpeg encoding and can be
+played by \texttt{mplayer} and transcoded by \texttt{ffmpeg}.
+The stream header is saved in \var{h.hdr}.
+
+See the Berkeley mpeg tools manual for more details.
+}
+
+\mlim{Assumes the file is in yuv420 format.}
+
+\msa{yuvread, yuv2rgb}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{yuvread}
+\mpur{Read frame from a YUV4MPEG format file}
+
+\msyn{
+[y,u,v] = yuvread(h)\\[0pt]
+[y,u,v] = yuvread(h, skip)\\[0pt]
+[y,u,v,hdr] = yuvread(h, skip)
+}
+
+\mdes{Reads the next frame from the YUV4MPEG format file opened on the
+handle \var{h}.  The frame is returned as a luminance plane, \var{y}, 
+and two half resolution planes \var{u} and \var{v}.
+If \var{skip} is provided then \var{skip} (default 0) frames will be 
+skipped before the next frame is returned.
+The function can optionally return the header string, \var{hdr}, which 
+contains information specific to the tool used to create the file.
+
+Returns \var{y = []} on end of file.
+}
+
+\mlim{Assumes the file is in yuv420 format.}
+
+\msa{yuvopen, yuv2rgb}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{yuv2rgb}
+\mpur{Convert an image from YUV to RGB format}
+
+\msyn{
+rgb = yuv2rgb(y, u, v)\\[0pt]
+[r,g,b] = yuvread(y, u, v)\\[0pt]
+rgb = yuv2rgb2(y, u, v)\\[0pt]
+[r,g,b] = yuvread2(y, u, v)
+}
+
+\mdes{Converts the YUV image to an RGB image with all planes of the
+same size.  The first two calls halve the resolution of luminance, \var{y},
+to match \var{u} and \var{v}.  The second two double  \var{u} and \var{v}
+using simple pixel replication.
+}
+
+\msa{yuvopen, yuvread}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{zcross}
+\mpur{Find zero crossings}
+
+\msyn{
+zc = zcross(image)
+}
+
+\mdes{\var{zcross} returns a binary image where set pixels correspond
+to transitions from negative to positive in the input image.
+Often used in conjunction with a Laplacian of Gaussian operator which
+is the basis of the Marr-Poggio edge finder.
+}
+
+\mex{}
+\begin{verbatim}
+  >> lena = loadpgm('lena');
+  >> LoGlena = conv2(lena, klog(1));
+  >> idisp(zcross(LoGlena))
+\end{verbatim}
+
+\psfig{figure=figs/zclena.eps,width=8cm}
+\mlim{The method is quite crude, at each pixel the result is the logical or
+of a transition to the left or below.}
+\msa{klog}
+\vfil\eject 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\function{zncc}
+\mpur{Zero-mean normalized cross-correlation}
+
+\msyn{
+m = zncc(A, B)
+}
+
+\mdes{
+Compute the zero-mean normalized cross-correlation similarity measure
+between the two equally sized image patches \var{A} and \var{B}.
+\[
+ZNCC(A, B)=\frac{\sum (A_{ij}-\overline{A})(B_{ij}-\overline{B})}{\sqrt{\sum (A_{ij
+}-\overline{A})\sum (B_{ij}-\overline{B})}}
+\]
+where $\overline{A}$ and $\overline{B}$ are the mean over the region
+being matched. This measure is invariant to illumination offset.
+While computationally complex it yields
+a well bounded result, simplifying the decision process.
+Result is in the range -1 to 1, with
+1 indicating identical pixel patterns.
+}
+\msa{similarity}
+
+
+\cleardoublepage
+\bibliographystyle{ieeetr}
+\bibliography{strings,3d,vision,publist}
+\end{document}
