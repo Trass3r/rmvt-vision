@@ -82,15 +82,21 @@ function [h,x] = ihist(im, varargin)
         hh = hh ./ hh(end);
     end
 
+    opt = varargin;
 	if nargout == 0,
-        if (nargin > 1) && strcmp(opt, 'cdf')
-            plot(xx, hh);
-            xlabel('Greylevel')
+        if (nargin > 1) && strcmp(opt(1), 'cdf')
+            opt = opt(2:end);
+            plot(xx, hh, opt{:});
+            if min(size(im)) > 1
+                xlabel('Greylevel')
+            end
             ylabel('CDF');
         else
-            bar(xx, hh, 'b');
+            bar(xx, hh, opt{:});
             xaxis(min(xx), max(xx));
-            xlabel('Greylevel')
+            if min(size(im)) > 1
+                xlabel('Greylevel')
+            end
             ylabel('Number of pixels');
         end
 	elseif nargout == 1,

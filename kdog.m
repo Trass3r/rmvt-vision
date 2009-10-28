@@ -1,7 +1,7 @@
 %KDOG	Difference of Gaussian kernel
 %
 %	k = kdog(sigma1)
-%	k = kdog(sigma1, sigma2)
+%	k = kdog(sigma1, w)
 %	k = kdog(sigma1, sigma2, w)
 %
 %	Returns a difference of Gaussian kernel which can be used for
@@ -33,21 +33,22 @@
 
 function m = kdog(sigma1, sigma2, w)
 
-    % sigma1 > sigma2
+    % sigma2 > sigma1
     if nargin == 1
-        sigma2 = sigma1/1.6;
-    elseif nargin < 3
+        sigma2 = sigma1*1.6;
+        w = ceil(3*sigma1);
+    elseif nargin == 2
+        w = sigma2;
+        sigma2 = sigma1*1.6;
+    elseif nargin == 3
         if sigma2 < sigma1
             t = sigma1;
             sigma1 = sigma2;
             sigma2 = t;
         end
     end
-	if nargin < 3
-        w = ceil(3*sigma1);
-	end
 
 	m1 = kgauss(sigma1, w);
 	m2 = kgauss(sigma2, w);
 
-	m = m1 - m2;
+	m = m2 - m1;
