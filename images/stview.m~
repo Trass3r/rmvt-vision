@@ -1,0 +1,33 @@
+function stview(L, R)
+
+    image([L R]);
+    
+    Y = 100;
+    X = 100;
+        hline = line('XData',get(gca,'XLim'),'YData',[Y Y], ...
+                     'EraseMode','xor','Tag','Horizontal Cursor');
+        vline = line('XData',[X X],'YData',get(gca,'YLim'), ...
+                     'EraseMode','xor','Tag','Vertical Cursor');
+   set(gca, 'UserData', {
+
+    % Set the WindowButton...Fcn of the figure
+    set(gcf,'WindowButtonDownFcn','buttonDown',...
+            'WindowButtonMotionFcn',@moveCursor, ...
+            'WindowButtonUpFcn','buttonUp');	
+                
+end
+        
+function moveCursor(src, event)
+     cp = get(gca,'CurrentPoint');
+
+end
+
+function buttonDown
+disp('down');
+
+end
+
+function buttonUp
+disp('up');
+
+end

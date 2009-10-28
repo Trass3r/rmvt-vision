@@ -1,0 +1,24 @@
+function [Lr, Rr] = rectify(F, L)
+
+    % choose the origin for rectification
+    x0 = [numcols(L) numrows(L)] / 2;
+    
+    % translate the image to the origin
+    T = [1 0 -x0(1); 0 1 -x0(2); 0 0 1];
+    
+    % rotate the epipole to horizontal
+    
+    eh = null(F);
+    e = h2e(e);
+    
+    R = inv([
+    
+    % move the epipole to infinity
+    G = [1 0 0; 0 1 0; -1/f 0 1];
+    
+    
+    H = G * R * T;
+    
+    
+    imr = imTrans(im, H);
+end
