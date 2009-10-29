@@ -1,8 +1,12 @@
 %IDISP	Interactive image display tool
 %
 %	IDISP(image)
-%	IDISP(image, clip)
-%	IDISP(image, clip, n)
+%	IDISP(image, options)
+%
+%   options
+%       'signed'
+%       'flatten'
+%       'colors', N
 %
 %	Display the image in current figure and create buttons for:
 %		* region zooming
@@ -37,63 +41,90 @@
 % 
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
-function idisp(z, clip, ncmap)
-	if nargin < 3,
-		ncmap = 256;
-	end
+function idisp(z, varargin)
+
+    % standard options parser goes in here
+    % flatten    z = reshape( z, size(z,1), size(z,2)*size(z,3) )
+    % expand, normhist it
+    % clip?  why?
 
 	if (nargin > 0) & ~isstr(z),
+        ncmap = 256;
+        argc = 1;
+        opt_gui = true;
+        opt_axes = true;
+        opt_square = false;
+        while argc <= length(varargin)
+            switch lower(varargin{argc})
+            case 'colors'
+                ncmap = varargin{argc+1}; argc = argc+1;
+            case 'nogui'
+                opt_gui = false;
+            case 'noaxes'
+                opt_axes = false;
+            case 'square'
+                opt_square = true;
+            case 'flatten'
+                z = reshape( z, size(z,1), size(z,2)*size(z,3) );
+            case 'signed'
+                % add this
+            otherwise
+                error( sprintf('unknown option <%s>', varargin{argc}));
+            end
+            argc = argc + 1;
+        end
+
 		% command line invocation, display the image
 
 		clf
 		colormap(gray(ncmap))
 		n = ncmap;
-		if nargin == 2,
-			if length(clip) == 2,
-				z(z<clip(1)) = clip(1);
-				z(z>clip(2)) = clip(2);
-			elseif length(clip) == 1,
-				z(z>clip) = clip;
-			end
-		end
 		hi = image(z);
-        xlabel('u (pixels)');
-        ylabel('v (pixels)');
+        if opt_axes
+            xlabel('u (pixels)');
+            ylabel('v (pixels)');
+        else
+            set(gca, 'Xtick', [], 'Ytick', []);
+        end
+        if opt_square
+            set(gca, 'DataAspectRatio', [1 1 1]);
+        end
         figure(gcf);    % bring to top
+        %set(gcf,'ShareColors','off');
+        set(hi, 'CDataMapping', 'scaled');
                 
-		%set(gcf,'ShareColors','off');
-		set(hi, 'CDataMapping', 'scaled');
-		htf = uicontrol(gcf, ...
-				'style', 'text', ...
-				'units',  'norm', ...
-				'pos', [.5 .93 .5 .07], ...
-				'string', '' ...
-			);
-		ud = [gca htf hi axis];
-		set(gca, 'UserData', ud);
-		set(hi, 'UserData', ud);
+        if opt_gui
+            htf = uicontrol(gcf, ...
+                    'style', 'text', ...
+                    'units',  'norm', ...
+                    'pos', [.5 .93 .5 .07], ...
+                    'string', '' ...
+                );
+            ud = [gca htf hi axis];
+            set(gca, 'UserData', ud);
+            set(hi, 'UserData', ud);
 
-		hpb=uicontrol(gcf,'style','push','string','line', ...
-			'units','norm','pos',[0 .93 .1 .07], ...
-			'userdata', ud, ...
-			'callback', 'idisp(''line'')');
-        hhist=uicontrol(gcf,'style','push','string','histo', ...
-			'units','norm','pos',[0.1 .93 .1 .07], ...
-			'userdata', ud, ...
-			'callback', 'idisp(''histo'')');
-		hzm=uicontrol(gcf,'style','push','string','zoom', ...
-			'units','norm','pos',[.2 .93 .1 .07], ...
-			'userdata', ud, ...
-			'callback', 'idisp(''zoom'')');
-		huz=uicontrol(gcf,'style','push','string','unzoom', ...
-			'units','norm','pos',[.3 .93 .15 .07], ...
-			'userdata', ud, ...
-			'callback', 'idisp(''unzoom'')');
+            hpb=uicontrol(gcf,'style','push','string','line', ...
+                'units','norm','pos',[0 .93 .1 .07], ...
+                'userdata', ud, ...
+                'callback', 'idisp(''line'')');
+            hhist=uicontrol(gcf,'style','push','string','histo', ...
+                'units','norm','pos',[0.1 .93 .1 .07], ...
+                'userdata', ud, ...
+                'callback', 'idisp(''histo'')');
+            hzm=uicontrol(gcf,'style','push','string','zoom', ...
+                'units','norm','pos',[.2 .93 .1 .07], ...
+                'userdata', ud, ...
+                'callback', 'idisp(''zoom'')');
+            huz=uicontrol(gcf,'style','push','string','unzoom', ...
+                'units','norm','pos',[.3 .93 .15 .07], ...
+                'userdata', ud, ...
+                'callback', 'idisp(''unzoom'')');
 
-		set(hi, 'UserData', ud);
-		set(gcf, 'WindowButtonDownFcn', 'idisp(''down'')');
-		set(gcf, 'WindowButtonUpFcn', 'idisp(''up'')');
-
+            set(hi, 'UserData', ud);
+            set(gcf, 'WindowButtonDownFcn', 'idisp(''down'')');
+            set(gcf, 'WindowButtonUpFcn', 'idisp(''up'')');
+        end
 		return;
 	end
 
