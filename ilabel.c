@@ -30,6 +30,7 @@
   * TODO:
   * eliminate lmap2
   * eliminate double copying of parent, color data
+  * edge is not propagated properly
   */
 #include "mex.h"
 #include <math.h>
@@ -127,9 +128,9 @@ ilabel(PIXEL *im, int nrows, int ncols, LABEL *lim, LABEL **Parents, PIXEL **Col
 		prevlab = UNKNOWN;
 		for (col=0; col<ncols; col++) {
 			curpix = PIX(im,row,col);
+			curlab = UNKNOWN;       // start with no known label
 
 			/* if no change in pixel value then inherit label from left */
-			curlab = UNKNOWN;
 			if ((col > 0) && (curpix == prevpix))
 				curlab = prevlab;
 			
@@ -144,7 +145,7 @@ ilabel(PIXEL *im, int nrows, int ncols, LABEL *lim, LABEL **Parents, PIXEL **Col
 				if (	(PIX(im,row-1,col) == curpix) &&
 					(lresolve(PIX(lim,row-1,col)) != curlab)
 				) {
-					/* we have a merge to N */
+					/* we have a label assignment from N */
 					int	newlabel;
 					
 					newlabel = lresolve(PIX(lim,row-1,col));
@@ -153,15 +154,18 @@ ilabel(PIXEL *im, int nrows, int ncols, LABEL *lim, LABEL **Parents, PIXEL **Col
 					*/
 
 #ifdef	DEBUG
-					printf("mergeN(%d,%d): %d becomes %d\n",
-						row, col, curlab, newlabel);
+					printf("mergeN(%d,%d): %d becomes %d %d %d\n",
+						row, col, curlab, newlabel, curpix, PIX(im,row-1,col));
 #endif
                     // newlabel dominates
-					if (curlab != UNKNOWN)
+					if (curlab != UNKNOWN) {
 						lmap[curlab] = newlabel;
-                    blobsize[newlabel] += blobsize[curlab];
-                    if (parents[curlab] == 0)
-                        parents[newlabel] = 0;
+                        blobsize[newlabel] += blobsize[curlab];
+                        //if (edge[curlab] < edge[newlabel])
+                            //edge[newlabel] = edge[curlab];
+                        if (parents[curlab] == 0)
+                            parents[newlabel] = 0;
+                    }
 					curlab = newlabel;
 
 				} else if (
@@ -188,6 +192,8 @@ ilabel(PIXEL *im, int nrows, int ncols, LABEL *lim, LABEL **Parents, PIXEL **Col
 						lmap[curlab] = newlabel;
                     if (parents[curlab] == 0)
                         parents[newlabel] = 0;
+                    //if (edge[curlab] < edge[newlabel])
+                        //edge[newlabel] = edge[curlab];
                     blobsize[newlabel] += blobsize[curlab];
 					curlab = newlabel;
 
@@ -212,6 +218,8 @@ ilabel(PIXEL *im, int nrows, int ncols, LABEL *lim, LABEL **Parents, PIXEL **Col
 					if (curlab != UNKNOWN)
 						lmap[curlab] = newlabel;
                     blobsize[newlabel] += blobsize[curlab];
+                    //if (edge[curlab] < edge[newlabel])
+                        //edge[newlabel] = edge[curlab];
 					curlab = newlabel;
 
 				}
@@ -232,14 +240,16 @@ ilabel(PIXEL *im, int nrows, int ncols, LABEL *lim, LABEL **Parents, PIXEL **Col
 					(northwest != curlab)
 				) {
 #ifdef	DEBUG
+#endif
 					printf("(%d,%d): label %d encloses %d\n",
                         row, col,
 						curlab, northwest);
-#endif
 					/* we have an enclosure */
                     if (blobsize[curlab] > THRESH) {
                         // mark the parent of this blob
                         parents[northwest] = curlab;
+                        //edge[northwest] = (row-1) + nrows*(col-1) + 1;
+                        //printf("edge is %d\n", edge[northwest]);
                     } else {
                         // it's a runt, merge it with its parent
 						lmap[curlab] = northwest;
@@ -350,7 +360,9 @@ ilabel(PIXEL *im, int nrows, int ncols, LABEL *lim, LABEL **Parents, PIXEL **Col
 
             l = lmap2[i];
             c[l-1] = color[i];
-            e[l-1] = edge[i];
+            if (e[l-1] == 0)
+                e[l-1] = edge[i];
+            //printf("edge %d %d %d\n", i, l, edge[i]);
             //printf("color [%d] = %f\n", l, color[i]);
         }
         mxFree(color);

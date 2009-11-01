@@ -1,8 +1,8 @@
 classdef Blob < handle
     properties
         area
-        x       % centroid
-        y
+        xc       % centroid
+        yc
         
         minx        % the bounding box
         maxx
@@ -25,7 +25,7 @@ classdef Blob < handle
         shape       % b/a  < 1.0
         circularity
 
-        m     % moments, a struct of: m00, m01, m10, m02, m20, m11
+        moments     % moments, a struct of: m00, m01, m10, m02, m20, m11
     end
 
     methods
@@ -59,14 +59,14 @@ classdef Blob < handle
                     s = '[]';
                 elseif isempty(bi.label)
                     s = sprintf('area=%d, cent=(%.1f,%.1f), theta=%.2f, a/b=%.3f', ...
-                        bi.area, bi.x, bi.y, bi.theta, bi.shape);
+                        bi.area, bi.xc, bi.yc, bi.theta, bi.shape);
                 elseif ~isempty(bi.edge)
                     s = sprintf('[%d] area=%d, cent=(%.1f,%.1f), theta=%.2f, a/b=%.3f, color=%d, touch=%d, parent=%d, perim=%d, circ=%.3f', ... 
-                        bi.label, bi.area, bi.x, bi.y, bi.theta, bi.shape, bi.color, bi.touch, ...
+                        bi.label, bi.area, bi.xc, bi.yc, bi.theta, bi.shape, bi.color, bi.touch, ...
                         bi.parent, bi.perimeter, bi.circularity);
                 else
-                    s = sprintf('[%d] area=%d, cent=(%.1f,%.1f), theta=%.2f, a/b=%.3f, color=%d, touch=%d, parent=%d, perim=%d, circ=%.3f', ... 
-                        bi.label, bi.area, bi.x, bi.y, bi.theta, bi.shape, bi.color, bi.touch, bi.parent);
+                    s = sprintf('[%d] area=%d, cent=(%.1f,%.1f), theta=%.2f, a/b=%.3f, color=%d, touch=%d, parent=%d', ... 
+                        bi.label, bi.area, bi.xc, bi.yc, bi.theta, bi.shape, bi.color, bi.touch, bi.parent);
                 end
                 ss = strvcat(ss, s);
             end
@@ -85,20 +85,20 @@ classdef Blob < handle
 
         function plot_centroid(bb, varargin)
             for b=bb
-                markfeatures([b.x b.y], 0, varargin{:});
+                markfeatures([b.xc b.yc], 0, varargin{:});
             end
         end
 
         function plot_box(bb, varargin)
             for b=bb
-                box(b.minx, b.miny, b.maxx, b.maxy, varargin{:});
+                plot_box(b.minx, b.miny, b.maxx, b.maxy, varargin{:});
             end
         end
 
         function plot_ellipse(bb, varargin)
             for b=bb
-                I = [b.m.u20 b.m.u11; b.m.u11 b.m.u02];
-                plot_ellipse([b.x, b.y], sqrtm(I), varargin{:});
+                I = [b.moments.u20 b.moments.u11; b.moments.u11 b.moments.u02];
+                plot_ellipse([b.xc, b.yc], sqrtm(I), varargin{:});
             end
         end
 

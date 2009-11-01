@@ -98,22 +98,22 @@ function F = imoments(a1, a2, a3)
     F = Blob;
 	F.area = m00;
 	if m00 > 0,
-		F.x = m10/m00;
-		F.y = m01/m00;
+		F.xc = m10/m00;
+		F.yc = m01/m00;
 	else
-		F.x = NaN;
-		F.y = NaN;
+		F.xc = NaN;
+		F.yc = NaN;
 	end
 	F.a = a;
 	F.b = b;
     F.shape = b/a;
 	F.theta = th;
-	F.m.m00 = m00;
-	F.m.m01 = m01;
-	F.m.m10 = m10;
-	F.m.m02 = m02;
-	F.m.m20 = m20;
-	F.m.m11 = m11;
-    F.m.u20 = u20;
-    F.m.u02 = u02;
-    F.m.u11 = u11;
+	F.moments.m00 = m00;
+	F.moments.m01 = m01;
+	F.moments.m10 = m10;
+	F.moments.m02 = m02;
+	F.moments.m20 = m20;
+	F.moments.m11 = m11;
+    F.moments.u20 = u20;
+    F.moments.u02 = u02;
+    F.moments.u11 = u11;
