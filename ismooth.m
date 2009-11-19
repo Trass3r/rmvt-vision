@@ -10,6 +10,8 @@
 %
 %	The resulting image is the same size as the input image.
 %
+% COMMENT ON INT/FLOAT
+%
 % SEE ALSO:	kgauss
 
 % Copyright (C) 1995-2009, by Peter I. Corke
@@ -33,8 +35,22 @@
 
 function ims = ismooth(im, sigma, varargin)
 
+    if isfloat(im)
+        is_int = false;
+    else
+        is_int = true;
+        im = idouble(im);
+    end
+
 	m = kgauss(sigma, varargin{:});
 
 	for i=1:size(im,3),
 		ims(:,:,i) = conv2(im(:,:,i), m, 'same');
 	end
+
+    if is_int
+        ims = iint(is_int);
+     end
+    if ~isfloat(im)
+        ims = round(ims);
+    end
