@@ -98,8 +98,9 @@ mexFunction(int nlhs, mxArray * plhs[], int nrhs, const mxArray * prhs[])
 		if (!mxIsNumeric(HISTBINS_IN))
 			mexErrMsgTxt("histbins arg must be numeric");
 		histbins = (int) * mxGetPr(HISTBINS_IN);
+		/* fall through */
+    case 3:
         break;
-
     default:
 		mexErrMsgTxt("IRANK requires three input arguments.");
 	}
@@ -162,7 +163,7 @@ mexFunction(int nlhs, mxArray * plhs[], int nrhs, const mxArray * prhs[])
     }
 
 	/* Do the actual computations in a subroutine */
-	r = irank(IM_IN, SE_IN, ORDER_IN, histbins);
+	r = irank(im, SE_IN, ORDER_IN, histbins);
 	if (nlhs == 1)
 		plhs[0] = r;
 
@@ -222,12 +223,23 @@ irank(const mxArray * msrc, const mxArray * mmask, const mxArray * morder, int h
 	mask_nrows = mxGetM(mmask);
 	mask_ncols = mxGetN(mmask);
 
-
-
 	/* process input variables */
 	src = mxGetPr(msrc);
 	mask = mxGetPr(mmask);
-	iorder = (int) * mxGetPr(morder);
+	iorder = (int) mxGetScalar(morder);
+
+    if (mxGetNumberOfElements(mmask) == 1) {
+        // mask is a scalar, make it an NxN matrix of ones
+        int h = mxGetScalar(mmask);
+        int i;
+        int w;
+
+        w = 2*h+1;      // half-width was passed in
+        mask = mxCalloc(w*w, sizeof(double));
+        for (i=0; i<(w*w); i++)
+            mask[i] = 1;
+        mask_nrows = mask_ncols = w;
+    }
 
 	/*
 	 * find span of pixel values in the image
@@ -247,7 +259,8 @@ irank(const mxArray * msrc, const mxArray * mmask, const mxArray * morder, int h
 	offset = min;
 	if ( (max - min) == 0)
 			mexErrMsgTxt("Image has no variance");
-	scale = histbins / (max - min);
+	scale = (histbins-1) / (max - min);
+    printf(" %d bins, scale=%f, off=%f\n", histbins, scale, offset);
 
 	/*
 	 * determine number of non-zero mask elements
@@ -263,7 +276,7 @@ irank(const mxArray * msrc, const mxArray * mmask, const mxArray * morder, int h
 	printf("%d non-zero mask elements\n", count);
 	if ( (iorder < 1) || (iorder > count) )
 			mexErrMsgTxt("Order must be between 1 and number of elements in mask");
-	iorder = count + 1 - iorder;
+	iorder = count - iorder;
 
 	/*
 	 * Determine what dimensions the destination image should have: o if
@@ -283,7 +296,7 @@ irank(const mxArray * msrc, const mxArray * mmask, const mxArray * morder, int h
 	mdest = mxCreateDoubleMatrix(dest_nrows, dest_ncols, mxREAL);
 	dest = mxGetPr(mdest);
 
-	if ((hist = mxCalloc(histbins+1, sizeof(unsigned int))) == NULL)
+	if ((hist = mxCalloc(histbins, sizeof(unsigned int))) == NULL)
 		mexErrMsgTxt("irank: calloc() failed");
 
 	/*
@@ -297,36 +310,46 @@ irank(const mxArray * msrc, const mxArray * mmask, const mxArray * morder, int h
 		col_offset = -(mask_ncols / 2);
 	}
 
+    // index over the input image
 	for (dest_row = 0; dest_row < dest_nrows; dest_row++)
 		for (dest_col = 0; dest_col < dest_ncols; dest_col++) {
 			/* zero the histogram */
 			for (i=0, ph=hist; i<histbins; i++)
 				*ph++ = 0;
 
+            // index over the mask matrix
 			for (j = 0; j < mask_nrows; j++) {
 				src_row = dest_row + j + row_offset;
-				ClampIndex(src_row, src_nrows, label);
+				ClampIndex(src_row, src_nrows, END);
 				for (k = 0; k < mask_ncols; k++) {
 					double	p;
 					src_col = dest_col + k + col_offset;
-					ClampIndex(src_col, src_ncols, label);
+					ClampIndex(src_col, src_ncols, END);
 					if (MPixel(j, k) > 0) {
 						int	t;
 
+                        // get the pixel
 						p = SPixel(src_row, src_col);
-						/* convert value to bin index */
-						t = (int) (p-offset)*scale;
+
+                        // update the histogram of values
+						t = (int) ((p-offset)*scale);
 						hist[t]++;
 					}
 				}
 			}
-	label:		;
+	END:		;
+            // compute cumulative sum of histogram, break when the
+            // sum exceeds the specified rank
 			for (ph=hist, cumsum=0; cumsum<iorder; ph++)
 				cumsum += *ph;
 			/* convert bin index to value */
 			DPixel(dest_row, dest_col) = (double)(ph - hist) / scale + offset;
 		}
 
+    if (mxGetNumberOfElements(mmask) == 1) {
+        // mask is a scalar, free the allocated storage
+        mxFree(mask);
+    }
 
 	return mdest;
 }
