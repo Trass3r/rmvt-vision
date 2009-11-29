@@ -43,11 +43,17 @@ function I = iread(filename, varargin)
     %   'uint8
     %   'grey'
     %   'gray'
+    %   'grey_601'
+    %   'grey_709'
+    %   'grey_value'
+    %   'gray_601'
+    %   'gray_709'
+    %   'gray_value'
     %   'reduce', n
 
     opt.imageType = [];
-    opt.scaleFactor = 1;
-    opt.makeGrey = false;
+    opt.decimationFactor = 1;
+    opt.makeGrey = [];
     opt.debug = true;
     opt.gamma = [];
 
@@ -62,11 +68,17 @@ function I = iread(filename, varargin)
         case 'uint8',
             opt.imageType = 'uint8';
         case {'grey','gray', 'mono'},
-            opt.makeGrey = true;
+            opt.makeGrey = 'r601';
+        case {'grey_601','gray_601'},
+            opt.makeGrey = '601';
+        case {'grey_709','gray_709'},
+            opt.makeGrey = 'r709';
+        case {'grey_value','gray_value'},
+            opt.makeGrey = 'value';
         case 'gamma'
             opt.gamma = options{k+1}; k = k+1;
         case 'reduce',
-            opt.scaleFactor = options{k+1}; k = k+1;
+            opt.decimationFactor = options{k+1}; k = k+1;
         otherwise,
             error( sprintf('unknown option: %s', options{k}) );
         end
@@ -111,21 +123,22 @@ function I = iread(filename, varargin)
             if opt.debug,
                 fprintf('wildcard lookup\n');
             end
-            s = dir(filename);		% do a wildcard lookup
+            
+            [pth,name,ext] = fileparts(filename);
+            for p=path2cell(userpath)'
+                if exist( fullfile(p{1}, pth) ) == 7
+                    break;
+                end
+            end
+            s = dir( fullfile(p{1}, filename));		% do a wildcard lookup
 
             if length(s) == 0,
                 error('no matching files found');
             end
 
-            slashes = findstr(filename, '/');
-            if isempty(slashes),
-                fpath = './';
-            else
-                k = slashes(end);
-                fpath = filename(1:k);
-            end
+            fpath = fileparts( fullfile(p{1}, filename) );
             for i=1:length(s),
-                im1 = loadimg([fpath s(i).name], opt);
+                im1 = loadimg( fullfile(fpath, s(i).name), opt);
                 if ndims(im1) == 2,
                     im(:,:,i) = im1;
                 elseif ndims(im1) == 3,
@@ -161,23 +174,31 @@ function im = loadimg(name, opt)
     if opt.debug,
         fprintf('loading %s\n', name);
     end
+
+    % now we read the image
     im = imread(name);
 
-    if opt.makeGrey & (ndims(im) == 3),
-        im = imono(im);
+    % optionally gamma correct it
+    if ~isempty(opt.gamma)
+        im = igamma(im, opt.gamma);
     end
-    if opt.scaleFactor > 1,
-        im = im(1:scaleFactor:end, 1:scaleFactor:end, :);
+
+    % optionally convert it to greyscale using specified method
+    if ~isempty(opt.makeGrey) & (ndims(im) == 3),
+        im = imono(im, opt.makeGrey);
     end
+
+    % optionally decimate it
+    if opt.decimationFactor > 1,
+        im = im(1:decimationFactor:end, 1:decimationFactor:end, :);
+    end
+
+    % optionally convert to specified numeric type
     if ~isempty(opt.imageType)
         if isempty(findstr(opt.imageType, 'int'))
             im = cast(im, opt.imageType) /255.0;
         else
             im = cast(im, opt.imageType);
         end
-    end
-
-    if ~isempty(opt.gamma)
-        im = igamma(im, opt.gamma);
     end
 end
