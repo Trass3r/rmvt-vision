@@ -113,7 +113,7 @@ function [x,y] = cmfxyz(lambda, spect)
 	780	0.0000	0.0000	0.0000
 	1e9	0	0	0];
 
-	xyz = interp1(ciedat(:,1)*1e-9, ciedat(:,2:4), lambda, 'spline', 0);
+	xyz = interp1(ciedat(:,1)*1e-9, ciedat(:,2:4), lambda, 'pchip', 0);
 	if nargin == 2,
 		xyz = spect(:)' * xyz;
 	end
