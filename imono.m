@@ -22,8 +22,35 @@
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 function im = imono(rgb, opt)
 
-    % rec 601 luma
-	im = 0.299*rgb(:,:,1) + 0.587*rgb(:,:,2) + 0.114*rgb(:,:,3);
+    if size(rgb,3) == 1
+        % image is already monochrome
+        im = rgb;
+        return;
+    end
 
-    % rec 709 luma
-	%im = 0.2126*rgb(:,:,1) + 0.7152*rgb(:,:,2) + 0.0722*rgb(:,:,3);
+    if nargin < 2
+        opt = 'r601';
+    end
+
+    switch (lower(opt))
+    case 'r601'
+        % rec 601 luma
+        im = 0.299*rgb(:,:,1) + 0.587*rgb(:,:,2) + 0.114*rgb(:,:,3);
+
+    case 'r709'
+        % rec 709 luma
+        im = 0.2126*rgb(:,:,1) + 0.7152*rgb(:,:,2) + 0.0722*rgb(:,:,3);
+    case 'value'
+        % 'value', the V in HSV, not CIE L*
+        % the mean of the max and min of RGB values at each pixel
+        mx = max(rgb, [], 3);
+        mn = min(rgb, [], 3);
+        if isfloat(rgb)
+            im = 0.5*(mx+mn);
+        else
+            im = (int32(mx) + int32(mn))/2;
+            im = uint8(mx);
+        end
+    otherwise
+        error('unknown option');
+    end
