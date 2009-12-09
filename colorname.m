@@ -8,7 +8,11 @@
 % vector.
 %
 % Based on the standard X11 color database rgb.txt
-function r = colorname(a)
+function r = colorname(a, opt)
+
+    if nargin < 2
+        opt = '';
+    end
 
     persistent  rgbtable;
     
@@ -20,6 +24,8 @@ function r = colorname(a)
         k = 0;
         rgb = [];
         names = {};
+        xy = [];
+
         while ~feof(f),       
             line = fgets(f);
             if line(1) == '#',
@@ -29,35 +35,41 @@ function r = colorname(a)
             [A,count,errm,next] = sscanf(line, '%d %d %d');
             if count == 3,
                 k = k + 1;
-                rgb(k,:) = A';
+                rgb(k,:) = A' / 255.0;
                 names{k} = lower( strtrim(line(next:end)) );
+                xy = xyz2xy( colorspace('RGB->XYZ', rgb) );
             end
         end
         s.rgb = rgb;
         s.names = names;
+        s.xy = xy;
         rgbtable = s;
     end
     
-    if isstr(a),
+    if isstr(a)
         % map name to rgb
         if a(1)  == '?' 
             % just do a wildcard lookup
             r = namelookup(rgbtable, a(2:end));
         else
-            r = name2rgb(rgbtable, a) /255;
+            r = name2rgb(rgbtable, a, opt);
         end
-    elseif iscell(a),
+    elseif iscell(a)
         % map multiple names to rgb
         for name=a,
-            r = [r; nam2rgb(rgbtable, a)/255];
+            r = [r; name2rgb(rgbtable, a, opt)];
         end
     else
-        if numel(a) == 3,
-            r = rgb2name(rgbtable, 255*a(:)');
-        else
-            if numcols(a) ~= 3,
-                error('must have 3 columns (RGB)');
+        if numel(a) == 3
+            r = rgb2name(rgbtable, a(:)');
+        elseif numcols(a) == 2 && strcmp(opt, 'xy')
+            % convert xy to a name
+            r = {};
+            for k=1:numrows(a),
+                r{k} = xy2name(rgbtable, a(k,:));
             end
+        elseif numcols(a) == 3 && ~strcmp(opt, 'xy')
+            % convert RGB data to a name
             r = {};
             for k=1:numrows(a),
                 r{k} = rgb2name(rgbtable, a(k,:));
@@ -66,35 +78,48 @@ function r = colorname(a)
     end
 end
     
-    function r = namelookup(table, s)
-        s = lower(s);   % all matching done in lower case
-        
-        r = {};
-        count = 1;
-        for k=1:length(table.names),
-            if ~isempty( findstr(table.names{k}, s) )
-                r{count} = table.names{k};
-                count = count + 1;
-            end
+function r = namelookup(table, s)
+    s = lower(s);   % all matching done in lower case
+    
+    r = {};
+    count = 1;
+    for k=1:length(table.names),
+        if ~isempty( findstr(table.names{k}, s) )
+            r{count} = table.names{k};
+            count = count + 1;
         end
     end
+end
+
+function r = name2rgb(table, s, opt)
+    s = lower(s);   % all matching done in lower case
     
-    function r = name2rgb(table, s)
-        s = lower(s);   % all matching done in lower case
-        
-        for k=1:length(table.names),
-            if strcmp(s, table.names(k)),
-                r = table.rgb(k,:);
-                return;
+    for k=1:length(table.names),
+        if strcmp(s, table.names(k)),
+            r = table.rgb(k,:);
+            if strcmp(opt, 'xy')
+                r
+                XYZ = colorspace('RGB->XYZ', r);
+                XYZ
+                r = xyz2xy(XYZ);
+                r
             end
+            return;
         end
-        r = [];
     end
-    
-    
-    function r = rgb2name(table, v)
-        d = table.rgb - ones(numrows(table.rgb),1) * v;
-        n = colnorm(d');
-        [z,k] = min(n);
-        r = table.names{k};
-    end
+    r = [];
+end
+
+function r = rgb2name(table, v)
+    d = table.rgb - ones(numrows(table.rgb),1) * v;
+    n = colnorm(d');
+    [z,k] = min(n);
+    r = table.names{k};
+end
+
+function r = xy2name(table, v)
+    d = table.xy - ones(numrows(table.xy),1) * v;
+    n = colnorm(d');
+    [z,k] = min(n);
+    r = table.names{k};
+end
