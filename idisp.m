@@ -41,33 +41,33 @@
 % 
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
-function idisp(z, varargin)
+function idisp(im, varargin)
 
-    % standard options parser goes in here
-    % flatten    z = reshape( z, size(z,1), size(z,2)*size(z,3) )
-    % expand, normhist it
-    % clip?  why?
-
-	if (nargin > 0) & ~isstr(z),
+	if (nargin > 0) & ~isstr(im),
         ncmap = 256;
         argc = 1;
-        opt_gui = true;
-        opt_axes = true;
-        opt_square = false;
+        opt.gui = true;
+        opt.axes = true;
+        opt.square = false;
+        opt.colormap = 'grey';
         while argc <= length(varargin)
             switch lower(varargin{argc})
             case 'colors'
                 ncmap = varargin{argc+1}; argc = argc+1;
             case 'nogui'
-                opt_gui = false;
+                opt.gui = false;
             case 'noaxes'
-                opt_axes = false;
+                opt.axes = false;
             case 'square'
-                opt_square = true;
+                opt.square = true;
             case 'flatten'
-                z = reshape( z, size(z,1), size(z,2)*size(z,3) );
+                im = reshape( im, size(im,1), size(im,2)*size(im,3) );
+            case 'invert'
+                % invert the monochrome color map: black <-> white
+                opt.colormap = 'invert';
             case 'signed'
-                % add this
+                % signed color map, red is negative, blue is positive
+                opt.colormap = 'signed';
             otherwise
                 error( sprintf('unknown option <%s>', varargin{argc}));
             end
@@ -76,49 +76,85 @@ function idisp(z, varargin)
 
 		% command line invocation, display the image
 
+        % display the image
 		clf
-		colormap(gray(ncmap))
-		n = ncmap;
-		hi = image(z);
-        if opt_axes
+		hi = image(im);
+        switch opt.colormap
+        case 'grey'
+            colormap(gray(ncmap));
+        case 'invert'
+            cmap = gray(ncmap);
+            colormap( cmap(end:-1:1,:) );
+        case 'signed'
+            cmap = zeros(ncmap, 3);
+            ncmap = bitor(ncmap, 1);    % ensure it's odd
+            ncm2 = ceil(ncmap/2);
+            for i=1:ncmap
+                if i > ncm2
+                    cmap(i,:) = [0 0 1] * (i-ncm2) / ncm2;
+                else
+                    cmap(i,:) = [1 0 0] * (ncm2-i) / ncm2;
+                end
+            end
+            mn = min(im(:));
+            mx = max(im(:));
+            set(gca, 'CLimMode', 'Manual');
+            if mn < 0 && mx > 0
+                a = max(-mn, mx);
+                set(gca, 'CLim', [-a a]);
+            elseif mn > 0
+                set(gca, 'CLim', [-mx mx]);
+            elseif mx < 0
+                set(gca, 'CLim', [-mn mn]);
+            end
+            colormap(cmap);
+        end
+
+        if opt.axes
             xlabel('u (pixels)');
             ylabel('v (pixels)');
         else
             set(gca, 'Xtick', [], 'Ytick', []);
         end
-        if opt_square
+        if opt.square
             set(gca, 'DataAspectRatio', [1 1 1]);
         end
         figure(gcf);    % bring to top
-        %set(gcf,'ShareColors','off');
         set(hi, 'CDataMapping', 'scaled');
                 
-        if opt_gui
+        if opt.gui
             htf = uicontrol(gcf, ...
                     'style', 'text', ...
                     'units',  'norm', ...
                     'pos', [.5 .93 .5 .07], ...
+                    'HorizontalAlignment', 'left', ...
                     'string', '' ...
                 );
             ud = [gca htf hi axis];
             set(gca, 'UserData', ud);
             set(hi, 'UserData', ud);
 
-            hpb=uicontrol(gcf,'style','push','string','line', ...
+            % create pushbuttons
+            uicontrol(gcf,'style','push', ...
+                'string','line', ...
                 'units','norm','pos',[0 .93 .1 .07], ...
                 'userdata', ud, ...
                 'callback', 'idisp(''line'')');
-            hhist=uicontrol(gcf,'style','push','string','histo', ...
+            uicontrol(gcf,'style','push', ...
+                'string','histo', ...
                 'units','norm','pos',[0.1 .93 .1 .07], ...
                 'userdata', ud, ...
                 'callback', 'idisp(''histo'')');
-            hzm=uicontrol(gcf,'style','push','string','zoom', ...
+            uicontrol(gcf,'style','push', ...
+                'string','zoom', ...
                 'units','norm','pos',[.2 .93 .1 .07], ...
                 'userdata', ud, ...
                 'callback', 'idisp(''zoom'')');
-            huz=uicontrol(gcf,'style','push','string','unzoom', ...
+            uicontrol(gcf,'style','push', ...
+                'string','unzoom', ...
                 'units','norm','pos',[.3 .93 .15 .07], ...
                 'userdata', ud, ...
+                'DeleteFcn', 'idisp(''cleanup'')', ...
                 'callback', 'idisp(''unzoom'')');
 
             set(hi, 'UserData', ud);
@@ -144,7 +180,12 @@ function idisp(z, varargin)
 		set(tf, 'String', ['(' num2str(x) ', ' num2str(y) ') = ' num2str(imdata(y,x,:), 4)]);
 		drawnow
 	elseif nargin == 1,
-		switch z,
+		switch im,
+        case 'cleanup'
+            fprintf('cleaning up handlers\n');
+            set(gcf, 'WindowButtonDownFcn', '');
+            set(gcf, 'WindowButtonUpFcn', '');
+
 		case 'down',
 			% install pixel value inspector
 			set(gcf, 'WindowButtonMotionFcn', 'idisp');
@@ -159,10 +200,10 @@ function idisp(z, varargin)
 			ax = ud(1);	% axes
 			tf = ud(2);	% string field
 			hi = ud(3);	% the image
-			set(tf, 'String', 'First point');
+			set(tf, 'String', 'Click first point');
 			[x1,y1] = ginput(1);
 			x1 = round(x1); y1 = round(y1);
-			set(tf, 'String', 'Last point');
+			set(tf, 'String', 'Click last point');
 			[x2,y2] = ginput(1);
 			x2 = round(x2); y2 = round(y2);
 			set(tf, 'String', '');
