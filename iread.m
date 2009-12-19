@@ -34,7 +34,7 @@
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
 
-function I = iread(filename, varargin)
+function [I,info] = iread(filename, varargin)
 	persistent path
 
     % options
@@ -100,7 +100,8 @@ function I = iread(filename, varargin)
         else
             % save the path away for next time
             path = npath;
-            im = loadimg([path '/' file], opt);
+            filename = fullfile(path, file);
+            im = loadimg(filename, opt);
         end
     elseif (nargin == 1) & exist(filename,'dir'),
 		% invoke file browser GUI
@@ -114,7 +115,8 @@ function I = iread(filename, varargin)
         else
             % save the path away for next time
             path = npath;
-            im = loadimg([path pathsep file], opt);
+            filename = fullfile(path, file);
+            im = loadimg(filename, opt);
         end
     else
         % some kind of filespec has been given
@@ -151,9 +153,9 @@ function I = iread(filename, varargin)
                 im = loadimg(filename, opt);
             else
                 % see if it exists on the Matlab search path
-                f = which(filename);
-                if length(f) > 0
-                    im = loadimg(f, opt);
+                filename = which(filename);
+                if length(filename) > 0
+                    im = loadimg(filename, opt);
                 else
                     error('no such file');
                 end
@@ -161,10 +163,14 @@ function I = iread(filename, varargin)
         end
     end
 
-    if nargout > 0,
+    if nargout > 0
         I = im;
+        if nargout > 1
+            info = imfinfo(filename);
+        end
     else
-        if ndims(I) <= 3,
+        % if no output arguments display the image
+        if ndims(I) <= 3
             idisp(I);
         end
     end
