@@ -79,11 +79,11 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
  		/* EDGE handling flags */
 		if (strcmp(s, "replicate") == 0)
 			pad_method = PadBorder;
-		else if (strcmp(s, "same") == 0)
+		else if (strcmp(s, "none") == 0)
 			pad_method = PadNone;
-		else if (strcmp(s, "valid") == 0)
+		else if (strcmp(s, "wrap") == 0)
 			pad_method = PadWrap;
-		else if (strcmp(s, "trim") == 0)
+		else if (strcmp(s, "valid") == 0)
 			pad_method = PadTrim;
 		/* fall through */
 	case 3:
