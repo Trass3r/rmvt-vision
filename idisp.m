@@ -50,6 +50,7 @@ function idisp(im, varargin)
         opt.axes = true;
         opt.square = false;
         opt.colormap = 'grey';
+        opt.print = [];
         while argc <= length(varargin)
             switch lower(varargin{argc})
             case 'colors'
@@ -60,14 +61,14 @@ function idisp(im, varargin)
                 opt.axes = false;
             case 'square'
                 opt.square = true;
+            case 'print'
+                opt.print = varargin{argc+1}; argc = argc+1;
+                opt.gui = false;
             case 'flatten'
                 im = reshape( im, size(im,1), size(im,2)*size(im,3) );
-            case 'invert'
-                % invert the monochrome color map: black <-> white
-                opt.colormap = 'invert';
-            case 'signed'
-                % signed color map, red is negative, blue is positive
-                opt.colormap = 'signed';
+            case {'invert', 'signed', 'invsigned'}
+                % colormap options
+                opt.colormap = lower(varargin{argc});
             otherwise
                 error( sprintf('unknown option <%s>', varargin{argc}));
             end
@@ -83,17 +84,34 @@ function idisp(im, varargin)
         case 'grey'
             colormap(gray(ncmap));
         case 'invert'
+                % invert the monochrome color map: black <-> white
             cmap = gray(ncmap);
             colormap( cmap(end:-1:1,:) );
-        case 'signed'
+        case {'signed', 'invsigned'}
+                % signed color map, red is negative, blue is positive, zero is black
+                % inverse signed color map, red is negative, blue is positive, zero is white
             cmap = zeros(ncmap, 3);
             ncmap = bitor(ncmap, 1);    % ensure it's odd
             ncm2 = ceil(ncmap/2);
-            for i=1:ncmap
-                if i > ncm2
-                    cmap(i,:) = [0 0 1] * (i-ncm2) / ncm2;
-                else
-                    cmap(i,:) = [1 0 0] * (ncm2-i) / ncm2;
+            if strcmp(opt.colormap, 'signed')
+                % signed color map, red is negative, blue is positive, zero is black
+                for i=1:ncmap
+                    if i > ncm2
+                        cmap(i,:) = [0 0 1] * (i-ncm2) / ncm2;
+                    else
+                        cmap(i,:) = [1 0 0] * (ncm2-i) / ncm2;
+                    end
+                end
+            else
+                % inverse signed color map, red is negative, blue is positive, zero is white
+                for i=1:ncmap
+                    if i > ncm2
+                        s = (i-ncm2)/ncm2;
+                        cmap(i,:) = [1-s 1-s 1];
+                    else
+                        s = (ncm2-i)/ncm2;
+                        cmap(i,:) = [1 1-s 1-s];
+                    end
                 end
             end
             mn = min(im(:));
@@ -122,6 +140,10 @@ function idisp(im, varargin)
         figure(gcf);    % bring to top
         set(hi, 'CDataMapping', 'scaled');
                 
+        if opt.print
+            print(opt.print, '-depsc');
+            return
+        end
         if opt.gui
             htf = uicontrol(gcf, ...
                     'style', 'text', ...
@@ -137,25 +159,39 @@ function idisp(im, varargin)
             % create pushbuttons
             uicontrol(gcf,'style','push', ...
                 'string','line', ...
+                'foregroundcolor', [0 0 1], ...
                 'units','norm','pos',[0 .93 .1 .07], ...
                 'userdata', ud, ...
                 'callback', 'idisp(''line'')');
             uicontrol(gcf,'style','push', ...
                 'string','histo', ...
+                'foregroundcolor', [0 0 1], ...
                 'units','norm','pos',[0.1 .93 .1 .07], ...
                 'userdata', ud, ...
                 'callback', 'idisp(''histo'')');
             uicontrol(gcf,'style','push', ...
                 'string','zoom', ...
+                'foregroundcolor', [0 0 1], ...
                 'units','norm','pos',[.2 .93 .1 .07], ...
                 'userdata', ud, ...
                 'callback', 'idisp(''zoom'')');
             uicontrol(gcf,'style','push', ...
                 'string','unzoom', ...
+                'foregroundcolor', [0 0 1], ...
                 'units','norm','pos',[.3 .93 .15 .07], ...
                 'userdata', ud, ...
                 'DeleteFcn', 'idisp(''cleanup'')', ...
                 'callback', 'idisp(''unzoom'')');
+            set(gcf, 'Color', [0.8 0.8 0.9]);
+            htf = uicontrol(gcf, ...
+                    'style', 'text', ...
+                    'units',  'norm', ...
+                    'pos', [.6 0 .4 .04], ...
+                    'ForegroundColor', [0 0 1], ...
+                    'BackgroundColor', get(gcf, 'Color'), ...
+                    'HorizontalAlignment', 'right', ...
+                    'string', 'Machine Vision Toolbox for Matlab  ' ...
+                );
 
             set(hi, 'UserData', ud);
             set(gcf, 'WindowButtonDownFcn', 'idisp(''down'')');
@@ -182,7 +218,7 @@ function idisp(im, varargin)
 	elseif nargin == 1,
 		switch im,
         case 'cleanup'
-            fprintf('cleaning up handlers\n');
+            %fprintf('cleaning up handlers\n');
             set(gcf, 'WindowButtonDownFcn', '');
             set(gcf, 'WindowButtonUpFcn', '');
 
