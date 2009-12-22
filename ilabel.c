@@ -2,10 +2,10 @@
  *
  * Fast image labelling funciton.
  *
- *	L = ILABEL(IM [,OPT])
- *	[L,LMAX] = ILABEL(IM)
- *	[L,LMAX,PARENTS] = ILABEL(IM)
- *	[L,LMAX,PARENTS,COLOR] = ILABEL(IM)
+ *  L = ILABEL(IM [,OPT])
+ *  [L,LMAX] = ILABEL(IM)
+ *  [L,LMAX,PARENTS] = ILABEL(IM)
+ *  [L,LMAX,PARENTS,COLOR] = ILABEL(IM)
  *
  * Copyright (C) 1995-2009, by Peter I. Corke
  *
@@ -36,7 +36,7 @@
 #include <math.h>
 
 /*
-#define	DEBUG   1
+#define DEBUG   1
 */
 
 /*
@@ -46,67 +46,87 @@
  * enclosures seem to happen too often
  */
 
-#define	THRESH  0
+#define THRESH  0
 
 /* Input Arguments */
 
-#define	IM_IN		prhs[0]
-#define	OPT_IN		prhs[1]
+#define IM_IN       prhs[0]
+#define OPT_IN      prhs[1]
 
 /* Output Arguments */
 
-#define	IM_OUT	plhs[0]
-#define	MAX_OUT	plhs[1]
-#define	PARENT_OUT	plhs[2]
-#define	COLOR_OUT	plhs[3]
-#define	EDGE_OUT	plhs[4]
+#define IM_OUT  plhs[0]
+#define MAX_OUT plhs[1]
+#define PARENT_OUT  plhs[2]
+#define COLOR_OUT   plhs[3]
+#define EDGE_OUT    plhs[4]
 
-#define	MAXLABEL	40000
-#define	UNKNOWN		0
+#define MAXLABEL    10000
+#define UNKNOWN     0
 
-typedef unsigned short LABEL;
+#define TERMINAL    0x8000000
+
+typedef unsigned int LABEL;
 typedef int  PIXEL;
 
-#define	PIX(v,r,c)	v[(r)+(c)*nrows]
+#define PIX(v,r,c)      v[(r)*height+(c)]
+#define PIX_N(v,r,c)    v[(r-1)*height+(c)]
+#define PIX_NW(v,r,c)   v[(r-1)*height+(c-1)]
+#define PIX_W(v,r,c)    v[(r)*height+(c-1)]
+
 LABEL lresolve(LABEL label);
 
-static LABEL	*lmap;
-int		connectivityWays;
+static LABEL    *lmap;
 
-/*
- * actual labelling code:
+#define NEWLABEL    (++newlabel)
+
+/**
+ * Image labeling algorithm.
  *
- *	im	double prec. input image (input)
- *	dlim	double prec. label image (output)
+ *  @param im  pointer to input image of type PIXEL
+ *  @param width  width input image in pixels
+ *  @param height  height input image in pixels
+ *  @param limage pointer to label image, of same size as \p im (output)
+ *  @param parent_out pointer to pointer for return of an array of region parents.  Can be NULL. (output)
+ *  @param color_out pointer to pointer for return of an array of region color. Can be NULL. (output)
+ *  @param edge_out pointer to pointer for return of an array of region edge points.  Can be NULL. (output)
+ *  @return the number of regions found
  */
 static int 
-ilabel(PIXEL *im, int nrows, int ncols, LABEL *lim, LABEL **Parents, PIXEL **Color, unsigned int **Edge)
+ilabel(PIXEL *im, int width, int height, int connectivity, int minsize,
+    LABEL *limage,
+    LABEL **parent_out, PIXEL **color_out, unsigned int **edge_out)
 {
     int     *blobsize, row, col, i, j, k, nlabels;
-	int	newlabel;
-	LABEL	*lmap2;
-	LABEL	prevlab, curlab;
-	LABEL	*parents;
+    int newlabel;
+    LABEL   *lmap2;
+    LABEL   prevlab, curlab;
+    LABEL   *parents;
     PIXEL   curpix, prevpix;
-	PIXEL	*color;
+    PIXEL   *color;
     unsigned int    *edge;
+    int     maxlabel = MAXLABEL;
 
-	/* allocate label map and initialize to zero */
-	lmap = (LABEL *)mxCalloc(MAXLABEL, sizeof(LABEL));
-	lmap2 = (LABEL *)mxCalloc(MAXLABEL, sizeof(LABEL));
+    /* allocate label map and initialize to zero */
+    lmap = (LABEL *)mxCalloc(maxlabel, sizeof(LABEL));
+    lmap2 = (LABEL *)mxCalloc(maxlabel, sizeof(LABEL));
 
-	parents = (LABEL *)mxCalloc(MAXLABEL, sizeof(LABEL));
-	color = (PIXEL *)mxCalloc(MAXLABEL, sizeof(PIXEL));
-	edge = (unsigned int *)mxCalloc(MAXLABEL, sizeof(int));
+    if (parent_p)
+        parents = (LABEL *)mxCalloc(maxlabel, sizeof(LABEL));
+    if (color_p)
+        color = (PIXEL *)mxCalloc(maxlabel, sizeof(PIXEL));
+    if (edge_p)
+        edge = (unsigned int *)mxCalloc(maxlabel, sizeof(int));
 
-	/* region size */
-	blobsize = (int *)mxCalloc(MAXLABEL, sizeof(int));
+    /* region size */
+    blobsize = (int *)mxCalloc(maxlabel, sizeof(int));
 
     /*
-     * Blob labels are ints > 0
+     * Blob labels are ints >= 1
      * newlabel holds the most recently assigned label value.
      * labels are unique and never recycled.
-     * when 2 blobs merge: A = A + B an entry is placed in the label map
+     *
+     * When 2 blobs merge: A = A + B an entry is placed in the label map
      *     lmap[B] = A indicating that all pixels that were B are now A.
      * If lmap[X] = 0 then X is unmerged, X is X
      * It is possible that a later merge: C = C + A
@@ -120,223 +140,238 @@ ilabel(PIXEL *im, int nrows, int ncols, LABEL *lim, LABEL **Parents, PIXEL **Col
      *      lresolve(C) --> C
      */
 
-	/*
-	 * first pass labelling loop.  Only does 4-way connectivity
-	 */
-	newlabel = 0;
-	for (row=0; row<nrows; row++) {
-		prevlab = UNKNOWN;
-		for (col=0; col<ncols; col++) {
-			curpix = PIX(im,row,col);
-			curlab = UNKNOWN;       // start with no known label
+    /*
+     * first pass labelling loop.  Only does 4-way connectivity
+     */
+    newlabel = 0;
+    for (row=0; row<height; row++) {
+        prevlab = UNKNOWN;
+        for (col=0; col<width; col++) {
+            curpix = PIX(im,row,col);
+            curlab = UNKNOWN;       // start with no known label
 
-			/* if no change in pixel value then inherit label from left */
-			if ((col > 0) && (curpix == prevpix))
-				curlab = prevlab;
-			
-			/*
-			 * check whether a label merge should happen, adjacent
-			 * pixels with the same value but different labels
-			 * means that one should change.
-			 *
-			 * merge can only happen on second row onwards 
-			 */
-			if (row > 0) {
-				if (	(PIX(im,row-1,col) == curpix) &&
-					(lresolve(PIX(lim,row-1,col)) != curlab)
-				) {
-					/* we have a label assignment from N */
-					int	newlabel;
-					
-					newlabel = lresolve(PIX(lim,row-1,col));
-					/*
-					newlabel = PIX(lim,row-1,col);
-					*/
+            /* if no change in pixel value then inherit label from left */
+            if ((col > 0) && (curpix == prevpix))
+                curlab = prevlab;
+            
+            /*
+             * check whether a label merge should happen, adjacent
+             * pixels with the same value but different labels
+             * means that one should change.
+             *
+             * merge can only happen on second row onwards 
+             */
+            if (row > 0) {
+                if (    (PIX(im,row-1,col) == curpix) &&
+                    (lresolve(PIX(lim,row-1,col)) != curlab)
+                ) {
+                    /* we have a label assignment from N */
+                    int newlabel;
+                    
+                    newlabel = lresolve(PIX(lim,row-1,col));
+                    /*
+                    newlabel = PIX(lim,row-1,col);
+                    */
 
-#ifdef	DEBUG
-					printf("mergeN(%d,%d): %d becomes %d %d %d\n",
-						row, col, curlab, newlabel, curpix, PIX(im,row-1,col));
+#ifdef  DEBUG
+                    printf("mergeN(%d,%d): %d becomes %d %d %d\n",
+                        row, col, curlab, newlabel, curpix, PIX(im,row-1,col));
 #endif
                     // newlabel dominates
-					if (curlab != UNKNOWN) {
-						lmap[curlab] = newlabel;
+                    if (curlab != UNKNOWN) {
+                        lmap[curlab] = newlabel;
                         blobsize[newlabel] += blobsize[curlab];
                         //if (edge[curlab] < edge[newlabel])
                             //edge[newlabel] = edge[curlab];
                         if (parents[curlab] == 0)
                             parents[newlabel] = 0;
                     }
-					curlab = newlabel;
+                    curlab = newlabel;
 
-				} else if (
-					connectivityWays == 8 &&
-					(col > 0) &&
-					(PIX(im,row-1,col-1) == curpix) &&
-					(lresolve(PIX(lim,row-1,col-1)) != curlab)
-				) {
+                } else if (
+                    connectivityWays == 8 &&
+                    (col > 0) &&
+                    (PIX(im,row-1,col-1) == curpix) &&
+                    (lresolve(PIX(lim,row-1,col-1)) != curlab)
+                ) {
                     //  TODO: factorize these two merge cases
 
-					/* we have a merge to NW */
-					int	newlabel;
-					
-					newlabel = lresolve(PIX(lim,row-1,col-1));
-					/*
-					newlabel = PIX(lim,row-1,col);
-					*/
+                    /* we have a merge to NW */
+                    int newlabel;
+                    
+                    newlabel = lresolve(PIX(lim,row-1,col-1));
+                    /*
+                    newlabel = PIX(lim,row-1,col);
+                    */
 
-#ifdef	DEBUG
-					printf("mergeNW(%d,%d): %d becomes %d\n",
-						row, col, curlab, newlabel);
+#ifdef  DEBUG
+                    printf("mergeNW(%d,%d): %d becomes %d\n",
+                        row, col, curlab, newlabel);
 #endif
-					if (curlab != UNKNOWN)
-						lmap[curlab] = newlabel;
+                    if (curlab != UNKNOWN)
+                        lmap[curlab] = newlabel;
                     if (parents[curlab] == 0)
                         parents[newlabel] = 0;
                     //if (edge[curlab] < edge[newlabel])
                         //edge[newlabel] = edge[curlab];
                     blobsize[newlabel] += blobsize[curlab];
-					curlab = newlabel;
+                    curlab = newlabel;
 
-				} else if (
-					connectivityWays == 8 &&
-					(col < (ncols-1)) &&
-					(PIX(im,row-1,col+1) == curpix) &&
-					(lresolve(PIX(lim,row-1,col+1)) != curlab)
-				) {
-					/* we have a merge to NE */
-					int	newlabel;
-					
-					newlabel = lresolve(PIX(lim,row-1,col+1));
-					/*
-					newlabel = PIX(lim,row-1,col);
-					*/
+                } else if (
+                    connectivityWays == 8 &&
+                    (col < (width-1)) &&
+                    (PIX(im,row-1,col+1) == curpix) &&
+                    (lresolve(PIX(lim,row-1,col+1)) != curlab)
+                ) {
+                    /* we have a merge to NE */
+                    int newlabel;
+                    
+                    newlabel = lresolve(PIX(lim,row-1,col+1));
+                    /*
+                    newlabel = PIX(lim,row-1,col);
+                    */
 
-#ifdef	DEBUG
-					printf("mergeNE(%d,%d): %d becomes %d\n",
-						row, col, curlab, newlabel);
+#ifdef  DEBUG
+                    printf("mergeNE(%d,%d): %d becomes %d\n",
+                        row, col, curlab, newlabel);
 #endif
-					if (curlab != UNKNOWN)
-						lmap[curlab] = newlabel;
+                    if (curlab != UNKNOWN)
+                        lmap[curlab] = newlabel;
                     blobsize[newlabel] += blobsize[curlab];
                     //if (edge[curlab] < edge[newlabel])
                         //edge[newlabel] = edge[curlab];
-					curlab = newlabel;
+                    curlab = newlabel;
 
-				}
+                }
 
-			}
+            }
 
-			if ((row > 0) && (col > 0)) {
-				/*
-				 * check for enclosure
-				 */
-				int	left, above, northwest;
+            if ((row > 0) && (col > 0)) {
+                /*
+                 * check for enclosure
+                 */
+                int left, above, northwest;
 
-				left = prevlab;
-				above = lresolve( PIX(lim,row-1,col) );
-				northwest = lresolve( PIX(lim,row-1,col-1) );
-				if (	(left == curlab) &&
-					(above == curlab) &&
-					(northwest != curlab)
-				) {
-#ifdef	DEBUG
+                left = prevlab;
+                above = lresolve( PIX(lim,row-1,col) );
+                northwest = lresolve( PIX(lim,row-1,col-1) );
+                if (    (left == curlab) &&
+                    (above == curlab) &&
+                    (northwest != curlab)
+                ) {
+#ifdef  DEBUG
 #endif
-					printf("(%d,%d): label %d encloses %d\n",
+                    printf("(%d,%d): label %d encloses %d\n",
                         row, col,
-						curlab, northwest);
-					/* we have an enclosure */
+                        curlab, northwest);
+                    /* we have an enclosure */
                     if (blobsize[curlab] > THRESH) {
                         // mark the parent of this blob
                         parents[northwest] = curlab;
-                        //edge[northwest] = (row-1) + nrows*(col-1) + 1;
+                        //edge[northwest] = (row-1) + height*(col-1) + 1;
                         //printf("edge is %d\n", edge[northwest]);
                     } else {
                         // it's a runt, merge it with its parent
-						lmap[curlab] = northwest;
+                        lmap[curlab] = northwest;
                     }
-				}
-			}
+                }
+            }
 
-			/* if label still not known, assign new */
-			if (curlab == UNKNOWN) {
-				curlab = ++newlabel;
-				if (newlabel >= MAXLABEL)
-					mexErrMsgTxt("ilabel: too many regions");
+            /* if label still not known, assign new */
+            if (curlab == UNKNOWN) {
+                curlab = NEWLABEL;
+                if (newlabel >= maxlabel) {
+                    /*
+                     * too many labels, increase the size of all the working arrays 
+                     */
+                    maxlabel *= 2;
+                    lmap = (LABEL *)mxRealloc(lmap, maxlabel*sizeof(LABEL));
+                    lmap2 = (LABEL *)mxRealloc(lmap2, maxlabel*sizeof(LABEL));
+
+                    if (parent_p)
+                        parents = (LABEL *)mxRealloc(parents, maxlabel*sizeof(LABEL));
+                    if (color_p)
+                        color = (PIXEL *)mxRealloc(color, maxlabel*sizeof(PIXEL));
+                    if (edge_p)
+                        edge = (unsigned int *)mxRealloc(maxlabel*sizeof(int));
+
+                    /* region size */
+                    blobsize = (int *)mxRealloc(maxlabel*sizeof(int));
+                }
                 color[curlab] = curpix;
-                edge[curlab] = row + nrows*col + 1;
+                edge[curlab] = row + height*col + 1;
                 //printf("color %d %f\n", curlab, curpix);
-#ifdef	DEBUG
-				printf("new label(%d,%d): %d\n", 
-					row, col, curlab);
+#ifdef  DEBUG
+                printf("new label(%d,%d): %d\n", 
+                    row, col, curlab);
 #endif
-			}
+            }
             blobsize[curlab] += 1;
 
-			PIX(lim,row,col) = curlab;
-			prevlab = curlab;
-			prevpix = curpix;
-		}
-	}
+            PIX(lim,row,col) = curlab;
+            prevlab = curlab;
+            prevpix = curpix;
+        }
+    }
 
-#ifdef	DEBUG
-	printf("max lim is %d\n", newlabel);
+#ifdef  DEBUG
+    printf("max lim is %d\n", newlabel);
 #endif
 
-	/*
+    /*
      * The label indirection map can have have quite long chains of indirection
      * as the result of region merges.
      *
      * We pass over the map, and set each entry to its final value, or 0 meaning
      * that it is not indirected.
-	 *
-	 *	lmap[pass1 label] -> pass 2 label
-	 *	lmap2[pass 2 label] -> final label
-	 */
+     *
+
+     */
 
      /*
       * create a new label map that maps all old labels to new consecutive labels
       */
-#ifdef	DEBUG
-	printf("----------------------\nlmap:\n");
+#ifdef  DEBUG
+    printf("----------------------\nlmap:\n");
 #endif
-	for (i=1,nlabels=0; i<=newlabel; i++) {
-#ifdef	DEBUG
-		printf("(%d) = %d\n", i, lmap[i]);
+    for (i=1,nlabels=0; i<=newlabel; i++) {
+#ifdef  DEBUG
+        printf("(%d) = %d\n", i, lmap[i]);
 #endif
-		if (lmap[i] == 0)
-			lmap2[i] = ++nlabels;	/* assign new sequential label */
-	}
-	/*
-	 * now adjust the label map so that consecutive labels appear in the
-	 * labelled image, ie. no missing labels.
-	 */
-	for (i=0; i<=newlabel; i++)
-		if (lmap[i] != 0) {
-			j = lresolve(i);
-			lmap2[i] = lmap2[j];
-		}
-#ifdef	DEBUG
-	printf("----------------------\nlmap2:\n");
-	for (i=1; i<=newlabel; i++)
-		printf("old(%d) -> %d\n", i, lmap2[i]);
-#endif
-
-#ifdef	DEBUG
-	printf("----------------------\nparents:\n");
-	for (i=1; i<=newlabel; i++)
-		printf("parent[%d] = %d\n", i, parents[i]);
+        if (lmap[i] == 0)
+            lmap2[i] = ++nlabels;   /* assign new sequential label */
+    }
+    /*
+     * now adjust the label map so that consecutive labels appear in the
+     * labelled image, ie. no missing labels.
+     */
+    for (i=0; i<=newlabel; i++)
+        if (lmap[i] != 0) {
+            j = lresolve(i);
+            lmap2[i] = lmap2[j];
+        }
+#ifdef  DEBUG
+    printf("----------------------\nlmap2:\n");
+    for (i=1; i<=newlabel; i++)
+        printf("old(%d) -> %d\n", i, lmap2[i]);
 #endif
 
-	/*
-	 * resolve the labels in the parent array and assign to double proc
-	 * output array
-	 */
-    {
+#ifdef  DEBUG
+    printf("----------------------\nparents:\n");
+    for (i=1; i<=newlabel; i++)
+        printf("parent[%d] = %d\n", i, parents[i]);
+#endif
+
+    /*
+     * resolve the labels in the parent array and assign to double proc
+     * output array
+     */
+    if (parent_out) {
         LABEL   *lab;
 
         lab = mxCalloc(nlabels, sizeof(LABEL));
         for (i=1; i<=newlabel; i++) {
-            LABEL	par = parents[i], child;
+            LABEL   par = parents[i], child;
 
             if (par) {
                 child = lmap2[i];
@@ -349,7 +384,7 @@ ilabel(PIXEL *im, int nrows, int ncols, LABEL *lim, LABEL **Parents, PIXEL **Col
         *Parents = lab;
     }
 
-    {
+    if (color_out || edge_out) {
         PIXEL   *c;
         unsigned int    *e;
 
@@ -371,19 +406,19 @@ ilabel(PIXEL *im, int nrows, int ncols, LABEL *lim, LABEL **Parents, PIXEL **Col
         *Edge = e;
    }
 
-	/*
-	 * resolve the labels in the integer labelled image and assign
-	 * to the double prec. output image
-	 */
-	for (row=0; row<nrows; row++)
-		for (col=0; col<ncols; col++)
-			PIX(lim,row,col) = lmap2[ PIX(lim,row,col) ];
+    /*
+     * resolve the labels in the integer labelled image and assign
+     * to the double prec. output image
+     */
+    for (row=0; row<height; row++)
+        for (col=0; col<width; col++)
+            PIX(lim,row,col) = lmap2[ PIX(lim,row,col) ];
 
-	mxFree(lmap);
-	mxFree(lmap2);
-	mxFree(blobsize);
+    mxFree(lmap);
+    mxFree(lmap2);
+    mxFree(blobsize);
 
-	return(nlabels);
+    return(nlabels);
 }
 
 /*
@@ -392,15 +427,15 @@ ilabel(PIXEL *im, int nrows, int ncols, LABEL *lim, LABEL **Parents, PIXEL **Col
 LABEL
 lresolve(LABEL l)
 {
-	LABEL	i;
+    LABEL   i;
 
-	for (i=l; lmap[i] > 0; )
-		i = lmap[i];
-#ifdef	DEBUG>1
+    for (i=l; lmap[i] > 0; )
+        i = lmap[i];
+#ifdef  DEBUG>1
     if (l != i)
         printf("resolved %d to %d\n", l, i);
 #endif
-	return i;
+    return i;
 }
 
 
@@ -410,27 +445,27 @@ lresolve(LABEL l)
 void
 mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-	PIXEL	*im, *color;
+    PIXEL   *im, *color;
     unsigned int     *edge;
-	LABEL   maxlabel, *label, *parents;
+    LABEL   maxlabel, *label, *parents;
     int height, width;
 
-	/* Check for proper number of arguments */
+    /* Check for proper number of arguments */
 
-	connectivityWays = 4;
-	switch (nrhs) {
-	case 2: {
-		double	opt = mxGetScalar(OPT_IN);
+    connectivityWays = 4;
+    switch (nrhs) {
+    case 2: {
+        double  opt = mxGetScalar(OPT_IN);
 
-		if (opt == 8)
-			connectivityWays = 8;
-		else if (opt != 4)
-			mexErrMsgTxt("ILABEL connectivity must be 4 or 8.");
-		}
-	case 1: {
+        if (opt == 8)
+            connectivityWays = 8;
+        else if (opt != 4)
+            mexErrMsgTxt("ILABEL connectivity must be 4 or 8.");
+        }
+    case 1: {
         
-		if (mxIsComplex(IM_IN))
-			mexErrMsgTxt("ILABEL requires a real matrix.");
+        if (mxIsComplex(IM_IN))
+            mexErrMsgTxt("ILABEL requires a real matrix.");
 
         if (mxGetNumberOfDimensions(prhs[0]) > 2)
             mexErrMsgTxt("Only greylevel images allowed.");
@@ -438,9 +473,9 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         height = mxGetM(prhs[0]);
         width = mxGetN(prhs[0]);
 
-		/*
-		printf("size %d x %d\n", nrows, ncols);
-		*/
+        /*
+        printf("size %d x %d\n", height, width);
+        */
 
         im = mxCalloc(width*height, sizeof(PIXEL));
 
@@ -486,55 +521,55 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
         break;
     }
-	default:
-		mexErrMsgTxt("ILABEL requires one or more input arguments");
-		break;
-	}
+    default:
+        mexErrMsgTxt("ILABEL requires one or more input arguments");
+        break;
+    }
 
-	label = (LABEL *)mxCalloc(width*height, sizeof(LABEL));
+    label = (LABEL *)mxCalloc(width*height, sizeof(LABEL));
 
-	/* Do the actual computations in a subroutine */
-	maxlabel = ilabel(im, height, width, label, &parents, &color, &edge);
+    /* Do the actual computations in a subroutine */
+    maxlabel = ilabel(im, height, width, label, &parents, &color, &edge);
 
-	switch (nlhs) {
-	case 5: {
-		double  *p;
-		int	i;
+    switch (nlhs) {
+    case 5: {
+        double  *p;
+        int i;
 
-		EDGE_OUT = mxCreateNumericMatrix(maxlabel, 1, mxDOUBLE_CLASS, mxREAL);
+        EDGE_OUT = mxCreateNumericMatrix(maxlabel, 1, mxDOUBLE_CLASS, mxREAL);
         p = (double *)mxGetData(EDGE_OUT);
-		for (i=0; i<maxlabel; i++)
-			p[i] = edge[i];
-	    }
-		/* fall through */
-	case 4: {
-		double   *p;
-		int	i;
+        for (i=0; i<maxlabel; i++)
+            p[i] = edge[i];
+        }
+        /* fall through */
+    case 4: {
+        double   *p;
+        int i;
 
-		COLOR_OUT = mxCreateNumericMatrix(maxlabel, 1, mxDOUBLE_CLASS, mxREAL);
+        COLOR_OUT = mxCreateNumericMatrix(maxlabel, 1, mxDOUBLE_CLASS, mxREAL);
         p = (double *)mxGetData(COLOR_OUT);
-		for (i=0; i<maxlabel; i++)
-			p[i] = color[i];
-	    }
-		/* fall through */
-	case 3: {
-		LABEL   *p;
-		int	i;
+        for (i=0; i<maxlabel; i++)
+            p[i] = color[i];
+        }
+        /* fall through */
+    case 3: {
+        LABEL   *p;
+        int i;
 
-		PARENT_OUT = mxCreateNumericMatrix(maxlabel, 1, mxUINT16_CLASS, mxREAL);
+        PARENT_OUT = mxCreateNumericMatrix(maxlabel, 1, mxUINT16_CLASS, mxREAL);
         p = (LABEL *)mxGetData(PARENT_OUT);
-		for (i=0; i<maxlabel; i++)
-			p[i] = parents[i];
-	    }
-		/* fall through */
-	case 2: {
-		MAX_OUT = mxCreateDoubleScalar( (double)maxlabel);
-		}
-		/* fall through */
-	case 1: {
-		double   *p;
+        for (i=0; i<maxlabel; i++)
+            p[i] = parents[i];
+        }
+        /* fall through */
+    case 2: {
+        MAX_OUT = mxCreateDoubleScalar( (double)maxlabel);
+        }
+        /* fall through */
+    case 1: {
+        double   *p;
         LABEL   *l;
-		int	i;
+        int i;
 
         /* Create a matrix for the return argument */
         IM_OUT = mxCreateNumericMatrix(height, width, mxDOUBLE_CLASS, mxREAL);
@@ -542,9 +577,9 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         l = label;
         for (i=0; i<width*height; i++)
             *p++ = *l++;
-		break;
+        break;
       }
-	}
+    }
 
     mxFree(label);
     mxFree(edge);
@@ -552,5 +587,5 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     mxFree(parents);
     mxFree(im);
 
-	return;
+    return;
 }
