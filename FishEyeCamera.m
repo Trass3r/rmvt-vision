@@ -1,62 +1,83 @@
 %FishEyeCamera  Fish eye camera class
 %
-% A concrete class a fisheye lense projection camera.
+%   C = camera    default camera, 1024x1024, f=8mm, 10um pixels, camera at 
+%                             origin, optical axis is z-axis, u||x, v||y).
+%   C = camera(f, s, pp, npix, name)
+%   C = camera(0)           f=sx=sy=1, u0=v0=0: normalized coordinates
+%
+%   This camera model assumes central projection, that is, the focal point
+%   is at z=0 and the image plane is at z=f.  The image is not inverted.
 %
 %   The camera coordinate system is:
 %
-%       0------------> u, X
+%       0------------> u X
 %       |
 %       |
 %       |   + (principal point)
 %       |
-%       |   Z-axis is into the page.
-%       v, Y
+%       |
+%       v Y
+%              Z-axis is into the page.
 %
-% This camera model assumes central projection, that is, the focal point
-% is at z=0 and the image plane is at z=f.  The image is not inverted.
+% Object properties (read/write)
 %
-% Methods::
+%   C.f           intrinsic: focal length 
+%   C.s           intrinsic: pixel size 2x1
+%   C.pp          intrinsic: principal point 2x1
+%   C.np          size of the virtual image plane (pixels) 2x1
 %
-% project          project world points to image plane
+%   C.Tcam        extrinsic: pose of the camera
+%   C.name        name of the camera, used for graphical display
 %
-% plot             plot/return world point on image plane
-% hold             control hold for image plane
-% ishold           test figure hold for image plane
-% clf              clear image plane
-% figure           figure holding the image plane
-% mesh             draw shape represented as a mesh
-% point            draw homogeneous points on image plane
-% line             draw homogeneous lines on image plane
-% plot_camera      draw camera
+% Object properties (read only)
 %
-% rpy              set camera attitude
-% move             copy of Camera after motion
-% centre           get world coordinate of camera centre
+%   C.su          pixel width
+%   C.sv          pixel height
+%   C.u0          principal point, u coordinate
+%   C.v0          principal point, v coordinate
+% 
+% Object methods
 %
-% delete           object destructor
-% char             convert camera parameters to string
-% display          display camera parameters
+%   C.fov         return camera half field-of-view angles (2x1 rads)
+%   C.K           return camera intrinsic matrix (3x3)
+%   C.P           return camera project matrix for camera pose (3x4)
+%   C.P(T)        return camera intrinsic matrix for specified camera pose (3x4)
 %
-% Properties (read/write)::
-% npix         image dimensions in pixels (2x1)
-% pp           intrinsic: principal point (2x1)
-% f            intrinsic: focal length [metres]
-% rho          intrinsic: pixel dimensions (2x1) [metres]
-% T            extrinsic: camera pose as homogeneous transformation
+%   C.rpy(r,p,y)   set camera rpy angles
+%   C.rpy(rpy)
 %
-% Properties (read only)::
-% nu    number of pixels in u-direction
-% nv    number of pixels in v-direction
+%   uv = C.project(P)     return image coordinates for world points  P
+%   uv = C.project(P, T)  return image coordinates for world points P 
+%                          transformed by T prior to projection
 %
-% Notes::
-%  - Camera is a reference object.
-%  - Camera objects can be used in vectors and arrays
+% P is a list of 3D world points and the corresponding image plane points are 
+% returned in uv.  Each point is represented by a column in P and uv.
 %
-% See also Camera.
+% If P has 3 columns it is treated as a number of 3D points in  world 
+% coordinates, one point per row.
+%
+% If POINTS has 6 columns, each row is treated as the start and end 3D 
+% coordinate for a line segment, in world coordinates.  
+%
+% The optional arguments, T, represents a transformation that can be applied
+% to the object data, P, prior to 'imaging'.  The camera pose, C.Tcam, is also 
+% taken into account.
+%
+%   uv = C.plot(P)    display image coordinates for world points P
+%   uv = C.plot(P, T) isplay image coordinates for world points P transformed by T
+%
+% Points are displayed as a round marker.  Lines are displayed as line segments.
+% Optionally returns image plane coordinates uv.
+%
+%   C.show
+%   C.show(name)
+%
+% Create a graphical camera with name, and pixel dimensions given by C.npix.  
+% Automatically called on first call to plot().
+%
+% SEE ALSO: Camera
 
-
-
-% Copyright (C) 1993-2011, by Peter I. Corke
+% Copyright (C) 1995-2009, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -82,7 +103,7 @@ classdef FishEyeCamera < Camera
 
     properties
         k       % radial distortion vector
-        projection   % projection model
+        model   % projection model
     end
 
     properties (SetAccess = private)
@@ -100,76 +121,32 @@ classdef FishEyeCamera < Camera
     
     methods
 
+        %
+        %   Return a camera intrinsic parameter structure:
+        %       focal length 8mm
+        %       pixel size 10um square
+        %       image size 1024 x 1024
+        %       principal point (512, 512)
         function c = FishEyeCamera(varargin)
-        %FishEyeCamera.FishEyeCamera Create fisheyecamera object
-        %
-        % C = FishEyeCamera() creates a fisheye camera with canonic
-        % parameters: f=1 and name='canonic'.
-        %
-        % C = FishEyeCamera(OPTIONS) as above but with specified parameters.
-        %
-        % Options::
-        % 'name',N         Name of camera
-        % 'default'        Default camera parameters: 1024x1024, f=8mm,
-        %                  10um pixels, camera at origin, optical axis
-        %                  is z-axis, u- and v-axes are parallel to x- and y-
-        %                  axes respectively.
-        % 'projection',M   Fisheye model: 'equiangular' (default), 'sine',
-        %                  'equisolid', 'stereographic'
-        % 'k',K            Parameter for the projection model
-        % 'resolution',N   Image plane resolution: NxN or N=[W H].
-        % 'sensor',S       Image sensor size [metres] (2x1)
-        % 'centre',P       Principal point (2x1)
-        % 'pixel',S        Pixel size: SxS or S=[W H].
-        % 'noise',SIGMA    Standard deviation of additive Gaussian 
-        %                  noise added to returned image projections
-        % 'pose',T         Pose of the camera as a homogeneous 
-        %                  transformation
-        %
-        % Notes::
-        % - If K is not specified it is computed such that the circular imaging region
-        %   maximally fills the square image plane.
-        %
-        % See also Camera, CentralCamera, CatadioptricCamera, SphericalCamera.
+
 
             % invoke the superclass constructor
-            c = c@Camera(varargin{:});
+            c = c@Camera(varargin);
             c.type = 'FishEye';
 
             if nargin == 0,
                 % default values
                 c.type = 'fisheye';
                 c.k = 1;
-                c.projection = 'equiangular';
+                c.model = 'equiangular';
                 c.name = 'fisheye-default';
 
             else
-                
-                % process remaining options
-                opt.k = [];
-                opt.projection = {'equiangular', 'sine', 'equisolid', 'stereographic'};
-                opt.default = false;
-
-                [opt,args] = tb_optparse(opt, varargin);
-
-                c.projection = opt.projection;
-                
-                if opt.default
-                    c.rho = [10e-6, 10e-6];      % square pixels 10um side
-                    c.npix = [1024, 1024];  % 1Mpix image plane
-                    c.pp = [512, 512];      % principal point in the middle
-                    c.limits = [0 1024 0 1024];
-                    c.name = 'default';
-                    r = min([(c.npix-c.pp).*c.rho, c.pp.*c.rho]);
-                    c.k = 2*r/pi;
-                    n = 0;
-                end
-            
-                if isempty(opt.k)
+                if isempty(c.k)
                     % compute k if not specified, so that hemisphere fits into
                     % image plane
-                    r = min([(c.npix-c.pp).*c.rho, c.pp.*c.rho]);
-                    switch c.projection
+                    r = min([(c.npix-c.pp).*c.s, c.pp.*c.s]);
+                    switch c.model
                     case 'equiangular'
                         c.k = r / (pi/2);
                     case 'sine'
@@ -182,59 +159,60 @@ classdef FishEyeCamera < Camera
                     otherwise
                         error('unknown fisheye projection model');
                     end
-                else
-                    c.k = opt.k;
                 end
+            end
+        end
+
+        function n = paramSet(c, args)
+            switch lower(args{1})
+            case 'k'
+                c.k = args{2}; n = 1;
+            case 'projection'
+                c.model = args{2}; n = 1;
+            case 'default'
+                c.s = [10e-6, 10e-6];      % square pixels 10um side
+                c.npix = [1024, 1024];  % 1Mpix image plane
+                c.pp = [512, 512];      % principal point in the middle
+                c.limits = [0 1024 0 1024];
+                c.name = 'default';
+                r = min([(c.npix-c.pp).*c.s, c.pp.*c.s]);
+                c.k = 2*r/pi;
+                n = 0;
+            otherwise
+                error( sprintf('unknown option <%s>', args{count}));
             end
         end
 
         function s = char(c)
 
             s = sprintf('name: %s [%s]', c.name, c.type);
-            s = strvcat(s, sprintf(    '  model:          %s', c.projection));
+            s = strvcat(s, sprintf(    '  model:          %s', c.model));
             s = strvcat(s, sprintf(    '  k:              %-11.4g', c.k));
             s = strvcat(s, char@Camera(c) );
         end
 
-        function uv = project(c, P, varargin)
-        %FishEyeCamera.project Project world points to image plane
-        %
-        % UV = C.project(P, OPTIONS) are the image plane coordinates for the world
-        % points P.  The columns of P (3xN) are the world points and the columns 
-        % of UV (2xN) are the corresponding image plane points.
-        %
-        % Options::
-        % 'Tobj',T         Transform all points by the homogeneous transformation T before
-        %                  projecting them to the camera image plane.
-        % 'Tcam',T         Set the camera pose to the homogeneous transformation T before
-        %                  projecting points to the camera image plane.  Temporarily overrides 
-        %                  the current camera pose C.T.
-        %
-        % See also FishEyeCamera.plot.
+        % return field-of-view angle for x and y direction (rad)
+        function th = fov(c)
+            th = 2*atan(c.npix/2.*c.s / c.f);
+        end
 
+        % do the fisheye projection
+        function uv = project(c, P, Tcam)
 
             np = numcols(P);
                 
-            opt.Tobj = [];
-            opt.Tcam = [];
-
-            [opt,arglist] = tb_optparse(opt, varargin);
-            
-            if isempty(opt.Tcam)
-                opt.Tcam = c.T;
-            end
-            if isempty(opt.Tobj)
-                opt.Tobj = eye(4,4);
+            if nargin < 3,
+                Tcam = eye(4,4);
             end
             
             % transform all the points to camera frame
-            X = homtrans(inv(opt.Tcam) * opt.Tobj, P);         % project them
+            X = Tcam * e2h(P);         % project them
 
             R = colnorm(X(1:3,:));
             phi = atan2( X(2,:), X(1,:) );
             theta = acos( X(3,:) ./ R );
 
-            switch c.projection
+            switch c.model
             case 'equiangular'
                 r = c.k * theta;
             case 'sine'
@@ -250,7 +228,7 @@ classdef FishEyeCamera < Camera
             x = r .* cos(phi);
             y = r .* sin(phi);
 
-            uv = [x/c.rho(1)+c.pp(1); y/c.rho(2)+c.pp(2)];
+            uv = [x/c.su+c.pp(1); y/c.sv+c.pp(2)];
 
             if c.noise
                 % add Gaussian noise with specified standard deviation

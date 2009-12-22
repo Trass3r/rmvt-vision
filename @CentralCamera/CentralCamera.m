@@ -140,43 +140,44 @@ classdef CentralCamera < Camera
         function c = CentralCamera(varargin)
 
             % invoke the superclass constructor
-            c = c@Camera(varargin{:});
-
-            % default values
+            c = c@Camera(varargin);
             c.type = 'central-perspective';
-            c.f = 1;
-            c.distortion = [];
+            c.perspective = true;
 
             if nargin == 0,
                 c.name = 'canonic';
-            else
-                c.name = 'noname';
-
-                count = 1;
-                while count <= length(varargin)
-                    switch lower(varargin{count})
-                    case 'focal'
-                        c.f = varargin{count+1}; count = count+1;
-                    case 'distortion'
-                        v = varargin{count+1}; count = count+1;
-                        if length(v) ~= 5
-                            error('distortion vector is [k1 k2 k3 p1 p2]');
-                        end
-                        c.distortion = v;
-                    case 'default'
-                        c.f = 8e-3;     % f
-                        c.s = [10e-6, 10e-6];      % square pixels 10um side
-                        c.npix = [1024, 1024];  % 1Mpix image plane
-                        c.pp = [512, 512];      % principal point in the middle
-                        c.limits = [0 1024 0 1024];
-                        c.name = 'default';
-                    otherwise
-                        error( sprintf('unknown option <%s>', varargin{count}));
-                    end
-                    count = count + 1;
-                end
+                % default values
+                c.f = 1;
+                c.distortion = [];
             end
         end
+
+        function n = paramSet(c, args)
+            switch lower(args{1})
+            case 'focal'
+                c.f = args{2}; n = 1;
+            case 'distortion'
+                v = args{2}; n = 1;
+                if length(v) ~= 5
+                    error('distortion vector is [k1 k2 k3 p1 p2]');
+                end
+                c.distortion = v;
+            case 'distortion-bouget'
+                v = args{2}; n = 1;
+                if length(v) ~= 5
+                    error('distortion vector is [k1 k2 p1 p2 k3]');
+                end
+                c.distortion = [v(1) v(2) v(5) v(3) v(4)];;
+            case 'default'
+                c.f = 8e-3;     % f
+                c.s = [10e-6, 10e-6];      % square pixels 10um side
+                c.npix = [1024, 1024];  % 1Mpix image plane
+                c.pp = [512, 512];      % principal point in the middle
+                c.limits = [0 1024 0 1024];
+                c.name = 'default';
+            end
+        end
+
 
         function s = char(c)
 
@@ -307,20 +308,6 @@ classdef CentralCamera < Camera
             s(:,:,4) = inv( [R2 -t; 0 0 0 1] );
         end
         
-        function hold(c, flag)
-            if nargin < 2
-                flag = true;
-            end
-            h = findobj('Tag', c.name);
-            if ~isempty(h),
-                if flag
-                    set(h, 'NextPlot', 'add');
-                else
-                    set(h, 'NextPlot', 'replacechildren');
-                end
-            end
-        end
-
         function handles = epiline(c, F, p, ls)
 
             % get plot limits from current graph
@@ -354,21 +341,16 @@ classdef CentralCamera < Camera
 
         % do the camera perspective transform
         %   P is 3xN matrix of points to plot
-        %   P is 4x4 transform whose transl component is plotted
-        function uv = project(c, P, Tcam)
+        function uv = project(c, P, Tobj)
 
             np = numrows(P);
                 
             if nargin < 3,
-                C = c.C;
+                C = c.C();
             else
-                C = c.C(Tcam);
+                C = c.C(inv(Tobj)*c.Tcam);
             end
             
-            if numrows(P) == 4,
-                P = transl(P);
-            end
-
             % transform all the points to camera frame
             X = C * e2h(P);         % project them
             X(3,X(3,:)<0) = NaN;    % points behind the camera are set to NaN
