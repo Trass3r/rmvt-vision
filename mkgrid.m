@@ -48,9 +48,6 @@ function p = mkgrid(N, s, T)
         nx = N(1); ny = N(2);
     end
 
-    if isvec(T)
-        T = transl(T);
-    end
 
     if N == 2,
         % special case, we want the points in specific order
@@ -66,8 +63,10 @@ function p = mkgrid(N, s, T)
         p = [X(:) Y(:) Z(:)]';
     end
     
-
     % optionally transform the points
     if nargin == 3,
+        if isvec(T)
+            T = transl(T);
+        end
         p = transformp(T, p);
     end
