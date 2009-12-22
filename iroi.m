@@ -33,10 +33,14 @@
 % 
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
-function [im, region] = iroi(image, reg)
+function [im, region] = iroi(image, reg, wh)
 
-	if nargin == 2,
-		im = image(reg(2,1):reg(2,2),reg(1,1):reg(1,2));
+	if nargin == 3
+        xc = reg(1); yc = reg(2);
+        w = round(wh(1)/2); h = round(h(2)/2);
+		im = image(yc-h:yc+h,xc-w:xc+w,:);
+    elseif nargin == 2
+		im = image(reg(2,1):reg(2,2),reg(1,1):reg(1,2),:);
 	else
 		% save old event handlers, otherwise may interfere with
 		% other tools operating on the figure, eg. idisp()
