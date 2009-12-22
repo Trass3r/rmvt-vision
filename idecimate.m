@@ -1,7 +1,8 @@
 %IDECIMATE	Decimate an image
 %
-%	s = idecimate(im, M)
-%	s = shrink(im, M, sigma)
+%	s = idecimate(im, m)
+%	s = shrink(im, m, sigma)
+%	s = shrink(im, m, [])
 %
 %   Reduce the image by a factor of M in each direction.  M is an integer.
 %	Smooth the image, IM, using Gaussian
@@ -28,22 +29,24 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-function s = shrink(im, M, sigma)
+function s = shrink(im, m, sigma)
 
     if nargin < 2
-        M = 2;
+        m = 2;
     end
 
-    if (M - ceil(M)) ~= 0
+    if (m - ceil(m)) ~= 0
         error('decimation factor must be integer');
     end
 
     if nargin < 3
-        sigma = M / 2;
+        sigma = m / 2;
     end
 
     % smooth the image
-	im = ismooth(im, sigma);
+    if ~isempty(sigma)
+        im = ismooth(im, sigma);
+    end
 
     % then decimate
-	s = im(1:M:end,1:M:end);
+	s = im(1:m:end,1:m:end,:);
