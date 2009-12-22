@@ -1,13 +1,13 @@
-%KCIRCLE 	Create circular structuring element
+%KCIRCLE    Create circular structuring element
 %
-%	s = kcircle(r)
-%	s = kcircle(r, w)
+%   s = kcircle(r)
+%   s = kcircle(r, w)
 %
-%	Return a square matrix of zeros with a central circular region of 
-%	radius r of ones.  Matrix size is (2r+1) x (2r+1) or w*w.
+%   Return a square matrix of zeros with a central circular region of 
+%   radius r of ones.  Matrix size is (2r+1) x (2r+1) or w*w.
 %
-%	If r is a 2-element vector then it returns an annulus of ones, and
-%	the two numbers are interpretted as inner and outer radii.
+%   If r is a 2-element vector then it returns an annulus of ones, and
+%   the two numbers are interpretted as inner and outer radii.
 %
 % SEE ALSO: ones imorph
 
@@ -30,29 +30,29 @@
 
 function s = kcircle(r, w)
 
-	if ismatrix(r) 
-		rmax = max(r(:));
-		rmin = min(r(:));
-	else
-		rmax = r;
-	end
+    if ismatrix(r) 
+        rmax = max(r(:));
+        rmin = min(r(:));
+    else
+        rmax = r;
+    end
 
 
-	if nargin == 2
+    if nargin == 2
         w = w*2 + 1;
     elseif nargin == 1
-	    w = 2*rmax+1;
-	end
-	s = zeros(w,w);
+        w = 2*rmax+1;
+    end
+    s = zeros(w,w);
 
     c = ceil(w/2);
 
-	if ismatrix(r) 
-		s = kcircle(rmax,w) - kcircle(rmin, w);
-	else
-		[x,y] = find(s == 0);
-		x = x - c;
-		y = y - c;
-		l = find(x.^2+y.^2-r^2 <= 0.5);
-		s(l) = 1;
-	end
+    if ismatrix(r) 
+        s = kcircle(rmax,w) - kcircle(rmin, w);
+    else
+        [x,y] = find(s == 0);
+        x = x - c;
+        y = y - c;
+        l = find(x.^2+y.^2-r^2 < 0.5);
+        s(l) = 1;
+    end
