@@ -121,12 +121,14 @@ function [I,info] = iread(filename, varargin)
     else
         % some kind of filespec has been given
         if ~isempty(strfind(filename, '*')) | ~isempty(strfind(filename, '?')),
-            % wild card files
+            % wild card files, eg.  'seq/*.png', we need to look for a folder
+            % seq somewhere along the path.
             if opt.debug,
                 fprintf('wildcard lookup\n');
             end
             
             [pth,name,ext] = fileparts(filename);
+            % search for the folder name along the path
             for p=path2cell(userpath)'
                 if exist( fullfile(p{1}, pth) ) == 7
                     break;
