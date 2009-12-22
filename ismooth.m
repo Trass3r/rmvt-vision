@@ -49,7 +49,7 @@ function ims = ismooth(im, sigma, varargin)
 	end
 
     if is_int
-        ims = iint(is_int);
+        ims = iint(ims);
      end
     if ~isfloat(im)
         ims = round(ims);
