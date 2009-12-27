@@ -1,13 +1,17 @@
-function c2 = ipaste(c, pattern, topleft)
-
-    % TODO: should work if c and/or pattern are color 
+function c2 = ipaste(c, pattern, topleft, opt)
 
     [h,w,nc] = size(c);
     [ph,pw,np] = size(pattern);
-    left = topleft(1);      % x
-    top = topleft(2);       % y
 
-    [top left w h pw ph]
+    if nargin == 4 && strcmp(opt, 'centre')
+        % specify centre of pattern not topleft
+        left = topleft(1) - floor(pw/2);
+        top = topleft(2) - floor(ph/2);
+    else
+        left = topleft(1);      % x
+        top = topleft(2);       % y
+    end
+
     if (top+ph > h) || (left+pw) > w
         error('pattern falls off edge');
     end
