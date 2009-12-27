@@ -12,7 +12,7 @@ function [ri,thi] = boundary(f, varargin)
         plot(dxy(:,1), dxy(:,2), varargin{:});
 
     else
-        thi = [0:399]'/400*pi - pi;
+        thi = [0:399]'/400*2*pi - pi;
         ri = interp1(th, r, thi, 'spline');
     end
 
