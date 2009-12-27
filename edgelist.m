@@ -91,6 +91,10 @@ function P = adjacent_point(im, seed, pix0)
             if im(P(2), P(1)) ~= pix0
                 return;
             end    
+        catch
+            % if we get an exception then by definition P is outside the region,
+            % since it's off the edge of the image
+            return;
         end
     end
     P = [];
