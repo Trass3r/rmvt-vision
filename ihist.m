@@ -79,12 +79,14 @@ function [h,x] = ihist(im, varargin)
     % computer CDF if requested
     if (nargin > 1) && strcmp(varargin(1), 'cdf')
         hh = cumsum(hh);
+    elseif (nargin > 1) && strcmp(varargin(1), 'normcdf')
+        hh = cumsum(hh);
         hh = hh ./ hh(end);
     end
 
     opt = varargin;
 	if nargout == 0,
-        if (nargin > 1) && strcmp(opt(1), 'cdf')
+        if (nargin > 1) && ~isempty(findstr('cdf', opt{1}))
             opt = opt(2:end);
             plot(xx, hh, opt{:});
             if min(size(im)) > 1
