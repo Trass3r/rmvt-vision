@@ -45,12 +45,13 @@ function idisp(im, varargin)
 
 	if (nargin > 0) & ~isstr(im),
         ncmap = 256;
-        argc = 1;
         opt.gui = true;
         opt.axes = true;
         opt.square = false;
+        opt.wide = false;
         opt.colormap = 'grey';
         opt.print = [];
+        argc = 1;
         while argc <= length(varargin)
             switch lower(varargin{argc})
             case 'colors'
@@ -66,7 +67,11 @@ function idisp(im, varargin)
                 opt.gui = false;
             case 'flatten'
                 im = reshape( im, size(im,1), size(im,2)*size(im,3) );
-            case {'invert', 'signed', 'invsigned'}
+            case 'wide'
+                opt.wide = true;
+            case 'colormap'
+                opt.colormap = varargin{argc+1}; argc = argc+1;
+            case {'invert', 'signed', 'invsigned', 'random'}
                 % colormap options
                 opt.colormap = lower(varargin{argc});
             otherwise
@@ -80,7 +85,15 @@ function idisp(im, varargin)
         % display the image
 		clf
 		hi = image(im);
+
+        if opt.wide
+            set(gcf, 'units', 'norm');
+            pos = get(gcf, 'pos');
+            set(gcf, 'pos', [0.0 pos(2) 1.0 pos(4)]);
+        end
         switch opt.colormap
+        case 'random'
+            colormap(rand(ncmap,3));
         case 'grey'
             colormap(gray(ncmap));
         case 'invert'
@@ -126,6 +139,8 @@ function idisp(im, varargin)
                 set(gca, 'CLim', [-mn mn]);
             end
             colormap(cmap);
+        otherwise
+            colormap( feval(opt.colormap) );
         end
 
         if opt.axes
