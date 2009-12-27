@@ -73,171 +73,191 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-function [F,RawC] = iharris(im, p)
 
-	default.k = 0.04;
-	default.cmin = 0;
-	default.cMinThresh = 0.01;
-	default.deriv = [-1 0 1; -1 0 1; -1 0 1] / 3;
-	default.sigma = 1;
-	default.edgegap = 2;
-	default.nfeat = Inf;
-	default.harris = 1;
-	default.tiling = 0;
-	default.distance = 0;
+classdef iharris < FeatureList
 
-	if nargin == 0,
-		F = default;
-		return
-	elseif nargin == 1,
-		p = default;
-	elseif nargin == 2,
-		for field = fieldnames(p)',
-			default = setfield(default, field{1}, getfield(p, field{1}));
-		end
-		p = default;
+    properties
+        descriptor
     end
 
+    methods
+        function h = iharris(im, varargin)
 
-	%gp.deriv = [1 2 1; 2 4 2;1 2 1]/4;
+            if nargin == 0
+                return;
+            end
+            % parse options into parameter struct
+            p.k = 0.04;
+            p.deriv = kdgauss(2);
+            p.distance = 0;
+            p.noble = false;
 
-	if ndims(im) == 3,
-		R = double(im(:,:,1));
-		G = double(im(:,:,2));
-		B = double(im(:,:,3));
-		Rx = conv2(R, p.deriv, 'same');
-		Ry = conv2(R, p.deriv', 'same');
-		Gx = conv2(G, p.deriv, 'same');
-		Gy = conv2(G, p.deriv', 'same');
-		Bx = conv2(B, p.deriv, 'same');
-		By = conv2(B, p.deriv', 'same');
+            p.cmin = 0;
+            p.cMinThresh = 0.0;
+            p.edgegap = 2;
+            p.nfeat = 100;
+            p.sigma_i = 2;
+            p.verbose = false;
 
-		% smooth them
-		if p.sigma > 0,
-			smooth = kgauss(round(p.sigma*2), p.sigma);
-			Ix = conv2(Rx.^2+Gx.^2+Bx.^2, smooth, 'same');
-			Iy = conv2(Ry.^2+Gy.^2+By.^2, smooth, 'same');
-			Ixy = conv2(Rx.*Ry+Gx.*Gy+Bx.*By, smooth, 'same');
-		else
-			Ix = Rx.^2+Gx.^2+Bx.^2;
-			Iy = Ry.^2+Gy.^2+By.^2;
-			Ixy = Rx.*Ry+Gx.*Gy+Bx.*By;
-		end
-	else
-		% compute horizontal and vertical gradients
-		ix = conv2(im, p.deriv, 'same');
-		iy = conv2(im, p.deriv', 'same');
-		% smooth them
-		if p.sigma > 0,
-			smooth = kgauss(round(p.sigma*2), p.sigma);
-			Ix = conv2(ix.*ix, smooth, 'same');
-			Iy = conv2(iy.*iy, smooth, 'same');
-			Ixy = conv2(ix.*iy, smooth, 'same');
-		else
-			smooth = eye(7,7);
-			Ix = conv2(ix.*ix, smooth, 'same');
-			Iy = conv2(iy.*iy, smooth, 'same');
-			Ixy = conv2(ix.*iy, smooth, 'same');
-		end
-	end
+            argc = 1;
+            while argc <= length(varargin)
+                switch lower(varargin{argc})
+                case 'k'
+                    p.k = varargin{argc+1}; argc = argc+1;
+                case 'deriv'
+                    p.deriv = varargin{argc+1}; argc = argc+1;
+                case 'nfeat'
+                    p.nfeat = varargin{argc+1}; argc = argc+1;
+                case 'cminthresh'
+                    p.cMinThresh = varargin{argc+1}; argc = argc+1;
+                case 'sigma_i'
+                    p.sigma_i = varargin{argc+1}; argc = argc+1;
+                case 'distance'
+                    p.distance = varargin{argc+1}; argc = argc+1;
+                case 'noble'
+                    p.noble = true;
+                case 'harris'
+                    p.noble = false;
+                case 'verbose'
+                    p.verbose = true;
 
-	[nr,nc] = size(Ix);
+                otherwise
+                    error( sprintf('unknown option <%s>', varargin{argc}));
+                end
+                argc = argc + 1;
+            end
 
-	if p.harris,
-		% computer cornerness
-		rawc = (Ix .* Iy - Ixy.^2) - p.k * (Ix + Iy).^2;
-	else
-		rawc = (Ix .* Iy - Ixy.^2) ./ (Ix + Iy);
-	end
+            if p.verbose
+                fprintf('Harris parameter settings\n');
+                p
+            end
 
-	% compute maximum value around each pixel
-	cmax = imorph(rawc, [1 1 1;1 0 1;1 1 1], 'max');
+            if ndims(im) == 3,
+                R = double(im(:,:,1));
+                G = double(im(:,:,2));
+                B = double(im(:,:,3));
+                Rx = conv2(R, p.deriv, 'same');
+                Ry = conv2(R, p.deriv', 'same');
+                Gx = conv2(G, p.deriv, 'same');
+                Gy = conv2(G, p.deriv', 'same');
+                Bx = conv2(B, p.deriv, 'same');
+                By = conv2(B, p.deriv', 'same');
 
-	% if pixel equals minimum, its a local minima, find index
-	cindex = find(rawc > cmax);
+                Ix = Rx.^2+Gx.^2+Bx.^2;
+                Iy = Ry.^2+Gy.^2+By.^2;
+                Ixy = Rx.*Ry+Gx.*Gy+Bx.*By;
+            else
+                % compute horizontal and vertical gradients
+                ix = conv2(im, p.deriv, 'same');
+                iy = conv2(im, p.deriv', 'same');
+                Ix = ix.*ix;
+                Iy = iy.*iy;
+                Ixy = ix.*iy;
+            end
 
-	% remove those near edges
-	[y, x] = ind2sub(size(rawc), cindex);
-	e = p.edgegap;
-	sel = (x>e) & (y>e) & (x < (nc-e)) & (y < (nr-e));
-	cindex = cindex(sel);
+            % smooth them
+            if p.sigma_i > 0,
+                Ix = ismooth(Ix, p.sigma_i);
+                Iy = ismooth(Iy, p.sigma_i);
+                Ixy = ismooth(Ixy, p.sigma_i);
+            end
 
-	p.npix = nr*nc;
-	if p.tiling == 0,
-		F = build_flist(p.nfeat, rawc, cindex, p, Ix, Iy, Ixy);
-	else
-		F = [];
-		[y, x] = ind2sub(size(rawc), cindex);
-		p.npix = p.npix / p.tiling^2;
 
-		% do tiling
-		for ty=1:p.tiling,
-			ymax = nr*ty/p.tiling;
-			ymin = ymax - nr/p.tiling + 1;
-			for tx=1:p.tiling,
-				xmax = nc*tx/p.tiling;
-				xmin = xmax - nc/p.tiling + 1;
+            % computer cornerness
+            if p.noble,
+                rawc = (Ix .* Iy - Ixy.^2) ./ (Ix + Iy);
+            else
+                rawc = (Ix .* Iy - Ixy.^2) - p.k * (Ix + Iy).^2;
+            end
 
-				sel = (x>=xmin) & (y>=ymin) & (x <= xmax) & (y <= ymax);
-				fprintf('tile (%d,%d): ', ty, tx);
-				cindext = cindex(sel);
+            % compute maximum value around each pixel
+            cmax = imorph(rawc, [1 1 1;1 0 1;1 1 1], 'max');
 
-				FF = build_flist(p.nfeat, rawc, cindext, p, Ix, Iy, Ixy);
-				F = [F FF];
-			end
-		end
-	end
+            % if pixel exceeds this, its a local maxima, find index
+            cindex = find(rawc > cmax);
 
-	if nargout == 2,
-		RawC = rawc;
-	end
-	if nargout == 0,
-		idisp(im);
-		markfeatures(F, 100);
+            % remove those near edges
+            [nr,nc] = size(Ix);
+            [y, x] = ind2sub(size(rawc), cindex);
+            e = p.edgegap;
+            sel = (x>e) & (y>e) & (x < (nc-e)) & (y < (nr-e));
+            cindex = cindex(sel);
 
-	end
+            p.npix = nr*nc;
 
-function f = build_flist(N, rawc, cindex, p, Ix, Iy, Ixy)
+            fprintf('%d corners found (%.1f%%), ', length(cindex), ...
+                length(cindex)/p.npix*100);
+            N = min(length(cindex), p.nfeat);
 
-	fprintf('%d minima found (%.1f%%), ', length(cindex), ...
-		length(cindex)/p.npix*100);
-	N = min(length(cindex), N);
+            % sort into descending order
+            cval = rawc(cindex);		% extract corner values
+            [z,k] = sort(-cval);	% sort into descending order
+            cindex = cindex(k);
+            cmax = rawc( cindex(1) );   % take the strongest feature value
 
-	% sort into descending order
-	cval = rawc(cindex);		% extract corner values
-	[csort,k] = sort(-cval);	% sort into descending order
-	cindex = cindex(k);
-	cmax = rawc( cindex(1) );
+            fc = 1;
+            for i=1:length(cindex),
+                K = cindex(i);
+                c = rawc(K);
 
-	f = [];
-	count = 1;
-	for i=1:length(cindex),
-		K = cindex(i);
-		c = rawc(K);
-		if c < p.cmin,
-			break;
-		end
-		if c/cmax < p.cMinThresh,
-			fprintf('break after %d minimas\n', i);
-			break;
-		end
+                % we apply two termination threshold conditions:
 
-		[y, x] = ind2sub(size(rawc), K);
+                % 1. corner strength must exceed an absolute minimum
+                if c < p.cmin,
+                    break;
+                end
 
-		if (i>1) & (p.distance > 0),
-			d = sqrt( ([f.y]'-y).^2 + ([f.x]'-x).^2 );
-			if min(d) < p.distance,
-				continue;
-			end
-		end
+                % 2. corner strength must exceed a fraction of the maximum value
+                if c/cmax < p.cMinThresh,
+                    break;
+                end
 
-		f(count).x = x;
-		f(count).y = y;
-		f(count).c = c;
-		f(count).grad = [Ix(K); Iy(K); Ixy(K)];
-		count = count + 1;
-		if count > N,
-			break;
-		end
-	end
-	fprintf(' %d added\n', count-1);
+                % get the coordinate
+                [y, x] = ind2sub(size(rawc), K);
+
+                % enforce separation between corners
+                % TODO: strategy of Brown etal. only keep if 10% greater than all within radius
+                if (p.distance > 0) && (i>1)
+                    d = sqrt( ([h.y]'-y).^2 + ([h.x]'-x).^2 );
+                    if min(d) < p.distance,
+                        continue;
+                    end
+                end
+
+                % ok, this one is for keeping
+                h.x(fc,1) = x;
+                h.y(fc,1) = y;
+                h.strength(fc,1) = c;
+                h.descriptor(fc,:) = [Ix(K) Iy(K) Ixy(K)];
+                fc = fc + 1;
+
+                % terminate if we have enough features
+                if fc > N,
+                    break;
+                end
+            end
+            fprintf(' %d corner features saved\n', fc-1);
+        end     % Harris
+
+
+
+        function m = match(f1, f2)
+
+    m = matchobj;
+
+    m.image1 = f1.image;
+            m.image2 = f2.image;
+
+            [matches,d] = siftmatch(f1.descriptor, f2.descriptor);
+
+            % build the vector of matching coordinates
+            m.xy = zeros(numcols(matches), 4);
+            for i=1:numrows(m.xy),
+                k1 = matches(1,i);
+                k2 = matches(2,i);
+                m.xy(i,:) = [f1.x(k1) f1.y(k1) f2.x(k2) f2.y(k2)];
+            end
+            m.strength = d';
+        end  % match
+    end % methods
+end % classdef
