@@ -105,11 +105,12 @@ function [F,labimg] = iblobs(im, varargin)
 	for i=1:nl,
 		binimage = (li == i);
 
-		% determine the blob extent and touch status
+		% determine the blob extent
 		[y,x] = find(binimage);
-
 		minx = min(x); maxx = max(x);
 		miny = min(y); maxy = max(y);
+
+        % it touches the edge if its parent is 0
 		t = (parent(i) == 0);
 
 		if greyscale_opt,
@@ -142,8 +143,10 @@ function [F,labimg] = iblobs(im, varargin)
             ff.edgepoint = [x y];    % a point on the perimeter
 
             if boundary_opt
+                [y,x]
                 ff.edge = edgelist(im, [x y]);
                 ff.perimeter = numrows(ff.edge);
+                ff.perimeter
                 ff.circularity = 4*pi*ff.area/ff.perimeter^2;
             end
 
@@ -163,7 +166,7 @@ function [F,labimg] = iblobs(im, varargin)
 
     % add children property
     for i=1:length(Feature)
-        parent = f.parent;
+        parent = Feature(i).parent;
         for f2=Feature
             if f2.label == parent
                 f2.children = [f2.children i];
