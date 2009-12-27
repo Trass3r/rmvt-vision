@@ -1,32 +1,19 @@
-%ISCALESPACE  Scale-space image sequence
+%SCALESPACE  Return scale-space image sequence
 %
-% [G,L,S] = ISCALESPACE(IM, N, SIGMA) is a scale space image sequence of 
-% length N derived from IM (HxW).  The standard deviation of the smoothing 
-% Gaussian is SIGMA.  At each scale step the variance of the Gaussian increases
-% by SIGMA^2.  The first step in the sequence is the original image.
+%   [G,L,scale] = scalespace(im, n);
+%   [G,L,scale] = scalespace(im, n, sigma);
 %
-% G (HxWxN) is the scale sequence, L (HxWxN) is the absolute value of the 
-% Laplacian of Gaussian (LoG) of the scale sequence, corresponding to each 
-% step of the sequence, and S (Nx1) is the vector of scales.
+% where im is the input image, n the length of the scale space sequence, and sigma
+% is the width of the Gaussian.  At each scale step the variance of the Gaussian
+% increases by sigma^2.  The first step in the sequence is the original image.
 %
-% [G,L,S] = ISCALESPACE(IM, N) as above but SIGMA=1.
+% L is the absolute value of the Laplacian of the scale sequence, G is the scale sequence,
+% and scale is the vector of scales used at each step of the sequence.
 %
-% Examples::
-%  Create a scale-space image sequence
-%         im = iread('lena.png', 'double', 'grey');
-%         [G,L,s] = iscalespace(im, 50, 2);
-%  Then find scale-space maxima, an array of ScalePointFeature objects.
-%         f = iscalemax(L, s);
-%  Look at the scalespace volume
-%         slice(L, [], [], 5:10:50); shading interp
-%
-% Notes::
-% - The Laplacian is approximated by the the difference of adjacent Gaussians.
-%
-% See also ISCALEMAX, ISMOOTH, ILAPLACE, KLOG.
+% SEE ALSO: ismooth, ilaplace
 
 
-% Copyright (C) 1993-2011, by Peter I. Corke
+% Copyright (C) 1995-2009, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -45,11 +32,12 @@
 
 function [G, L, S] = scalespace(im, n, sigma)
 
-    if nargin < 3
+    if nargin < 3,
         sigma = 1;
     end
 
     g(:,:,1) = im;
+    %lap(:,:,1) = abs( ilaplace(im, [], 'valid') );
     scale = 0.5;
     scales = scale;
     for i=1:n-1,
@@ -57,6 +45,7 @@ function [G, L, S] = scalespace(im, n, sigma)
         scale = sqrt(scale^2 + sigma^2);
         scales = [scales; scale];
         g(:,:,i+1) = im;
+        %lap(:,:,i+1) = scale^2 * ( ilaplace(im, [], 'valid') );
         lap(:,:,i) = scale^2 * ( g(:,:,i+1) - g(:,:,i) );
     end
 
