@@ -197,16 +197,16 @@ classdef FishEyeCamera < Camera
         end
 
         % do the fisheye projection
-        function uv = project(c, P, Tcam)
+        function uv = project(c, P, Tobj)
 
             np = numcols(P);
                 
             if nargin < 3,
-                Tcam = eye(4,4);
+                Tobj = eye(4,4);
             end
             
             % transform all the points to camera frame
-            X = Tcam * e2h(P);         % project them
+            X = inv(c.Tcam) * Tobj * e2h(P);         % project them
 
             R = colnorm(X(1:3,:));
             phi = atan2( X(2,:), X(1,:) );
