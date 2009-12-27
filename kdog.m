@@ -35,20 +35,25 @@ function m = kdog(sigma1, sigma2, w)
 
     % sigma2 > sigma1
     if nargin == 1
-        sigma2 = sigma1*1.6;
-        w = ceil(3*sigma1);
+        k = sigma1/sqrt(2+sigma1^2);
+        sigma2 = sigma1/k;
+        w = ceil(3*sigma2);
     elseif nargin == 2
         w = sigma2;
-        sigma2 = sigma1*1.6;
+        k = sigma1/sqrt(2+sigma1^2);
+        sigma2 = sigma1/k;
+        sigma2
     elseif nargin == 3
         if sigma2 < sigma1
             t = sigma1;
             sigma1 = sigma2;
             sigma2 = t;
         end
+        w = ceil(3*sigma2);
     end
 
-	m1 = kgauss(sigma1, w);
-	m2 = kgauss(sigma2, w);
+    % sigma2 > sigma1
+	m1 = kgauss(sigma1, w);     % thin kernel
+	m2 = kgauss(sigma2, w);     % wide kernel
 
 	m = m2 - m1;
