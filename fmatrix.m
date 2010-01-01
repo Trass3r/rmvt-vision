@@ -29,7 +29,7 @@
 
 
 
-function [F, resid] = fmatrix(p1, p2)
+function [F,resid] = fmatrix(p1, p2)
 
     % RANSAC integration
     if isstruct(p1)
@@ -163,6 +163,7 @@ function out = ransac_driver(ransac)
     switch cmd
     case 'size'
         % return sample size
+        % 7 is technically possible but results are not so good...
         out.s = 8;
     case 'condition'
         if numrows(ransac.X) == 4
