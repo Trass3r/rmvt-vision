@@ -12,8 +12,11 @@ function c2 = ipaste(c, pattern, topleft, opt)
         top = topleft(2);       % y
     end
 
-    if (top+ph > h) || (left+pw) > w
-        error('pattern falls off edge');
+    if (top+ph-1) > h
+        error('pattern falls off bottom edge');
+    end
+    if (left+pw-1) > w
+        error('pattern falls off right edge');
     end
 
     if np > nc
