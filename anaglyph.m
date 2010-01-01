@@ -99,17 +99,22 @@ function anaglyph = anaglyph(left, right, colors, disp)
 function out = ag_insert(in, im, c)
 
     out = in;
+    % map single letter color codes to image planes
     switch c,
     case 'r'
-        out(:,:,1) = im;
+        out(:,:,1) = im;        % red
     case 'g'
-        out(:,:,2) = im;
+        out(:,:,2) = im;        % green
     case 'b'
+        % blue
         out(:,:,3) = im;
     case 'c'
-        out(:,:,2) = im;
+        out(:,:,2) = im;        % cyan
         out(:,:,3) = im;
     case 'm'
-        out(:,:,1) = im;
+        out(:,:,1) = im;        % magenta
         out(:,:,3) = im;
+    case 'o'
+        out(:,:,1) = im;        % orange
+        out(:,:,2) = im;
     end
