@@ -179,12 +179,13 @@ function [I,info] = iread(filename, varargin)
 end
 
 function im = loadimg(name, opt)
-    if opt.debug,
-        fprintf('loading %s\n', name);
-    end
 
     % now we read the image
     im = imread(name);
+
+    if opt.debug,
+        fprintf('loaded %s, %dx%d\n', name, size(im,2), size(im,1));
+    end
 
     % optionally gamma correct it
     if ~isempty(opt.gamma)
