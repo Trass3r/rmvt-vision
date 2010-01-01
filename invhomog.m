@@ -35,40 +35,41 @@
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
 function solutions = invhomog(H, K)
-    %condition
-    H = inv(K) * H * K;	
 
+    % normalize H so that the second singular value is one
     [U,S,V] = svd(H);
+    H = H/S(2,2);
     
-    if S(2,2) ~= 1,
-        fprintf('normalizing H\n');
-        H = H / S(2,2);
-        [U,S,V] = svd(H);
-    end
+    % compute the SVD of the symmetric matrix H'*H = VSV'
+    [U,S,V] = svd(H'*H);
         
-    
+    % ensure V is right-handed
     if det(V) < 0,
         fprintf('det(V) was < 0\n');
         V = -V;
     end
-    s1 = S(1,1)^2;
-    s3 = S(3,3)^2;
+
+    % get the squared singular values
+    s1 = S(1,1);
+    s3 = S(3,3);
 
 	v1 = V(:,1); v2 = V(:,2); v3 = V(:,3);
-    u1 = (sqrt(1-s3)*v1 + sqrt(s1-1)*v3) / sqrt(s1-s3);
-    u2 = (sqrt(1-s3)*v1 - sqrt(s1-1)*v3) / sqrt(s1-s3);
 
-	U1 = [v2 u1 cross(v2,u1)];
-    W1 = [H*v2 H*u1 cross(H*v2, H*u1)];
+    % compute orthogonal unit vectors
+    u1 = (sqrt(1-s3)*v1 + sqrt(s1-1)*v3) / sqrt(s1-s3)
+    u2 = (sqrt(1-s3)*v1 - sqrt(s1-1)*v3) / sqrt(s1-s3)
+
+	U1 = [v2 u1 cross(v2,u1)]
+    W1 = [H*v2 H*u1 skew(H*v2)*H*u1]
     
-    U2 = [v2 u2 cross(v2,u2)];
-    W2 = [H*v2 H*u2 cross(H*v2, H*u2)];
-        
-    
+    U2 = [v2 u2 cross(v2,u2)]
+    W2 = [H*v2 H*u2 skew(H*v2)*H*u2]
+
+    % compute the rotation matrices
     R1 = W1*U1';
     R2 = W2*U2';
-    
-    % build the solutins, discard those with negative plane normals
+
+    % build the solutions, discard those with negative plane normals
     n = cross(v2, u1);
     if n(3) > 0,
         sol(1).n = n;
