@@ -29,7 +29,10 @@ classdef FeatureList < handle
             disp([inputname(1), ' = '])
             disp(' ');
             if length(f) > 20
-                disp(sprintf('%d features (listing suppressed)\n', length(f.x)));
+                disp(sprintf('%d features (listing suppressed), properties:\n', length(f.x)));
+                for property=fieldnames(f)'
+                    fprintf('  %s\n', property{1});
+                end
             else
                 disp( char(f) );
             end
@@ -61,45 +64,60 @@ classdef FeatureList < handle
         % f.plot('circle', colorspec)
         % f.plot('disk', colorspec, options)
         % f.plot('arrow', linespec)
-        function plot(features, varargin)
+        function plot(f, varargin)
             holdon = ishold;
             hold on
 
             if nargin > 1
                 switch (varargin{1})
                 case 'circle'
-                    if ~isfield(f, 'scale') || isempty(f.scale)
+                    try
+                        if isempty(f.scale)
+                            error('feature has no scale to draw a circle');
+                        end
+                    catch
                         error('feature has no scale to draw a circle');
                     end
-                    for f=features
-                        circle([f.x, f.y], f.scale, varargin{:});
-                    end
-                    if ~isempty(f.theta)
-                        plot([f.x, f.x+f.scale*cos(f.theta)], [f.y, f.y+f.scale*sin(f.theta)], ...
-                            varargin{2:end});
+                    circle([f.x, f.y], f.scale, varargin{2:end});
+                    try
+                        if ~isempty(f.theta)
+                            for i=1:numrows(f.x);
+                                plot([f.x(i), f.x(i)+f.scale(i)*cos(f.theta(i))], ...
+                                    [f.y(i), f.y(i)+f.scale(i)*sin(f.theta(i))], ...
+                                    varargin{2:end});
+                            end
+                        end
+                    catch
+                        return
                     end
                 case 'disk'
-                    if ~isfield(f, 'scale') || isempty(f.scale)
+                    try
+                        if isempty(f.scale)
+                            error('feature has no scale to draw a disk');
+                        end
+                    catch
                         error('feature has no scale to draw a disk');
                     end
-                    for f=features
-                        imarker([f.x, f.y], 'circle', 'size', f.scale, 'fillcolor', varargin{:});
+
+                    for i=1:numrows(f.x);
+                        imarker([f.x(i), f.y(i)], 'circle', 'size', f.scale(i), 'fillcolor', varargin{:});
                     end
                 case 'arrow'
-                    if ~isfield(f, 'scale') || isempty(f.scale) || ~isfield(f, 'theta') || isempty(f.theta)
+                    try
+                        if isempty(f.scale) || isempty(f.theta)
+                            error('feature has no scale or theta to draw an arrow');
+                        end
+                    catch
                         error('feature has no scale or theta to draw an arrow');
                     end
-                    for f=features
-                        quiver(f.x, f.y, f.scale*cos(f.theta), f.scale*sin(f.theta), varargin{2:end});
-                    end
+                    quiver(f.x, f.y, f.scale.*cos(f.theta), ...
+                            f.scale.*sin(f.theta), varargin{2:end});
                 otherwise
-                    for f=features
-                        plot(f.x, f.y, varargin{:});
-                    end
+                    plot(f.x, f.y, varargin{:});
                 end
             else
                 % no arguments, default point plot
-                for f=features
+                for f=f
                     plot(f.x, f.y, 'gs');
                 end
             end
@@ -122,13 +140,22 @@ classdef FeatureList < handle
         %
         % this indexing system was designed by a hamster.
 
-        function ret = subsref(p, S)
+        function varargout = subsref(p, S)
             if S(1).type == '.'
                 % come here on *any* class method invocation or unsubscripted
                 % property reference, eg. obj.method, obj.property, obj()
                 if ismethod(p, S(1).subs)
                     % if it was a method call then get Matlab to do it
-                    builtin('subsref', p, S);
+                    %
+                    % but things just get worse (aaaaaargh), we don't know how many
+                    % arguments the method will return so we use an ugly trick from
+                    % http://blogs.mathworks.com/loren/2009/04/14/convenient-nargout-behavior/
+                    [c{1:0}] = builtin('subsref', p, S);
+                    if ~isempty(c)
+                        for i=1:length(c)
+                            varargout{1} = c{1};
+                        end
+                    end
                 else
                     % if it was a property reference, eg. obj.property, obj.prop(a,b)
                     % get Matlab to find the answer, which we return
@@ -140,7 +167,7 @@ classdef FeatureList < handle
                 % range of each of its properties
 
                 % first we instantiate a new object of the same type
-                ret = feval( class(p) );
+                varargout{1} = feval( class(p) );
 
                 % for each property
                 for prop=fieldnames(p)'
