@@ -24,7 +24,7 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-function H = homography(X, p2, Ht)
+function [H,resid] = homography(X, p2, Ht)
 
     % RANSAC integration
     if isstruct(X)
@@ -50,11 +50,21 @@ function H = homography(X, p2, Ht)
 
     % linear estimation step
     H = vgg_H_from_x_lin(p1, p2);
-    
+
     % non-linear refinement
-    if numrows(X) ~= 6,
+    if numrows(X) ~= 6 && numcols(p1) >= 8
         % dont do it if invoked with 1 argument (from RANSAC)
         H = vgg_H_from_x_nonlin(H, e2h(p1), e2h(p2));
+    end
+
+    if numrows(p1) == 3
+        d = h2e(H*p1) - h2e(p2);
+    else
+        d = homtrans(H,p1) - p2;
+    end
+    resid = max(colnorm(d));
+    if nargout < 2,
+        fprintf('maximum residual %.4g\n', resid);
     end
 end
 
@@ -99,12 +109,13 @@ function out = ransac_driver(ransac)
         out.X = [p1; p2];
         out.misc = {};
     case 'decondition'
+        out.theta = ransac.theta;
     case 'valid'
         out.valid = ~isdegenerate(ransac.X);
     case 'error'
         [out.inliers, out.theta] = homogdist2d(ransac.theta, ransac.X, ransac.t);
     case 'estimate'
-        [out.theta] = homography(ransac.X);
+        [out.theta, out.resid] = homography(ransac.X);
     otherwise
         error('bad RANSAC command')
     end
