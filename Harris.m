@@ -74,18 +74,22 @@
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
 
-classdef iharris < FeatureList
+classdef Harris < FeatureList
 
+    properties
+        corner_image
+    end
+    
     methods
 
         % constructor
-        function h = iharris(im, varargin)
+        function h = Harris(im, varargin)
 
             % parse options into parameter struct
             p.k = 0.04;
             p.deriv = kdgauss(2);
             p.distance = 0;
-            p.noble = false;
+            p.detector = 'harris';
 
             p.cmin = 0;
             p.cMinThresh = 0.0;
@@ -110,9 +114,9 @@ classdef iharris < FeatureList
                 case 'distance'
                     p.distance = varargin{argc+1}; argc = argc+1;
                 case 'noble'
-                    p.noble = true;
-                case 'harris'
-                    p.noble = false;
+                    p.detector = 'noble';
+                case 'klt'
+                    p.detector = 'klt';
                 case 'verbose'
                     p.verbose = true;
 
@@ -158,12 +162,20 @@ classdef iharris < FeatureList
                 Ixy = ismooth(Ixy, p.sigma_i);
             end
 
+            [nr,nc] = size(Ix);
+            npix = nr*nc;
 
             % computer cornerness
-            if p.noble,
-                rawc = (Ix .* Iy - Ixy.^2) ./ (Ix + Iy);
-            else
+            if strcmp(p.detector, 'harris')
                 rawc = (Ix .* Iy - Ixy.^2) - p.k * (Ix + Iy).^2;
+            elseif strcmp(p.detector, 'noble')
+                rawc = (Ix .* Iy - Ixy.^2) ./ (Ix + Iy);
+            elseif strcmp(p.detector, 'klt')
+                rawc = zeros(size(Ix));
+                for i=1:npix
+                    lambda = eig([Ix(i) Ixy(i); Ixy(i) Iy(i)]);
+                    rawc(i) = min(lambda);
+                end
             end
 
             % compute maximum value around each pixel
@@ -173,16 +185,16 @@ classdef iharris < FeatureList
             cindex = find(rawc > cmax);
 
             % remove those near edges
-            [nr,nc] = size(Ix);
+
+
             [y, x] = ind2sub(size(rawc), cindex);
             e = p.edgegap;
             sel = (x>e) & (y>e) & (x < (nc-e)) & (y < (nr-e));
             cindex = cindex(sel);
 
-            p.npix = nr*nc;
 
             fprintf('%d corners found (%.1f%%), ', length(cindex), ...
-                length(cindex)/p.npix*100);
+                length(cindex)/npix*100);
             N = min(length(cindex), p.nfeat);
 
             % sort into descending order
@@ -199,12 +211,12 @@ classdef iharris < FeatureList
                 % we apply two termination threshold conditions:
 
                 % 1. corner strength must exceed an absolute minimum
-                if c < p.cmin,
+                if c < p.cmin
                     break;
                 end
 
                 % 2. corner strength must exceed a fraction of the maximum value
-                if c/cmax < p.cMinThresh,
+                if c/cmax < p.cMinThresh
                     break;
                 end
 
@@ -214,15 +226,15 @@ classdef iharris < FeatureList
                 % enforce separation between corners
                 % TODO: strategy of Brown etal. only keep if 10% greater than all within radius
                 if (p.distance > 0) && (i>1)
-                    d = sqrt( ([h.y]'-y).^2 + ([h.x]'-x).^2 );
+                    d = sqrt( ([h.v]'-y).^2 + ([h.u]'-x).^2 );
                     if min(d) < p.distance,
                         continue;
                     end
                 end
 
                 % ok, this one is for keeping
-                h.x(fc) = x;
-                h.y(fc) = y;
+                h.u(fc) = x;
+                h.v(fc) = y;
                 h.strength(fc) = c;
                 h.descriptor(fc,:) = [Ix(K) Iy(K) Ixy(K)];
                 fc = fc + 1;
@@ -234,7 +246,9 @@ classdef iharris < FeatureList
             end
             fprintf(' %d corner features saved\n', fc-1);
             f.image = im;
+
             h.corner_image = rawc;
+            
         end     % Harris
 
 
