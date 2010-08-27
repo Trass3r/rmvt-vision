@@ -151,7 +151,9 @@ function [I,info] = iread(filename, varargin)
             end
         else
             % simple file, no wildcard
-            if exist(filename)
+            if strncmp(filename, 'http://', 7)
+                im = loadimg(filename, opt);
+            elseif exist(filename)
                 im = loadimg(filename, opt);
             else
                 % see if it exists on the Matlab search path
@@ -159,7 +161,7 @@ function [I,info] = iread(filename, varargin)
                 if length(filename) > 0
                     im = loadimg(filename, opt);
                 else
-                    error('no such file');
+                    error(sprintf('cant open file: %s', filename));
                 end
             end
         end
