@@ -21,5 +21,4 @@ function m = zssd(w1, w2)
 	w2 = w2 - mean(w2(:));
 
 	m = (w1-w2).^2;
-	
-	m = sqrt(sum(m(:)) / prod(size(w1)));
+    m = sum(m(:));
