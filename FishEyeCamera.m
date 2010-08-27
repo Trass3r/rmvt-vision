@@ -145,7 +145,7 @@ classdef FishEyeCamera < Camera
                 if isempty(c.k)
                     % compute k if not specified, so that hemisphere fits into
                     % image plane
-                    r = min([(c.npix-c.pp).*c.s, c.pp.*c.s]);
+                    r = min([(c.npix-c.pp).*c.rho, c.pp.*c.rho]);
                     switch c.model
                     case 'equiangular'
                         c.k = r / (pi/2);
@@ -170,12 +170,12 @@ classdef FishEyeCamera < Camera
             case 'projection'
                 c.model = args{2}; n = 1;
             case 'default'
-                c.s = [10e-6, 10e-6];      % square pixels 10um side
+                c.rho = [10e-6, 10e-6];      % square pixels 10um side
                 c.npix = [1024, 1024];  % 1Mpix image plane
                 c.pp = [512, 512];      % principal point in the middle
                 c.limits = [0 1024 0 1024];
                 c.name = 'default';
-                r = min([(c.npix-c.pp).*c.s, c.pp.*c.s]);
+                r = min([(c.npix-c.pp).*c.rho, c.pp.*c.rho]);
                 c.k = 2*r/pi;
                 n = 0;
             otherwise
@@ -197,16 +197,21 @@ classdef FishEyeCamera < Camera
         end
 
         % do the fisheye projection
-        function uv = project(c, P, Tobj)
+        function uv = project(c, P, Tobj, Tcam)
 
             np = numcols(P);
                 
-            if nargin < 3,
-                Tobj = eye(4,4);
+            if nargin < 4
+                Tcam = c.Tcam;
+            end
+            if nargin == 3,
+                if isempty(Tobj)
+                    C = c.C(Tcam);
+                end
             end
             
             % transform all the points to camera frame
-            X = inv(c.Tcam) * Tobj * e2h(P);         % project them
+            X = inv(Tcam) * Tobj * e2h(P);         % project them
 
             R = colnorm(X(1:3,:));
             phi = atan2( X(2,:), X(1,:) );
@@ -228,7 +233,7 @@ classdef FishEyeCamera < Camera
             x = r .* cos(phi);
             y = r .* sin(phi);
 
-            uv = [x/c.su+c.pp(1); y/c.sv+c.pp(2)];
+            uv = [x/c.rho(1)+c.pp(1); y/c.rho(2)+c.pp(2)];
 
             if c.noise
                 % add Gaussian noise with specified standard deviation
