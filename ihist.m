@@ -73,10 +73,21 @@ function [h,x] = ihist(im, varargin)
     if isinteger(im)
         [hh,xx] = fhist(im);
     else
-        [hh,xx] = hist(im(:), N);
+        z = im(:);
+        k = find(isnan(z));
+        z(k) = [];
+        if length(k) > 0
+            warning('%d NaNs removed', length(k));
+        end
+        k = find(isinf(z));
+        z(k) = [];
+        if length(k) > 0
+            warning('%d Infs removed', length(k));
+        end
+        [hh,xx] = hist(z, N);
     end
 
-    % computer CDF if requested
+    % compute CDF if requested
     if (nargin > 1) && strcmp(varargin(1), 'cdf')
         hh = cumsum(hh);
     elseif (nargin > 1) && strcmp(varargin(1), 'normcdf')
