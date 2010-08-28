@@ -1,6 +1,6 @@
-%IINT Convert double image to integer class
+%IINT Convert image to integer class
 %
-%   im = iint(dim, class)
+%   im = iint(in, class)
 %
 %   Convert the double precision image to the specificed integer class.
 %   In the input image each pixel is in the range 0 to 1.  The integer
@@ -9,14 +9,10 @@
 %
 %       im = iint(dim, 'uint8');
 
-function im = iint(dim, cls)
+function im = iint(in, cls)
 
     if nargin < 2
         cls = 'uint8';
     end
 
-    if isfloat(dim)
-        im = cast(round( dim * double(intmax(cls))), cls);
-    else
-        im = dim;
-    end
+    im = cast(round( in * double(intmax(cls))), cls);
