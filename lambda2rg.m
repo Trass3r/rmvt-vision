@@ -1,23 +1,18 @@
-%LAMBDA2RGB RGB chromaticity coordinates
+%CCRGB	RGG chromaticity coordinates
 %
-% RGB = LAMBDA2RG(LAMBDA) is the rg-chromaticity coordinate (1x2) for 
-% illumination at the specific wavelength LAMBDA [m]. If LAMBDA is a
-% vector (Nx1), then P (Nx2) is a vector whose elements are the chromaticity
-% coordinates at the corresponding elements of LAMBDA.
+%	rgb = CCRGB(lambda)
+%		Compute rg chromaticity coordinates for a 
+%		specific wavelength.
 %
-% RGB = LAMBDA2RG(LAMBDA, E) is the rg-chromaticity coordinate (1x2) for an 
-% illumination spectrum E (Nx1) defined at corresponding wavelengths
-% LAMBDA (Nx1).
+%	rgb = CCRGB(lambda, e)
+%		Compute rg chromaticity coordinates for a spectral
+%		response e, where elements of e correspond to the wavelength
+%		lambda.
 %
-% References::
-%  - Robotics, Vision & Control, Section 10.2,
-%    P. Corke, Springer 2011.
+% SEE ALSO: CMFRGB, CCXYZ
 %
-% See also CMFRGB, LAMBDA2XY.
 
-
-
-% Copyright (C) 1993-2011, by Peter I. Corke
+% Copyright (C) 1995-2009, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -34,11 +29,11 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 function [r,g] = lambda2rg(lambda, e)
-    if nargin == 1,
+	if nargin == 1,
         RGB = cmfrgb(lambda);
-    elseif nargin == 2,
+	elseif nargin == 2,
         RGB = cmfrgb(lambda, e);
-    end
+	end
     cc = tristim2cc(RGB);
 
     if nargout == 1

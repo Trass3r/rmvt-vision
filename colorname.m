@@ -101,7 +101,7 @@ function r = name2rgb(table, s, opt)
                 r
                 XYZ = colorspace('RGB->XYZ', r);
                 XYZ
-                r = xyz2xy(XYZ);
+                r = tristim2cc(XYZ);
                 r
             end
             return;
