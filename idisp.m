@@ -7,6 +7,18 @@
 %       'signed'
 %       'flatten'
 %       'colors', N
+%            'nogui'
+%            'noframe'
+%            'ynormal'
+%            'plain' no frame or gui
+%            'noaxes'
+%            'square'
+%            'bar'
+%            'print'
+%            'wide'
+%            'colormap'
+%            {'invert', 'signed', 'invsigned', 'random'}
+%            'flatten'
 %
 %	Display the image in current figure and create buttons for:
 %		* region zooming
@@ -52,12 +64,26 @@ function idisp(im, varargin)
         opt.colormap = 'grey';
         opt.print = [];
         opt.bar = false;
+        opt.frame = true;
+        opt.ynormal = false;
+        opt.cscale = [];
+        opt.xdata = [];
+        opt.ydata = [];
         argc = 1;
         while argc <= length(varargin)
             switch lower(varargin{argc})
             case 'colors'
                 ncmap = varargin{argc+1}; argc = argc+1;
+            case 'cscale'
+                opt.cscale = varargin{argc+1}; argc = argc+1;
             case 'nogui'
+                opt.gui = false;
+            case 'noframe'
+                opt.frame = false;
+            case 'ynormal'
+                opt.ynormal = true;
+            case 'plain'
+                opt.frame = false;
                 opt.gui = false;
             case 'noaxes'
                 opt.axes = false;
@@ -77,6 +103,9 @@ function idisp(im, varargin)
             case {'invert', 'signed', 'invsigned', 'random'}
                 % colormap options
                 opt.colormap = lower(varargin{argc});
+            case 'xydata'
+                opt.xdata = varargin{argc+1}; argc = argc+1;
+                opt.ydata = varargin{argc+1}; argc = argc+1;
             otherwise
                 error( sprintf('unknown option <%s>', varargin{argc}));
             end
@@ -87,80 +116,125 @@ function idisp(im, varargin)
 
         % display the image
 		clf
-		hi = image(im);
+        ud = [];
+        
+        if iscell(im)
+            % image is a cell array
+            width = 0;
+            height = 0;
+            for i=1:length(im)
+                [nr,nc] = size(im{i});
+                width = width + nc;
+                height = max(height, nr);
+                ud.widths(i) = width;
+            end
+            composite = zeros(height, width);
+            
+            u = 1;
+            for i=1:length(im)
+                composite = ipaste(composite, im{i}, [u 1]);
+                u = u + size(im{i}, 2);
+            end
+            im = composite;
+        end
+        ud.size = size(im);
+        
+        if ~isempty(opt.xdata)
+            hi = image(opt.xdata, opt.ydata, im);
+        else
+            hi = image(im);
+        end
 
         if opt.wide
             set(gcf, 'units', 'norm');
             pos = get(gcf, 'pos');
             set(gcf, 'pos', [0.0 pos(2) 1.0 pos(4)]);
         end
-        switch opt.colormap
-        case 'random'
-            colormap(rand(ncmap,3));
-        case 'grey'
-            colormap(gray(ncmap));
-        case 'invert'
-                % invert the monochrome color map: black <-> white
-            cmap = gray(ncmap);
-            colormap( cmap(end:-1:1,:) );
-        case {'signed', 'invsigned'}
-                % signed color map, red is negative, blue is positive, zero is black
-                % inverse signed color map, red is negative, blue is positive, zero is white
-            cmap = zeros(ncmap, 3);
-            ncmap = bitor(ncmap, 1);    % ensure it's odd
-            ncm2 = ceil(ncmap/2);
-            if strcmp(opt.colormap, 'signed')
-                % signed color map, red is negative, blue is positive, zero is black
-                for i=1:ncmap
-                    if i > ncm2
-                        cmap(i,:) = [0 0 1] * (i-ncm2) / ncm2;
-                    else
-                        cmap(i,:) = [1 0 0] * (ncm2-i) / ncm2;
+
+        if isstr(opt.colormap)
+            switch opt.colormap
+            case 'random'
+                colormap(rand(ncmap,3));
+            case 'dark'
+                colormap(gray(ncmap)*0.5);
+            case 'grey'
+                colormap(gray(ncmap));
+            case 'invert'
+                    % invert the monochrome color map: black <-> white
+                cmap = gray(ncmap);
+                colormap( cmap(end:-1:1,:) );
+            case {'signed', 'invsigned'}
+                    % signed color map, red is negative, blue is positive, zero is black
+                    % inverse signed color map, red is negative, blue is positive, zero is white
+                cmap = zeros(ncmap, 3);
+                ncmap = bitor(ncmap, 1);    % ensure it's odd
+                ncm2 = ceil(ncmap/2);
+                if strcmp(opt.colormap, 'signed')
+                    % signed color map, red is negative, blue is positive, zero is black
+                    for i=1:ncmap
+                        if i > ncm2
+                            cmap(i,:) = [0 0 1] * (i-ncm2) / ncm2;
+                        else
+                            cmap(i,:) = [1 0 0] * (ncm2-i) / ncm2;
+                        end
+                    end
+                else
+                    % inverse signed color map, red is negative, blue is positive, zero is white
+                    for i=1:ncmap
+                        if i > ncm2
+                            s = (i-ncm2)/ncm2;
+                            cmap(i,:) = [1-s 1-s 1];
+                        else
+                            s = (ncm2-i)/ncm2;
+                            cmap(i,:) = [1 1-s 1-s];
+                        end
                     end
                 end
-            else
-                % inverse signed color map, red is negative, blue is positive, zero is white
-                for i=1:ncmap
-                    if i > ncm2
-                        s = (i-ncm2)/ncm2;
-                        cmap(i,:) = [1-s 1-s 1];
-                    else
-                        s = (ncm2-i)/ncm2;
-                        cmap(i,:) = [1 1-s 1-s];
-                    end
+                mn = min(im(:));
+                mx = max(im(:));
+                set(gca, 'CLimMode', 'Manual');
+                if mn < 0 && mx > 0
+                    a = max(-mn, mx);
+                    set(gca, 'CLim', [-a a]);
+                elseif mn > 0
+                    set(gca, 'CLim', [-mx mx]);
+                elseif mx < 0
+                    set(gca, 'CLim', [-mn mn]);
                 end
+                colormap(cmap);
+            otherwise
+                colormap( feval(opt.colormap) );
             end
-            mn = min(im(:));
-            mx = max(im(:));
-            set(gca, 'CLimMode', 'Manual');
-            if mn < 0 && mx > 0
-                a = max(-mn, mx);
-                set(gca, 'CLim', [-a a]);
-            elseif mn > 0
-                set(gca, 'CLim', [-mx mx]);
-            elseif mx < 0
-                set(gca, 'CLim', [-mn mn]);
-            end
-            colormap(cmap);
-        otherwise
-            colormap( feval(opt.colormap) );
+        else
+            colormap(opt.colormap);
         end
 
         if opt.bar
             colorbar
         end
-        if opt.axes
-            xlabel('u (pixels)');
-            ylabel('v (pixels)');
+        if opt.frame
+            if opt.axes
+                xlabel('u (pixels)');
+                ylabel('v (pixels)');
+            else
+                set(gca, 'Xtick', [], 'Ytick', []);
+            end
         else
-            set(gca, 'Xtick', [], 'Ytick', []);
+            set(gca, 'Visible', 'off');
         end
         if opt.square
             set(gca, 'DataAspectRatio', [1 1 1]);
         end
-        figure(gcf);    % bring to top
+        if opt.ynormal
+            set(gca, 'YDir', 'normal');
+        end
         set(hi, 'CDataMapping', 'scaled');
-                
+        if ~isempty(opt.cscale)
+            set(gca, 'Clim', opt.cscale);
+        end
+        
+        figure(gcf);    % bring to top
+
         if opt.print
             print(opt.print, '-depsc');
             return
@@ -174,7 +248,9 @@ function idisp(im, varargin)
                     'HorizontalAlignment', 'left', ...
                     'string', ' Machine Vision Toolbox for Matlab  ' ...
                 );
-            ud = [gca htf hi axis];
+            ud.axis = gca;
+            ud.panel = htf;
+            ud.image = hi;
             set(gca, 'UserData', ud);
             set(hi, 'UserData', ud);
 
@@ -227,6 +303,8 @@ function idisp(im, varargin)
             set(gcf, 'WindowButtonDownFcn', 'idisp(''down'')');
             set(gcf, 'WindowButtonUpFcn', 'idisp(''up'')');
         end
+        set(gca, 'UserData', ud);
+
 		return;
 	end
 
@@ -236,15 +314,17 @@ function idisp(im, varargin)
 		% mouse push or motion request
 		h = get(gcf, 'CurrentObject'); % image
 		ud = get(h, 'UserData');		% axis
-		h_ax = ud(1);	% axes
-		tf = ud(2);	% string field
-		hi = ud(3);	% the image
-		cp = get(h_ax, 'CurrentPoint');
-		x = round(cp(1,1));
-		y = round(cp(1,2));
-		imdata = get(hi, 'CData');
-		set(tf, 'String', sprintf(' (%d, %d) = %s', x, y, num2str(imdata(y,x,:), 4)));
-		drawnow
+        
+        if ~isempty(ud)
+            cp = get(ud.axis, 'CurrentPoint');
+            x = round(cp(1,1));
+            y = round(cp(1,2));
+            try
+                imdata = get(ud.image, 'CData');
+                set(ud.panel, 'String', sprintf(' (%d, %d) = %s', x, y, num2str(imdata(y,x,:), 4)));
+                drawnow
+            end
+        end
 	elseif nargin == 1,
 		switch im,
         case 'cleanup'
@@ -262,18 +342,17 @@ function idisp(im, varargin)
 
 		case 'line',
 			h = get(gcf, 'CurrentObject'); % push button
+                        
 			ud = get(h, 'UserData');
-			ax = ud(1);	% axes
-			tf = ud(2);	% string field
-			hi = ud(3);	% the image
-			set(tf, 'String', 'Click first point');
+            
+			set(ud.panel, 'String', 'Click first point');
 			[x1,y1] = ginput(1);
 			x1 = round(x1); y1 = round(y1);
-			set(tf, 'String', 'Click last point');
+			set(ud.panel, 'String', 'Click last point');
 			[x2,y2] = ginput(1);
 			x2 = round(x2); y2 = round(y2);
-			set(tf, 'String', '');
-			imdata = get(hi, 'CData');
+			set(ud.panel, 'String', '');
+			imdata = get(ud.image, 'CData');
 			dx = x2-x1; dy = y2-y1;
 			if abs(dx) > abs(dy),
 				x = x1:x2;
@@ -316,16 +395,13 @@ function idisp(im, varargin)
         case 'histo',
             h = get(gcf, 'CurrentObject'); % push button
 			ud = get(h, 'UserData');
-			ax = ud(1);	% axes
-			hi = ud(3);	% the image;
-			imdata = get(hi, 'CData');
+
+			imdata = get(ud.image, 'CData');
             b = floor(axis);   % bounds of displayed image
             if b(1) == 0,
                 b = [1 b(2) 1 b(4)];
             end
-            ud
-            size(imdata)
-            b
+
             figure
             imdata = double(imdata(b(3):b(4), b(1):b(2),:));
             ihist(imdata);
@@ -361,9 +437,8 @@ function idisp(im, varargin)
 		case 'unzoom',
 			h = get(gcf, 'CurrentObject'); % push button
 			ud = get(h, 'UserData');
-			h_ax = ud(1);	% axes
-			axes(h_ax);
-			axis(ud(4:7));
+			axes(ud.axis);
+			axis([1 ud.size(2) 1 ud.size(1)]);
 
         otherwise
             idisp( imread(z) );
