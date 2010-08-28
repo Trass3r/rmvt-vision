@@ -29,14 +29,18 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-function il = ilaplace(im);
+function il = ilaplace(im, sigma, varargin);
 
     % perform the convolution, same size output image
-	il = conv2(im, klaplace, 'same');
+    if nargin == 1 || isempty(sigma)
+        il = conv2(im, klaplace(), varargin{:});
+    else
+        il = conv2(im, klog(sigma), varargin{:});
+    end
 
-    % set edge pixels to zero
-    il(1,:) = 0;
-    il(end,:) = 0;
-    il(:,1) = 0;
-    il(:,end) = 0;
+%    % set edge pixels to zero
+%    il(1,:) = 0;
+%    il(end,:) = 0;
+%    il(:,1) = 0;
+%    il(:,end) = 0;
 	
