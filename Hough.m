@@ -66,7 +66,7 @@
 classdef Hough < handle
 
     properties
-        Nd
+        Nrho
         Ntheta
         border
         radius
@@ -75,16 +75,16 @@ classdef Hough < handle
         houghThresh
 
         A       % the Hough accumulator
-        d       % the d values
-        theta   % the theta values
-        doffset
-        dscale
+        rho       % the rho values for the centre of each bin vertically
+        theta   % the theta values for the centre of each bin horizontally
+        rho_offset
+        rho_scale
     end
 
     methods
         function h = Hough(IM, varargin)
 
-            h.Nd = 401;
+            h.Nrho = 401;
             h.Ntheta = 400;
             h.edgeThresh = 0.1;
             h.interpWidth = 3;
@@ -98,10 +98,10 @@ classdef Hough < handle
                         nbins = varargin{count+1}; count = count+1;
                         if length(nbins) == 1
                             h.Ntheta = nbins;
-                            h.Nd = nbins;
+                            h.Nrho = nbins;
                          elseif length(nbins) == 2
                             h.Ntheta = nbins(1);
-                            h.Nd = nbins(2);
+                            h.Nrho = nbins(2);
                         else
                             error('1 or 2 elements for nbins');
                         end
@@ -122,7 +122,7 @@ classdef Hough < handle
             end
 
 
-            h.Nd = bitor(h.Nd, 1);            % Nd must be odd
+            h.Nrho = bitor(h.Nrho, 1);            % Nrho must be odd
             h.Ntheta = floor(h.Ntheta/2)*2; % Ntheta must even
             
             if isempty(h.radius)
@@ -159,12 +159,12 @@ classdef Hough < handle
 
         function s = char(h)
             s = sprintf('Hough: nd=%d, ntheta=%d, interp=%dx%d, distance=%d', ...
-                h.Nd, h.Ntheta, h.interpWidth, h.interpWidth, h.radius);
+                h.Nrho, h.Ntheta, h.interpWidth, h.interpWidth, h.radius);
         end
         
         function show(h)
             clf
-            hi = image(h.theta, h.d, h.A/max(max(h.A)));
+            hi = image(h.theta, h.rho, h.A/max(max(h.A)));
             set(hi, 'CDataMapping', 'scaled');
             set(gca, 'YDir', 'normal');
             set(gca, 'Xcolor', [1 1 1]*0.5);
@@ -197,42 +197,15 @@ classdef Hough < handle
             x = [scale(1):scale(2)]';
             y = [scale(3):scale(4)]';
 
-            % p = [d theta]
-            if (nargin > 1) && isscalar(N)
-                p = h.peaks(N);
-            else
-                p = h.peaks();
-            end
+            lines = h.lines();
     
             if (nargin > 1) && ~isscalar(N)
-                p = p(N,:);
+                lines = lines(1:N);
             end
 
             % plot it
-            for i=1:numrows(p),
-                d = p(i,1);
-                theta = p(i,2);
+            lines.plot(varargin{:});
 
-                fprintf('theta = %f, d = %f\n', theta, d);
-                if abs(cos(theta)) > 0.5,
-                    % horizontalish lines
-                    disp('hoz');
-                    hl(i) = plot(x, -x*tan(theta) + d/cos(theta), varargin{:});
-                else
-                    % verticalish lines
-                    disp('vert');
-                    hl(i) = plot( -y/tan(theta) + d/sin(theta), y, varargin{:});
-                end
-            end
-
-            if ~holdon,
-                hold off
-            end
-
-            if nargout > 0,
-                handles = hl;
-            end
-            figure(gcf);        % bring it to the top
         end
         
         
@@ -260,7 +233,7 @@ classdef Hough < handle
         %	hp.interpWidth  width of region used for peak interpolation
         %                                 (default 5)
         %
-        function pp = peaks(h, N)
+        function out = lines(h, N)
             if nargin < 2
                 N = Inf;
             end
@@ -270,7 +243,7 @@ classdef Hough < handle
                 N = Inf;
             end
 
-            [x,y] = meshgrid(1:h.Ntheta, 1:h.Nd);
+            [x,y] = meshgrid(1:h.Ntheta, 1:h.Nrho);
 
             nw2= floor((h.interpWidth-1)/2);
             nr2= floor((h.radius-1)/2);
@@ -292,7 +265,7 @@ classdef Hough < handle
                 [rp,cp] = ind2sub(size(A), where);
                 %fprintf('\npeak height %f at (%d,%d)\n', mx, cp, rp);
                 if h.interpWidth == 0
-                    d = H.d(rp);
+                    d = H.rho(rp);
                     theta = H.theta(cp);
                     p(i,:) = [d theta mx/globalMax];
                 else
@@ -310,9 +283,10 @@ classdef Hough < handle
                     %fprintf('refined %f %f\n', ci, ri);
 
                     % interpolate the line parameter values
-                    d = interp1(h.d, ri);
+                    d = interp1(h.rho, ri);
                     theta = interp1(h.theta, ci, 'linear', 0);
-                    p(i,:) = [d theta mx/globalMax];
+                    %p(i,:) = [d theta mx/globalMax];
+                    L(i) = LineFeature(d, theta, mx/globalMax);
                     %p(i,:)
 
                 end
@@ -323,15 +297,11 @@ classdef Hough < handle
 
             end
             if nargout == 1
-                pp = p;
+                out = L;
             else
-                fprintf(' intercept     theta   strength\n');
-                disp(p);
                 h.show
                 hold on
-                for i=1:numrows(p)
-                    plot(p(i,2), p(i,1), 'go');
-                end
+                plot([L.theta]', [L.rho]', 'go');
                 hold off
             end
         end % peaks
@@ -372,8 +342,8 @@ classdef Hough < handle
 
             inc = 1;
             
-            h.doffset = (h.Nd+1)/2;
-            h.dscale = (h.Nd-1)/2 / dmax;
+            h.rho_offset = (h.Nrho+1)/2;
+            h.rho_scale = (h.Nrho-1)/2 / dmax;
             
             if numcols(XYZ) == 2
                 XYZ = [XYZ ones(numrows(XYZ),1)];
@@ -385,13 +355,13 @@ classdef Hough < handle
             st = sin(h.theta);
             ct = cos(h.theta);
 
-            H = zeros(h.Nd, h.Ntheta);		% create the Hough accumulator
+            H = zeros(h.Nrho, h.Ntheta);		% create the Hough accumulator
 
             % this is a fast `vectorized' algorithm
 
             % evaluate the index of the top of each column in the Hough array
-            col0 = ([1:h.Ntheta]'-1)*h.Nd;
-            %col0_r = [(Nth-1):-1:0]'*Nd + 1;
+            col0 = ([1:h.Ntheta]'-1)*h.Nrho;
+            %col0_r = [(Nth-1):-1:0]'*Nrho + 1;
 
             for xyz = XYZ'
                 x = xyz(1);		% determine (x, y) coordinate
@@ -399,77 +369,21 @@ classdef Hough < handle
                 inc = xyz(3);
                 inc =1 ;
                 
-                d = y * ct + x * st;
+                rho = y * ct + x * st;
                 
-                di = round( d*h.dscale + h.doffset);	% in the range 1 .. Nd
+                di = round( rho*h.rho_scale + h.rho_offset);	% in the range 1 .. Nrho
                 % which elements are within the column
                 %d(d<0) = -d(d<0);
-                %inrange = d<Nd;
+                %inrange = d<Nrho;
 
                 di = di + col0;   	% convert array of d values to Hough indices
                 H(di) = H(di) + inc;	% increment the accumulator cells
             end
 
-            nd2 = (h.Nd-1)/2;
-            h.d = [-nd2:nd2]'/h.dscale;
+            nd2 = (h.Nrho-1)/2;
+            h.rho = [-nd2:nd2]'/h.rho_scale;
         end % xyhough
     
-        function len = seglength(h, edges)
-            p = h.peaks;
-
-            ppp = [];
-
-            for i=1:numrows(p)
-                d = p(i,1); theta = p(i,2);
-                fprintf('d=%f, theta=%f\n', d, theta)
-
-
-                if abs(theta) < pi/4
-                    xmin = 1; xmax = numcols(edges);
-                    m = -tan(theta); c = d/cos(theta);
-                    ymin = round(xmin*m + c);
-                    ymax = round(xmax*m + c);
-                else
-                    ymin = 1; ymax = numrows(edges);
-                    m = -1/tan(theta); c = d/sin(theta);
-                    xmin = round(ymin*m + c);
-                    xmax = round(ymax*m + c);
-                end
-
-
-                line = bresenham(xmin, ymin, xmax, ymax);
-
-                line = line(line(:,2)>=1,:);
-                line = line(line(:,2)<=numrows(edges),:);
-                line = line(line(:,1)>=1,:);
-                line = line(line(:,1)<=numcols(edges),:);
-
-                contig = 0;
-                contig_max = 0;
-                total = 0;
-                missing = 0;
-                for pp=line'
-                    pix = edges(pp(2), pp(1));
-                    if pix == 0
-                        missing = missing+1;
-                        if missing > 5
-                            contig_max = max(contig_max, contig);
-                            contig = 0;
-                        end
-                    else
-                        contig = contig+1;
-                        total = total+1;
-                        missing = 0;
-                    end
-                    %ee(pp(2), pp(1))=1;
-                end
-                contig_max = max(contig_max, contig);
-
-                fprintf('  strength=%f, len=%f, total=%f\n', p(i,3), contig_max, total);
-                ppp = [ppp; p(i,:) contig_max];
-            end
-            len = ppp;
-        end
 
     end % methods
     
