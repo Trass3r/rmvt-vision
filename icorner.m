@@ -1,84 +1,62 @@
-%ICORNER Corner detector
+%IHARRIS		Harris corner detector
 %
-% F = ICORNER(IM, OPTIONS) is a vector of PointFeature objects describing
-% corner features detected in the image IM.  This is a non-scale space detector 
-% and by default the Harris method is used but Shi-Tomasi and Noble are also
-% supported.
+%	hp = iharris
+%	F = iharris(im)
+%	F = iharris(im, hp)
+%	[F,C] = iharris(im, hp)
 %
-% If IM is an image sequence a cell array of PointFeature vectors for the 
-% correspnding frames of IM.
+%	The return value is a vector of structures, each with the elements:
+%		F.x	x-coordinate of feature
+%		F.y	y-coordinate of feature
+%		F.Ix	the smoothed x-gradient at the point
+%		F.Iy	the smoothed y-gradient at the point
+%		F.Ixy	the smoothed xy-gradient at the point
+%		F.c	corner strength at the point
 %
-% The PointFeature object has many properties including:
-%  u            horizontal coordinate
-%  v            vertical coordinate
-%  strength     corner strength
-%  descriptor   corner descriptor (vector)
+%  C is the cornerness image corresponding to im.
 %
-% See PointFeature for full details
+% The corners are processed in order from strongest to weakest.  The function
+% stops when:
+%	- the corner strength drops below P.cmin
+%	- the corner strenght drops below P.cMinThresh * strongest corner
+%	- the list of corners is exhausted
 %
-% Options::
-% 'detector',D      choose the detector where D is one of 'harris' (default),
-%                   'noble' or 'klt'
-% 'sigma',S         kernel width for smoothing (default 2)
-% 'deriv',D         kernel for gradient (default kdgauss(2))
-% 'cmin',CM         minimum corner strength
-% 'cminthresh',CT   minimum corner strength as a fraction of maximum corner 
-%                   strength
-% 'edgegap',E       don't return features closer than E pixels to the edge of 
-%                   image (default 2)
-% 'suppress',R      don't return a feature closer than R pixels to an earlier 
-%                   feature (default 0)
-% 'nfeat',N         return the N strongest corners (default Inf)
-% 'k',K             set the value of k for the Harris detector
-% 'patch',P         use a PxP patch of surrounding pixel values as the 
-%                   feature vector.  The vector has zero mean and unit norm.
-% 'color'           specify that IM is a color image not a sequence
+% PARAMETERS:
 %
-% Example::
+% This function has a number of parameters which are combined into a single
+% structure (default values shown):
 %
-% Compute the 100 strongest Harris features for the image
-%         c = icorner(im, 'nfeat', 100);
-% and overlay them on the image
-%         idisp(im);
-%         c.plot();
+%	hp.k = 0.04;		Harris parameter
+%	hp.cmin = 0;		Minimum corner strength
+%	hp.cMinThresh = 0.01;	Minimum relative corner strength
+%	hp.deriv = [-1 0 1; -1 0 1; -1 0 1] / 3;
+%	hp.sigma = 1;		Standard dev. for the smoothing step
+%	hp.edgegap = 2;		Corners this close to the border are ignored
+%	hp.nfeat = Inf;		Maximum number of features to return
+%	hp.harris = 1;		1 for Harris, 0 for inverse Noble detector
+%	hp.tiling = 0;		if set to N, evaluate corners in NxN tiles
+%	hp.distance = 0;		minimum distance between features
 %
-% Notes::
-% - Corners are processed in order from strongest to weakest.
-% - The function stops when:
-%     - the corner strength drops below cmin, or
-%     - the corner strength drops below cMinThresh x strongest corner, or
-%     - the list of corners is exhausted
-% - Features are returned in descending strength order
-% - If IM has more than 2 dimensions it is either a color image or a sequence
-% - If IM is NxMxP it is taken as an image sequence and F is a cell array whose
-%   elements are feature vectors for the corresponding image in the sequence.
-% - If IM is NxMx3 it is taken as a sequence unless the option 'color' is given
-% - If IM is NxMx3xP it is taken as a sequence of color images and F is a cell
-%   array whose elements are feature vectors for the corresponding color image 
-%   in the sequence.
-% - The default descriptor is a vector [Ix* Iy* Ixy*] which are the unique
-%   elements of the structure tensor, where * denotes squared and smoothed.
-% - The descriptor is a vector of float types to save space
+% The default parameter setting can be obtained with a call of the form:
+%		P = iharris
 %
-% References::
-% - "A combined corner and edge detector", 
-%   C.G. Harris and M.J. Stephens,
-%   Proc. Fourth Alvey Vision Conf., Manchester, pp 147-151, 1988.
-% - "Finding corners", 
-%   J.Noble, 
-%   Image and Vision Computing, vol.6, pp.121-128, May 1988.
-% - "Good features to track",
-%   J. Shi and C. Tomasi, 
-%   Proc. Computer Vision and Pattern Recognition, pp. 593-593,
-%   IEEE Computer Society, 1994.
-%  - Robotics, Vision & Control, Section 13.3,
-%    P. Corke, Springer 2011.
+% Passing in P will override those elements provided.
 %
-% See also PointFeature, ISURF.
+% In order to have good spatial layout of features set for example:
+%
+%	P.nfeat = 20;
+%	P.tiling = 3;
+%
+% which will place 20 features in each of 9 tiles that cover the image in
+% a 3x3 pattern.
+%
+%
+% REF:	"A combined corner and edge detector", C.G. Harris and M.J. Stephens
+%	Proc. Fourth Alvey Vision Conf., Manchester, pp 147-151, 1988.
+%
+% SEE ALSO:	showcorners
 
-
-
-% Copyright (C) 1993-2011, by Peter I. Corke
+% Copyright (C) 1995-2009, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -96,217 +74,204 @@
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
 
-function [features, corner_strength] = icorner(im, varargin)
+classdef Harris < FeatureList
 
-    % TODO, can handle image sequence, return 3D array of corner_strength if requested 
-    % and cell array of corner vectors
-    % handle tiling
-
-    % parse options into parameter struct
-    opt.k = 0.04;
-    opt.deriv = kdgauss(2);
-
-    opt.cmin = 0;
-    opt.cminthresh = 0.0;
-    opt.edgegap = 2;
-    opt.nfeat = Inf;
-    opt.sigma = 2;
-    opt.patch = 0;
-    opt.detector = {'harris', 'noble', 'st'};
-    opt.color = false;
-
-    opt.suppress = 0;
-    opt.nfeat = 100;
-
-    [opt,arglist] = tb_optparse(opt, varargin);
-
-    if opt.patch > 0
-        opt.edgegap = opt.patch;
+    properties
+        corner_image
     end
+    
+    methods
 
-    if iscell(im)
-        % images provided as a cell array, return a cell array
-        % of corner object vectors
-        if opt.verbose
-            fprintf('extracting corner features for %d images\n', length(im));
-        end
-        features = {};
-        for i=1:length(im)
-            f = icorner(im{i}, 'setopt', opt);
-            for j=1:length(f)
-                f(j).image_id = i;
-            end
-            features{i} = f;
-            fprintf('.');
-        end
-        if opt.verbose
-            fprintf('\n');
-        end
-        return
-    end
+        % constructor
+        function h = Harris(im, varargin)
 
+            % parse options into parameter struct
+            p.k = 0.04;
+            p.deriv = kdgauss(2);
+            p.distance = 0;
+            p.detector = 'harris';
 
-    if ndims(im) > 2
+            p.cmin = 0;
+            p.cMinThresh = 0.0;
+            p.edgegap = 2;
+            p.nfeat = 100;
+            p.sigma_i = 2;
+            p.verbose = false;
 
-        % images provided as an array, return a cell array
-        % of corner object vectors
+            argc = 1;
+            while argc <= length(varargin)
+                switch lower(varargin{argc})
+                case 'k'
+                    p.k = varargin{argc+1}; argc = argc+1;
+                case 'deriv'
+                    p.deriv = varargin{argc+1}; argc = argc+1;
+                case 'nfeat'
+                    p.nfeat = varargin{argc+1}; argc = argc+1;
+                case 'cminthresh'
+                    p.cMinThresh = varargin{argc+1}; argc = argc+1;
+                case 'sigma_i'
+                    p.sigma_i = varargin{argc+1}; argc = argc+1;
+                case 'distance'
+                    p.distance = varargin{argc+1}; argc = argc+1;
+                case 'noble'
+                    p.detector = 'noble';
+                case 'klt'
+                    p.detector = 'klt';
+                case 'verbose'
+                    p.verbose = true;
 
-        if ndims(im) == 4 && size(im,3) == 3 && opt.color
-            fprintf('extracting corner features for color %d images\n', size(im,4));
-            features = {};
-            % sequence of color images
-            for i=1:size(im,k)
-                f = icorner(im(:,:,:,i), 'setopt', opt);
-                for j=1:length(f)
-                    %f(j).image_id_ = i;
+                otherwise
+                    error( sprintf('unknown option <%s>', varargin{argc}));
                 end
-                features{i} = f;
-                fprintf('.');
+                argc = argc + 1;
             end
-            fprintf('\n');
-            return
-        elseif ndims(im) == 3 && ~opt.color
-            fprintf('extracting corner features for grey %d images\n', size(im,3));
-            features = {};
-            % sequence of grey images
-            for i=1:size(im,3)
-                f = icorner(im(:,:,i), 'setopt', opt);
-                for j=1:length(f)
-                    %f(j).image_id_ = i;
+
+            if p.verbose
+                fprintf('Harris parameter settings\n');
+                p
+            end
+
+
+            if ndims(im) == 3,
+                R = double(im(:,:,1));
+                G = double(im(:,:,2));
+                B = double(im(:,:,3));
+                Rx = conv2(R, p.deriv, 'same');
+                Ry = conv2(R, p.deriv', 'same');
+                Gx = conv2(G, p.deriv, 'same');
+                Gy = conv2(G, p.deriv', 'same');
+                Bx = conv2(B, p.deriv, 'same');
+                By = conv2(B, p.deriv', 'same');
+
+                Ix = Rx.^2+Gx.^2+Bx.^2;
+                Iy = Ry.^2+Gy.^2+By.^2;
+                Ixy = Rx.*Ry+Gx.*Gy+Bx.*By;
+            else
+                % compute horizontal and vertical gradients
+                ix = conv2(im, p.deriv, 'same');
+                iy = conv2(im, p.deriv', 'same');
+                Ix = ix.*ix;
+                Iy = iy.*iy;
+                Ixy = ix.*iy;
+            end
+
+            % smooth them
+            if p.sigma_i > 0,
+                Ix = ismooth(Ix, p.sigma_i);
+                Iy = ismooth(Iy, p.sigma_i);
+                Ixy = ismooth(Ixy, p.sigma_i);
+            end
+
+            [nr,nc] = size(Ix);
+            npix = nr*nc;
+
+            % computer cornerness
+            if strcmp(p.detector, 'harris')
+                rawc = (Ix .* Iy - Ixy.^2) - p.k * (Ix + Iy).^2;
+            elseif strcmp(p.detector, 'noble')
+                rawc = (Ix .* Iy - Ixy.^2) ./ (Ix + Iy);
+            elseif strcmp(p.detector, 'klt')
+                rawc = zeros(size(Ix));
+                for i=1:npix
+                    lambda = eig([Ix(i) Ixy(i); Ixy(i) Iy(i)]);
+                    rawc(i) = min(lambda);
                 end
-                features{i} = f;
-                fprintf('.');
             end
-            fprintf('\n');
-            return
-        end
-    end
 
-    if ndims(im) == 3 & opt.color
-        R = double(im(:,:,1));
-        G = double(im(:,:,2));
-        B = double(im(:,:,3));
-        Rx = conv2(R, opt.deriv, 'same');
-        Ry = conv2(R, opt.deriv', 'same');
-        Gx = conv2(G, opt.deriv, 'same');
-        Gy = conv2(G, opt.deriv', 'same');
-        Bx = conv2(B, opt.deriv, 'same');
-        By = conv2(B, opt.deriv', 'same');
+            % compute maximum value around each pixel
+            cmax = imorph(rawc, [1 1 1;1 0 1;1 1 1], 'max');
 
-        Ix = Rx.^2+Gx.^2+Bx.^2;
-        Iy = Ry.^2+Gy.^2+By.^2;
-        Ixy = Rx.*Ry+Gx.*Gy+Bx.*By;
-    else
-        % compute horizontal and vertical gradients
-        im = double(im);
-        ix = conv2(im, opt.deriv, 'same');
-        iy = conv2(im, opt.deriv', 'same');
-        Ix = ix.*ix;
-        Iy = iy.*iy;
-        Ixy = ix.*iy;
-    end
+            % if pixel exceeds this, its a local maxima, find index
+            cindex = find(rawc > cmax);
 
-    % smooth them
-    if opt.sigma > 0
-        Ix = ismooth(Ix, opt.sigma);
-        Iy = ismooth(Iy, opt.sigma);
-        Ixy = ismooth(Ixy, opt.sigma);
-    end
+            % remove those near edges
 
-    [nr,nc] = size(Ix);
-    npix = nr*nc;
 
-    % computer cornerness
-    switch opt.detector
-    case 'harris'
-        cornerness = (Ix .* Iy - Ixy.^2) - opt.k * (Ix + Iy).^2;
-    case 'noble'
-        cornerness = (Ix .* Iy - Ixy.^2) ./ (Ix + Iy);
-    case 'st'
-        cornerness = zeros(size(Ix));
-        for i=1:npix
-            lambda = eig([Ix(i) Ixy(i); Ixy(i) Iy(i)]);
-            cornerness(i) = min(lambda);
-        end
-    end
+            [y, x] = ind2sub(size(rawc), cindex);
+            e = p.edgegap;
+            sel = (x>e) & (y>e) & (x < (nc-e)) & (y < (nr-e));
+            cindex = cindex(sel);
 
-    % compute maximum value around each pixel
-    cmax = imorph(cornerness, [1 1 1;1 0 1;1 1 1], 'max');
 
-    % if pixel exceeds this, its a local maxima, find index
-    cindex = find(cornerness > cmax);
+            fprintf('%d corners found (%.1f%%), ', length(cindex), ...
+                length(cindex)/npix*100);
+            N = min(length(cindex), p.nfeat);
 
-    fprintf('%d corners found (%.1f%%), ', length(cindex), ...
-        length(cindex)/npix*100);
+            % sort into descending order
+            cval = rawc(cindex);		% extract corner values
+            [z,k] = sort(-cval);	% sort into descending order
+            cindex = cindex(k);
+            cmax = rawc( cindex(1) );   % take the strongest feature value
 
-    % remove those near edges
-    [y, x] = ind2sub(size(cornerness), cindex);
-    e = opt.edgegap;
-    k = (x>e) & (y>e) & (x < (nc-e)) & (y < (nr-e));
-    cindex = cindex(k);
+            fc = 1;
+            for i=1:length(cindex),
+                K = cindex(i);
+                c = rawc(K);
 
-    % corner strength must exceed an absolute minimum
-    k = cornerness(cindex) < opt.cmin;
-    cindex(k) = [];
+                % we apply two termination threshold conditions:
 
-    % sort into descending order
-    cval = cornerness(cindex);		    % extract corner values
-    [z,k] = sort(cval, 'descend');	% sort into descending order
-    cindex = cindex(k)';
-    cmax = cornerness( cindex(1) );   % take the strongest feature value
+                % 1. corner strength must exceed an absolute minimum
+                if c < p.cmin
+                    break;
+                end
 
-    % corner strength must exceed a fraction of the maximum value
-    k = cornerness(cindex)/cmax < opt.cminthresh;
-    cindex(k) = [];
+                % 2. corner strength must exceed a fraction of the maximum value
+                if c/cmax < p.cMinThresh
+                    break;
+                end
 
-    % allocate storage for the objects
-    n = min(opt.nfeat, numcols(cindex));
+                % get the coordinate
+                [y, x] = ind2sub(size(rawc), K);
 
-    features = [];
-    i = 1;
-    while i <= n
-        if i > length(cindex)
-            break;
-        end
-        K = cindex(i);
-        c = cornerness(K);
+                % enforce separation between corners
+                % TODO: strategy of Brown etal. only keep if 10% greater than all within radius
+                if (p.distance > 0) && (i>1)
+                    d = sqrt( ([h.v]'-y).^2 + ([h.u]'-x).^2 );
+                    if min(d) < p.distance,
+                        continue;
+                    end
+                end
 
-        % get the coordinate
-        [y, x] = ind2sub(size(cornerness), K);
+                % ok, this one is for keeping
+                h.u(fc) = x;
+                h.v(fc) = y;
+                h.strength(fc) = c;
+                h.descriptor(fc,:) = [Ix(K) Iy(K) Ixy(K)];
+                fc = fc + 1;
 
-        % enforce separation between corners
-        % TODO: strategy of Brown etal. only keep if 10% greater than all within radius
-        if (opt.suppress > 0) && (i>1)
-            d = sqrt( sum((features.v'-y).^2 + (features.u'-x).^2) );
-            if min(d) < opt.suppress
-                continue;
+                % terminate if we have enough features
+                if fc > N,
+                    break;
+                end
             end
+            fprintf(' %d corner features saved\n', fc-1);
+            f.image = im;
+
+            h.corner_image = rawc;
+            
+        end     % Harris
+
+
+
+        function m = match(f1, f2)
+
+            m = matchobj;
+
+            m.image1 = f1.image;
+            m.image2 = f2.image;
+
+            [matches,d] = siftmatch(f1.descriptor, f2.descriptor);
+
+            % build the vector of matching coordinates
+            m.xy = zeros(numcols(matches), 4);
+            for i=1:numrows(m.xy),
+                k1 = matches(1,i);
+                k2 = matches(2,i);
+                m.xy(i,:) = [f1.x(k1) f1.y(k1) f2.x(k2) f2.y(k2)];
+            end
+            m.strength = d';
         end
 
-        % ok, this one is for keeping
-        f = PointFeature(x, y, c);
-        if opt.patch == 0
-            f.descriptor_ = cast([Ix(K) Iy(K) Ixy(K)]', 'single');
-        else
-            % if opt.patch is finite, then return a vector which is the local image
-            % region as a vector, zero mean, and normalized by the norm.
-            % the dot product of this with another descriptor is the ZNCC similarity measure
-            w2 = opt.patch;
-            d = im(y-w2:y+w2,x-w2:x+w2);
-            d = d(:);
-            d = d - mean(d);
-            f.descriptor_ = cast( d / norm(d), 'single');
-        end
-
-        features = [features f];
-        i = i+1;
     end
-    fprintf(' %d corner features saved\n', i-1);
+end
 
-    % sort into descending order of strength
-    [z,k] = sort(-features.strength);
-    features = features(k);
-
-    if nargout > 1
-        corner_strength = cornerness;
-    end
