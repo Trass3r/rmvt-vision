@@ -90,6 +90,10 @@ classdef ImageSource < handle
             end
         end
 
+        function s = size(imsource)
+            s = [imsource.height imsource.width];
+        end
+            
         function display(imsource)
             loose = strcmp( get(0, 'FormatSpacing'), 'loose');
             if loose
