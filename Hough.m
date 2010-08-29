@@ -63,7 +63,7 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-class Hough < handle
+classdef Hough < handle
 
     properties
         Nd
@@ -71,33 +71,47 @@ class Hough < handle
         border
         radius
         edgeThresh
+        interpWidth
+        houghThresh
 
-        H       % the Hough accumulator
+        A       % the Hough accumulator
         d       % the d values
         theta   % the theta values
+        doffset
+        dscale
     end
 
     methods
         function h = Hough(IM, varargin)
 
-            if nargin == 0,
-                h.Nd = 64;
-                h.Ntheta = 64;
-                h.edgeThresh = 0.1;
-            else
+            h.Nd = 401;
+            h.Ntheta = 400;
+            h.edgeThresh = 0.1;
+            h.interpWidth = 3;
+            h.houghThresh = 0.5;
+            h.radius = [];
+            if nargin > 0,
                 count = 1;
                 while count <= length(varargin)
                     switch lower(varargin{count})
-                    case 'nd'
-                        h.Nd = varargin{count+1}; count = count+1;
-                    case 'ntheta'
-                        h.Ntheta = varargin{count+1}; count = count+1;
-                    case 'dims'
-                        v = varargin{count+1}; count = count+1;
-                        h.Nd = v(1);
-                        h.Ntheta = v(2);
-                    case 'radius'
+                    case 'nbins'
+                        nbins = varargin{count+1}; count = count+1;
+                        if length(nbins) == 1
+                            h.Ntheta = nbins;
+                            h.Nd = nbins;
+                         elseif length(nbins) == 2
+                            h.Ntheta = nbins(1);
+                            h.Nd = nbins(2);
+                        else
+                            error('1 or 2 elements for nbins');
+                        end
+                        
+                    case 'distance'
                         h.radius = varargin{count+1}; count = count+1;
+                    case 'interpwidth'
+                        h.interpWidth = 2*varargin{count+1}+1; count = count+1;
+                    case 'houghthresh'
+                        h.houghThresh = varargin{count+1}; count = count+1;
                     case 'edgethresh'
                         h.edgeThresh = varargin{count+1}; count = count+1;
                     otherwise
@@ -107,18 +121,25 @@ class Hough < handle
                 end
             end
 
+
+            h.Nd = bitor(h.Nd, 1);            % Nd must be odd
+            h.Ntheta = floor(h.Ntheta/2)*2; % Ntheta must even
+            
+            if isempty(h.radius)
+                h.radius = (h.interpWidth-1)/2;
+            end
             [nr,nc] = size(IM);
 
             % find the significant edge pixels
             IM = abs(IM);
             globalMax = max(IM(:));
-            i = find(IM > (globalMax*params.edgeThresh));	
-            [r,c]=ind2sub(size(IM), i);
+            i = find(IM > (globalMax*h.edgeThresh));	
+            [r,c] = ind2sub(size(IM), i);
 
             xyz = [c r IM(i)];
 
             % now pass the x/y/strenth info to xyhough
-            [h.H,h.d,h.theta] = h.hough_xy(xyz, [1 nr params.Nd], params.Nth);
+            h.A = h.xyhough(xyz, norm2(nr,nc));
         end
 
         function display(h)
@@ -137,24 +158,23 @@ class Hough < handle
         end
 
         function s = char(h)
-            s = sprintf('Hough: nd=%d, ntheta=%d', h.Nd, h.Ntheta);
+            s = sprintf('Hough: nd=%d, ntheta=%d, interp=%dx%d, distance=%d', ...
+                h.Nd, h.Ntheta, h.interpWidth, h.interpWidth, h.radius);
         end
-
+        
         function show(h)
-            image(h.th, h.dd, 64*h.H/max(max(h.H)));
-            xlabel('theta (rad)');
-            ylabel('intercept');
-            colormap(gray(64))
+            clf
+            hi = image(h.theta, h.d, h.A/max(max(h.A)));
+            set(hi, 'CDataMapping', 'scaled');
+            set(gca, 'YDir', 'normal');
+            set(gca, 'Xcolor', [1 1 1]*0.5);
+            set(gca, 'Ycolor', [1 1 1]*0.5);
+            grid on
+            xlabel('\theta (rad)');
+            ylabel('d (pixels)');
+            colormap(hot)
         end
             
-        function plot(h, varargin)
-            holdon = ishold
-            hold on
-            if ~holdon
-                hold off
-            end
-        end
-
         %HOUGHOVERLAY	Overlay lines on image.
         %
         %	houghoverlay(p)
@@ -178,20 +198,30 @@ class Hough < handle
             y = [scale(3):scale(4)]';
 
             % p = [d theta]
-            p = h.peaks(N);
+            if (nargin > 1) && isscalar(N)
+                p = h.peaks(N);
+            else
+                p = h.peaks();
+            end
+    
+            if (nargin > 1) && ~isscalar(N)
+                p = p(N,:);
+            end
 
             % plot it
             for i=1:numrows(p),
                 d = p(i,1);
                 theta = p(i,2);
 
-                %fprintf('theta = %f, d = %f\n', theta, d);
+                fprintf('theta = %f, d = %f\n', theta, d);
                 if abs(cos(theta)) > 0.5,
                     % horizontalish lines
-                    hl(i) = plot(x, -x*tan(theta) + d/cos(theta), ls);
+                    disp('hoz');
+                    hl(i) = plot(x, -x*tan(theta) + d/cos(theta), varargin{:});
                 else
                     % verticalish lines
-                    hl(i) = plot( -y/tan(theta) + d/sin(theta), y, ls);
+                    disp('vert');
+                    hl(i) = plot( -y/tan(theta) + d/sin(theta), y, varargin{:});
                 end
             end
 
@@ -204,6 +234,8 @@ class Hough < handle
             end
             figure(gcf);        % bring it to the top
         end
+        
+        
         %HOUGHPEAKS   Find Hough accumulator peaks.
         %
         %	p = houghpeaks(H, N, hp)
@@ -228,7 +260,7 @@ class Hough < handle
         %	hp.interpWidth  width of region used for peak interpolation
         %                                 (default 5)
         %
-        function p = peaks(h, N)
+        function pp = peaks(h, N)
             if nargin < 2
                 N = Inf;
             end
@@ -238,70 +270,72 @@ class Hough < handle
                 N = Inf;
             end
 
-            [x,y] = meshgrid(1:h.nd, 1:h.ntheta);
+            [x,y] = meshgrid(1:h.Ntheta, 1:h.Nd);
 
-            nw2= floor((params.interpWidth-1)/2);
+            nw2= floor((h.interpWidth-1)/2);
+            nr2= floor((h.radius-1)/2);
+
             [Wx,Wy] = meshgrid(-nw2:nw2,-nw2:nw2);
-            globalMax = max(H.h(:));
+            globalMax = max(h.A(:));
             
-            for i=1:N,
+            A = h.A;
+
+            for i=1:N
                 % find the current peak
-                [mx,where] = max(H.h(:));
+                [mx,where] = max(A(:));
+                %[mx where]
                 
                 % is the remaining peak good enough?
-                if mx < (globalMax*params.houghThresh),
+                if mx < (globalMax*h.houghThresh)
                     break;
                 end
-                [rp,cp] = ind2sub(size(H.h), where);
-                
-                if params.interpWidth == 0,
+                [rp,cp] = ind2sub(size(A), where);
+                %fprintf('\npeak height %f at (%d,%d)\n', mx, cp, rp);
+                if h.interpWidth == 0
                     d = H.d(rp);
                     theta = H.theta(cp);
                     p(i,:) = [d theta mx/globalMax];
-                else,
+                else
                     % refine the peak to subelement accuracy
-                    try,
-                        Wh = H.h(rp-nw2:rp+nw2,cp-nw2:cp+nw2);
-                    catch,
-                        % window is at the edge, do it the slow way
-                        % we wrap the coordinates around the accumulator on all edges
-                        for r2=1:2*nw2+1,
-                            r3 = rp+r2-nw2-1;
-                            if r3 > nr,
-                                r3 = r3 - nr;
-                            elseif r3 < 1,
-                                r3 = r3 + nr;
-                            end
-                            for c2=1:2*nw2+1,
-                                c3 = cp+c2-nw2-1;
-                                if c3 > nc,
-                                    c3 = c3 - nc;
-                                elseif c3 < 1,
-                                    c3 = c3 + nc;
-                                end
-                                Wh(r2,c2) = H.h(r3,c3);
-                            end
-                        end
 
-                    end
+                    k = Hough.nhood2ind(A, ones(h.interpWidth,h.interpWidth), [cp,rp]);
+                    Wh = A(k);
+                    %Wh                    
                     rr = Wy .* Wh;
                     cc = Wx .* Wh;
                     ri = sum(rr(:)) / sum(Wh(:)) + rp;
                     ci = sum(cc(:)) / sum(Wh(:)) + cp;
-                    %fprintf('refined %f %f\n', r, c);
+              
+                    
+                    %fprintf('refined %f %f\n', ci, ri);
 
                     % interpolate the line parameter values
-                    d = interp1(H.d, ri);
-                    theta = interp1(H.theta, ci);
+                    d = interp1(h.d, ri);
+                    theta = interp1(h.theta, ci, 'linear', 0);
                     p(i,:) = [d theta mx/globalMax];
+                    %p(i,:)
 
                 end
                 
                 % remove the region around the peak
-                k = (x(:)-cp).^2 + (y(:)-rp).^2 < params.radius^2;
-                H.h(k) = 0;
+                k = Hough.nhood2ind(A, ones(2*h.radius+1,2*h.radius+1), [cp,rp]);
+                A(k) = 0;
+
             end
-        end
+            if nargout == 1
+                pp = p;
+            else
+                fprintf(' intercept     theta   strength\n');
+                disp(p);
+                h.show
+                hold on
+                for i=1:numrows(p)
+                    plot(p(i,2), p(i,1), 'go');
+                end
+                hold off
+            end
+        end % peaks
+
 
         %XYHOUGH	XY Hough transform
         %
@@ -334,52 +368,133 @@ class Hough < handle
         %
         % SEE ALSO: ihough mkline, mksq, isobel
         %
-        function [H,dd,th] = xyhough(h, XYZ, drange, Nth)
+        function H = xyhough(h, XYZ, dmax, Nth)
 
-            dmin = drange(1);
-            dmax = drange(2);
-            dinc = 1;
-            if length(drange) > 2,
-                Nd = drange(3);
-            else
-                Nd = dmax - dmin + 1;
-            end
-            dinc = (dmax - dmin) / (Nd - 1);
+            inc = 1;
             
-            if numcols(XYZ) == 2,
+            h.doffset = (h.Nd+1)/2;
+            h.dscale = (h.Nd-1)/2 / dmax;
+            
+            if numcols(XYZ) == 2
                 XYZ = [XYZ ones(numrows(XYZ),1)];
             end
 
             % compute the quantized theta values and the sin/cos
-            th = [0:(Nth-1)]'/Nth*pi-pi/2;
-            st = sin(th);
-            ct = cos(th);
+            nt2 = h.Ntheta/2;
+            h.theta = [-nt2:(nt2-1)]'/nt2*pi/2;
+            st = sin(h.theta);
+            ct = cos(h.theta);
 
-            H = zeros(Nd, Nth);		% create the Hough accumulator
+            H = zeros(h.Nd, h.Ntheta);		% create the Hough accumulator
 
             % this is a fast `vectorized' algorithm
 
             % evaluate the index of the top of each column in the Hough array
-            col0 = [0:(Nth-1)]'*Nd;
+            col0 = ([1:h.Ntheta]'-1)*h.Nd;
+            %col0_r = [(Nth-1):-1:0]'*Nd + 1;
 
-            for xyz = XYZ',
+            for xyz = XYZ'
                 x = xyz(1);		% determine (x, y) coordinate
                 y = xyz(2);
                 inc = xyz(3);
-                d = round( ((y * ct - x * st)-dmin)/dinc );	% in the range 0 .. Nd-1
-
+                inc =1 ;
+                
+                d = y * ct + x * st;
+                
+                di = round( d*h.dscale + h.doffset);	% in the range 1 .. Nd
                 % which elements are within the column
-                inrange = (d>=0) & (d<Nd);
+                %d(d<0) = -d(d<0);
+                %inrange = d<Nd;
 
-                di = d + col0 + 1;	% convert array of d values to Hough indices
-                di = di(inrange);	% ignore those out of column range
-
+                di = di + col0;   	% convert array of d values to Hough indices
                 H(di) = H(di) + inc;	% increment the accumulator cells
             end
 
-            dd = [0:(Nd-1)]'*dinc+dmin;
+            nd2 = (h.Nd-1)/2;
+            h.d = [-nd2:nd2]'/h.dscale;
+        end % xyhough
+    
+        function len = seglength(h, edges)
+            p = h.peaks;
 
+            ppp = [];
+
+            for i=1:numrows(p)
+                d = p(i,1); theta = p(i,2);
+                fprintf('d=%f, theta=%f\n', d, theta)
+
+
+                if abs(theta) < pi/4
+                    xmin = 1; xmax = numcols(edges);
+                    m = -tan(theta); c = d/cos(theta);
+                    ymin = round(xmin*m + c);
+                    ymax = round(xmax*m + c);
+                else
+                    ymin = 1; ymax = numrows(edges);
+                    m = -1/tan(theta); c = d/sin(theta);
+                    xmin = round(ymin*m + c);
+                    xmax = round(ymax*m + c);
+                end
+
+
+                line = bresenham(xmin, ymin, xmax, ymax);
+
+                line = line(line(:,2)>=1,:);
+                line = line(line(:,2)<=numrows(edges),:);
+                line = line(line(:,1)>=1,:);
+                line = line(line(:,1)<=numcols(edges),:);
+
+                contig = 0;
+                contig_max = 0;
+                total = 0;
+                missing = 0;
+                for pp=line'
+                    pix = edges(pp(2), pp(1));
+                    if pix == 0
+                        missing = missing+1;
+                        if missing > 5
+                            contig_max = max(contig_max, contig);
+                            contig = 0;
+                        end
+                    else
+                        contig = contig+1;
+                        total = total+1;
+                        missing = 0;
+                    end
+                    %ee(pp(2), pp(1))=1;
+                end
+                contig_max = max(contig_max, contig);
+
+                fprintf('  strength=%f, len=%f, total=%f\n', p(i,3), contig_max, total);
+                ppp = [ppp; p(i,:) contig_max];
+            end
+            len = ppp;
         end
-    end
-end
 
+    end % methods
+    
+    methods(Static)
+        function idx = nhood2ind(im, SE, centre)
+            [y,x] = find(SE);
+
+            sw = (numcols(SE)-1)/2;
+            sh = (numrows(SE)-1)/2;
+            x = x + centre(1)-sw-1;
+            y = y + centre(2)-sh-1;
+
+            w = numcols(im);
+            h = numrows(im);
+
+            y(x<1) = h - y(x<1);
+            x(x<1) = x(x<1) + w;
+            
+            y(x>w) = h - y(x>w);
+            x(x>w) = x(x>w) - w;
+            
+
+
+            idx = sub2ind(size(im), y, x);
+            idx = reshape(idx, size(SE));
+        end
+    end % static methods
+end % Hough
