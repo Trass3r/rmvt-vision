@@ -6,6 +6,7 @@ classdef SiftCornerFeature < ScaleCornerFeature
 
     properties
         theta
+        image_id
     end % properties
 
     methods
