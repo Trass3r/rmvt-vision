@@ -51,39 +51,14 @@ function [I,info] = iread(filename, varargin)
     %   'gray_value'
     %   'reduce', n
 
-    opt.imageType = [];
-    opt.decimationFactor = 1;
-    opt.makeGrey = [];
-    opt.debug = true;
+    opt.type = {[], 'double', 'float', 'uint8'};
+    opt.mkGrey = {[], 'grey', 'gray', 'mono', '601', 'gray_709', 'value'};
     opt.gamma = [];
+    opt.reduce = 1;
 
-    options = varargin;
-    k = 1;
-    while k<=length(options),
-        switch options{k},
-        case 'double',
-            opt.imageType = 'double';
-        case 'float',
-            opt.imageType = 'float';
-        case 'uint8',
-            opt.imageType = 'uint8';
-        case {'grey','gray', 'mono'},
-            opt.makeGrey = 'r601';
-        case {'grey_601','gray_601'},
-            opt.makeGrey = '601';
-        case {'grey_709','gray_709'},
-            opt.makeGrey = 'r709';
-        case {'grey_value','gray_value'},
-            opt.makeGrey = 'value';
-        case 'gamma'
-            opt.gamma = options{k+1}; k = k+1;
-        case 'reduce',
-            opt.decimationFactor = options{k+1}; k = k+1;
-        otherwise,
-            error( sprintf('unknown option: %s', options{k}) );
-        end
-        k = k + 1;
-    end
+    opt = tb_optparse(opt, varargin);
+
+    im = [];
     
 	if nargin == 0,
 		% invoke file browser GUI
@@ -123,29 +98,34 @@ function [I,info] = iread(filename, varargin)
         if ~isempty(strfind(filename, '*')) | ~isempty(strfind(filename, '?')),
             % wild card files, eg.  'seq/*.png', we need to look for a folder
             % seq somewhere along the path.
-            if opt.debug,
+            if opt.verbose
                 fprintf('wildcard lookup\n');
             end
             
             [pth,name,ext] = fileparts(filename);
             % search for the folder name along the path
+            folderonpath = pth;
             for p=path2cell(userpath)'
                 if exist( fullfile(p{1}, pth) ) == 7
+                    folderonpath = fullfile(p{1}, pth);
                     break;
                 end
             end
-            s = dir( fullfile(p{1}, filename));		% do a wildcard lookup
+            s = dir( fullfile(folderonpath, [name, ext]));		% do a wildcard lookup
 
             if length(s) == 0,
                 error('no matching files found');
             end
 
-            fpath = fileparts( fullfile(p{1}, filename) );
             for i=1:length(s),
-                im1 = loadimg( fullfile(fpath, s(i).name), opt);
-                if ndims(im1) == 2,
+                im1 = loadimg( fullfile(folderonpath, s(i).name), opt);
+                if i==1
+                    % preallocate storage, much quicker
+                    im = zeros([size(im1) length(s)]);
+                end
+                if ndims(im1) == 2
                     im(:,:,i) = im1;
-                elseif ndims(im1) == 3,
+                elseif ndims(im1) == 3
                     im(:,:,:,i) = im1;
                 end
             end
@@ -157,16 +137,21 @@ function [I,info] = iread(filename, varargin)
                 im = loadimg(filename, opt);
             else
                 % see if it exists on the Matlab search path
-                filename = which(filename);
-                if length(filename) > 0
-                    im = loadimg(filename, opt);
-                else
-                    error(sprintf('cant open file: %s', filename));
+                for p=path2cell(userpath)'
+                    if exist( fullfile(p{1}, filename) ) > 0
+                        im = loadimg(fullfile(p{1}, filename), opt);
+                        break;
+                    end
                 end
+  
             end
         end
     end
 
+                      
+    if isempty(im)
+        error(sprintf('cant open file: %s', filename));
+    end
     if nargout > 0
         I = im;
         if nargout > 1
@@ -185,8 +170,12 @@ function im = loadimg(name, opt)
     % now we read the image
     im = imread(name);
 
-    if opt.debug,
-        fprintf('loaded %s, %dx%d\n', name, size(im,2), size(im,1));
+    if opt.verbose
+        if ndims(im) == 2
+            fprintf('loaded %s, %dx%d\n', name, size(im,2), size(im,1));
+        elseif ndims(im) == 3
+            fprintf('loaded %s, %dx%dx%d\n', name, size(im,2), size(im,1), size(im,3));
+        end
     end
 
     % optionally gamma correct it
@@ -195,21 +184,21 @@ function im = loadimg(name, opt)
     end
 
     % optionally convert it to greyscale using specified method
-    if ~isempty(opt.makeGrey) & (ndims(im) == 3),
-        im = imono(im, opt.makeGrey);
+    if ~isempty(opt.mkGrey) && (ndims(im) == 3)
+        im = imono(im, opt.mkGrey);
     end
 
     % optionally decimate it
-    if opt.decimationFactor > 1,
-        im = im(1:decimationFactor:end, 1:decimationFactor:end, :);
+    if opt.reduce > 1,
+        im = im(1:opt.reduce:end, 1:opt.reduce:end, :);
     end
 
     % optionally convert to specified numeric type
-    if ~isempty(opt.imageType)
-        if isempty(findstr(opt.imageType, 'int'))
-            im = cast(im, opt.imageType) /255.0;
+    if ~isempty(opt.type)
+        if isempty(findstr(opt.type, 'int'))
+            im = cast(im, opt.type) / double(intmax(class(im)));
         else
-            im = cast(im, opt.imageType);
+            im = cast(im, opt.type);
         end
     end
 end
