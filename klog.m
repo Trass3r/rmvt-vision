@@ -29,9 +29,8 @@ function il = klog(sigma, w)
 	if nargin == 1,
 		w = ceil(3*sigma);
 	end
-	ww = 2*w + 1;
 
 	[x,y] = meshgrid(-w:w, -w:w);
 
-	il = -1/(pi*sigma^4) * (1 - (x.^2 + y.^2)/(2*sigma^2)) .*  ...
+	il = 1/(pi*sigma^4) * ( (x.^2 + y.^2)/(2*sigma^2) -1 ) .*  ...
 		exp(-(x.^2+y.^2)/(2*sigma^2));

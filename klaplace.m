@@ -3,9 +3,9 @@
 %	k = klaplace
 %
 %	Return the Laplacian kernel
-%		0 -1  0
-%		-1 4 -1
-%		0 -1  0
+%		0  1  0
+%		1 -4  1
+%		0  1  0
 %
 % SEE ALSO:	ilaplace conv2
 
@@ -25,6 +25,6 @@
 % 
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
-function k = ilap;
-	k = [0 -1 0; -1 4 -1; 0 -1 0];
+function k = klaplace;
+	k = [0 1 0; 1 -4 1; 0 1 0];
 
