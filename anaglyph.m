@@ -47,29 +47,16 @@
 
 function anaglyph = anaglyph(left, right, colors, disp)
 
-    if ndims(left) == 3,
-        % stereo image as first argument
-        right = left(:,:,2);
-        left = left(:,:,1);
-
-        if nargin > 1,
-            colors = right;
-        else
-            colors = 'rc';
-        end
-        if nargin > 2,
-            disp = colors;
-        else
-            disp = 0;
-        end
-    elseif nargin < 3,
-        % separate L/R images
+    if nargin < 3,
         colors = 'rc';
-        disp = 0;
-    elseif nargin < 4,
+    end
+    if nargin < 4,
         disp = 0;
     end
 
+    % ensure the images are greyscale
+    left = imono(left);
+    right = imono(right);
 
     [height,width] = size(left);
     if disp > 0,
