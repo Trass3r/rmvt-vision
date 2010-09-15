@@ -1,15 +1,26 @@
-function c2 = ipaste(c, pattern, topleft, opt)
+function out = ipaste(canvas, pattern, topleft, varargin)
 
-    [h,w,nc] = size(c);
+    [h,w,nc] = size(canvas);
     [ph,pw,np] = size(pattern);
 
-    if nargin == 4 && strcmp(opt, 'centre')
+    opt.centre = false;
+    opt.zero = false;
+    opt.add = false;
+
+    opt = tb_optparse(opt, varargin);
+
+    if opt.centre
         % specify centre of pattern not topleft
         left = topleft(1) - floor(pw/2);
         top = topleft(2) - floor(ph/2);
     else
         left = topleft(1);      % x
         top = topleft(2);       % y
+    end
+
+    if opt.zero
+        left = left+1;
+        top = top+1;
     end
 
     if (top+ph-1) > h
@@ -21,12 +32,16 @@ function c2 = ipaste(c, pattern, topleft, opt)
 
     if np > nc
         % pattern has multiple planes, replicate the canvas
-        c2 = repmat(c, [1 1 np]);
+        out = repmat(canvas, [1 1 np]);
     else
-        c2 = c;
+        out = canvas;
     end
     if np < nc
         pattern = repmat(pattern, [1 1 nc]);
     end
-    c2(top:top+ph-1,left:left+pw-1,:) = pattern;
+    if opt.add
+        out(top:top+ph-1,left:left+pw-1,:) = out(top:top+ph-1,left:left+pw-1,:) +pattern;
+    else
+        out(top:top+ph-1,left:left+pw-1,:) = pattern;
+    end
         
