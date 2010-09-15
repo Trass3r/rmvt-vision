@@ -46,7 +46,9 @@ enum pad {
 	PadBorder,
 	PadNone,
 	PadWrap,
-	PadTrim
+	PadTrim,
+	Pad0,
+	Pad1,
 } pad_method = PadBorder;
 
 enum op_type {
@@ -86,6 +88,10 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			pad_method = PadWrap;
 		else if (strcmp(s, "valid") == 0)
 			pad_method = PadTrim;
+		else if (strcmp(s, "pad0") == 0)
+			pad_method = Pad0;
+		else if (strcmp(s, "pad1") == 0)
+			pad_method = Pad1;
 		/* fall through */
 	case 3:
 		if (!mxIsChar(OP_IN))
@@ -142,6 +148,18 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         case mxUINT16_CLASS: {
             double *p;
             unsigned short  *q = (unsigned short *)mxGetPr(IM_IN);
+            int     i;
+
+            im = mxCreateDoubleMatrix(height, width, mxREAL);
+            p = mxGetPr(im);
+            
+            for (i=0; i<width*height; i++)
+                    *p++ = *q++;
+            break;
+        }
+        case mxSINGLE_CLASS: {
+            double *p;
+            float  *q = (float *)mxGetPr(IM_IN);
             int     i;
 
             im = mxCreateDoubleMatrix(height, width, mxREAL);
