@@ -51,10 +51,11 @@ function [I,info] = iread(filename, varargin)
     %   'gray_value'
     %   'reduce', n
 
-    opt.type = {[], 'double', 'float', 'uint8'};
+    opt.type = {[], 'double', 'single', 'uint8'};
     opt.mkGrey = {[], 'grey', 'gray', 'mono', '601', 'gray_709', 'value'};
     opt.gamma = [];
     opt.reduce = 1;
+    opt.roi = [];
 
     opt = tb_optparse(opt, varargin);
 
@@ -121,7 +122,7 @@ function [I,info] = iread(filename, varargin)
                 im1 = loadimg( fullfile(folderonpath, s(i).name), opt);
                 if i==1
                     % preallocate storage, much quicker
-                    im = zeros([size(im1) length(s)]);
+                    im = zeros([size(im1) length(s)], class(im1));
                 end
                 if ndims(im1) == 2
                     im(:,:,i) = im1;
@@ -178,14 +179,14 @@ function im = loadimg(name, opt)
         end
     end
 
-    % optionally gamma correct it
-    if ~isempty(opt.gamma)
-        im = igamma(im, opt.gamma);
-    end
-
     % optionally convert it to greyscale using specified method
     if ~isempty(opt.mkGrey) && (ndims(im) == 3)
         im = imono(im, opt.mkGrey);
+    end
+
+    % optionally chop out a roi
+    if ~isempty(opt.roi)
+        im = iroi(im, opt.roi);
     end
 
     % optionally decimate it
@@ -201,4 +202,10 @@ function im = loadimg(name, opt)
             im = cast(im, opt.type);
         end
     end
+
+    % optionally gamma correct it
+    if ~isempty(opt.gamma)
+        im = igamma(im, opt.gamma);
+    end
+
 end
