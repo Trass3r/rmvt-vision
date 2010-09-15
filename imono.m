@@ -33,11 +33,11 @@ function im = imono(rgb, opt)
     end
 
     switch (lower(opt))
-    case 'r601'
+    case {'r601', 'grey', 'gray', 'mono', 'grey_601','gray_601'}
         % rec 601 luma
         im = 0.299*rgb(:,:,1) + 0.587*rgb(:,:,2) + 0.114*rgb(:,:,3);
 
-    case 'r709'
+    case {'r709', 'grey_709','gray_709'}
         % rec 709 luma
         im = 0.2126*rgb(:,:,1) + 0.7152*rgb(:,:,2) + 0.0722*rgb(:,:,3);
     case 'value'
