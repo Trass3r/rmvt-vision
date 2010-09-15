@@ -4,13 +4,13 @@ function [out,TT] = support(sf, images, N)
         N = 50;
     end
 
-    im = images(:,:,sf.image_id);
+    im = images(:,:,sf.image_id_);
 
-    d = 2*sf.scale;
+    d = 2*sf.scale_;
 
     [Uo,Vo] = imeshgrid(N, N);
 
-    T = se2(sf.u, sf.v, sf.theta) * diag([d/N,d/N,1]) * se2(-N/2, -N/2);
+    T = se2(sf.u_, sf.v_, sf.theta_) * diag([d/N,d/N,1]) * se2(-N/2, -N/2);
 
     UV = transformp(T, [Uo(:) Vo(:)]');
     U = reshape(UV(1,:), size(Uo));
