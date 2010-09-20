@@ -80,29 +80,32 @@ function F = imoments(a1, a2, a3)
 		u11 = m11 - m10*m01/m00;
 
 		% figure the equivalent axis lengths, function of the principal axis lengths
-		e = eig([u20 u11; u11 u02]);
-		a = 2*sqrt(max(e)/m00);
-		b = 2*sqrt(min(e)/m00);
-		th = 0.5*atan2(2*u11, u20-u02);
+		[x,e] = eig([u20 u11; u11 u02]);
+		a = 2*sqrt(max(diag(e))/m00);
+		b = 2*sqrt(min(diag(e))/m00);
+        v = x(:,end);
+        th = atan2(v(2),v(1));
+
+		%th = 0.5*atan2(2*u11, u20-u02);
 	else
 		u20 = NaN;
 		u02 = NaN;
 		u11 = NaN;
 
-		a = NaN;
+		a = NaN;u1
 		b = NaN;
 		th = NaN;
 	end
 
 	%F = [m00 m10/m00 m01/m00 a b th];
-    F = Blob;
+    F = RegionFeature;
 	F.area = m00;
 	if m00 > 0,
-		F.xc = m10/m00;
-		F.yc = m01/m00;
+		F.uc = m10/m00;
+		F.vc = m01/m00;
 	else
-		F.xc = NaN;
-		F.yc = NaN;
+		F.uc = NaN;
+		F.vc = NaN;
 	end
 	F.a = a;
 	F.b = b;

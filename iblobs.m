@@ -59,6 +59,7 @@
 
 
 function [F,labimg] = iblobs(im, varargin)
+%TODO use optparse
 	
 	[nr,nc] = size(im);
 
@@ -87,7 +88,7 @@ function [F,labimg] = iblobs(im, varargin)
 				shape_max = shape_filt(2);
 				shape_min = shape_filt(1);
 				i = i+1;
-		case 'color', 	color_filter = varargin{i+1}; i = i+1;
+		case 'class', 	color_filter = varargin{i+1}; i = i+1;
 		case 'touch', 	touch = varargin{i+1}; i = i+1;
 		case 'aspect', 	aspect = varargin{i+1}; i = i+1;
 		case 'connect',	connect = varargin{i+1}; i = i+1;
@@ -107,8 +108,8 @@ function [F,labimg] = iblobs(im, varargin)
 
 		% determine the blob extent
 		[y,x] = find(binimage);
-		minx = min(x); maxx = max(x);
-		miny = min(y); maxy = max(y);
+		umin = min(x); umax = max(x);
+		vmin = min(y); vmax = max(y);
 
         % it touches the edge if its parent is 0
 		t = (parent(i) == 0);
@@ -144,25 +145,29 @@ function [F,labimg] = iblobs(im, varargin)
 
             if boundary_opt
                 [y,x]
-                ff.edge = edgelist(im, [x y]);
+                ff.edge = edgelist(im, [x y])';
                 ff.perimeter = numrows(ff.edge);
                 ff.perimeter
                 ff.circularity = 4*pi*ff.area/ff.perimeter^2;
             end
 
-			ff.minx = minx;
-			ff.maxx = maxx;
-			ff.miny = miny;
-			ff.maxy = maxy;
+			ff.umin = umin;
+			ff.umax = umax;
+			ff.vmin = vmin;
+			ff.vmax = vmax;
 			ff.touch = t;
 			ff.shape = shape;
             ff.label = i;
             ff.parent = parent(i);
-            ff.color = color(i);
+            ff.class = color(i);
 			count = count+1;
 			Feature(count) = ff;
 		end
 	end
+
+    if count == 0
+        Feature = [];
+    end
 
     % add children property
     for i=1:length(Feature)
