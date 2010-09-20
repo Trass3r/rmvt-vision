@@ -47,39 +47,61 @@
 % http://www.comp.nus.edu.sg/~tancl/Papers/IJCNN04/he04ijcnn.pdf
 % http://citeseer.ist.psu.edu/398385.html
 
-function [label,centroid] = kmeans(x, K, z0)
+function [label,centroid,resid] = kmeans(x, K, varargin)
+% TODO update doco for assignment mode
+%      option to loop N times and take lowest residual
+%      return residual from assignment mode
 	deb = 0;
 
-    n = numrows(x);
+    n = numcols(x);
     
-    if nargin == 2,
+    if nargin == 2
         z0 = 'random';
     end
-    
-    % pick the initial cluster centers if not given
-    if isstr(z0),
-        if strcmp(z0, 'random'),
-            k = randi(n, K, 1);
-            z0 = x(k,:);
-        elseif strcmp(z0, 'spread'),
 
-            mx = max(x);
-            mn = min(x);
-            z0 = rand(K,1) * (mx-mn) + ones(K,1)*mn;
-            z0
-        else
-            error('unknown cluster initialization method');
+    if numcols(K) > 1 && numrows(x) == numrows(K)
+        % kmeans(x, centres)
+        % then return closest clusters
+        label = closest(x, K);
+        if nargout > 1
+            centroid = K;
         end
-    else
-        if numrows(z0) ~= K,
+        if nargout > 2
+            resid = norm( x - K(:,label) );
+        end
+        return
+    end
+
+    opt.plot = false;
+    opt.init = {'random', 'spread'};
+    [opt,z0] = tb_optparse(opt, varargin);
+
+    if opt.plot && numrow(x) > 3
+        warning('cant plot for more than 3D data');
+        opt.plot = false;
+    end
+    if ~isempty(z0)
+        % an initial condition was supplied
+        if numcols(z0) ~= K,
             error('initial cluster length should be k');
         end
-        if numcols(z0) ~= numcols(x),
+        if numrows(z0) ~= numrows(x),
             error('number of dimensions of z0 must match dimensions of x');
+        end
+    else
+        % determine initial condition
+        if strcmp(opt.init, 'random')
+            % select K points from the set given as initial cluster centres
+            k = randi(n, K, 1);
+            z0 = x(:,k);
+        elseif strcmp(opt.init, 'spread')
+            % select K points from within the hypercube defined by the points
+            mx = max(x')';
+            mn = min(x')';
+            z0 = (mx-mn) * rand(1,K) + mn * ones(1,K);
         end
     end
 
-    
     % z is the centroid
     % zp is the previous centroid
     % s is the vector of cluster labels corresponding to rows in x
@@ -91,7 +113,8 @@ function [label,centroid] = kmeans(x, K, z0)
 	% step 1
 	%
 	zp = z;             % previous centroids
-	s = zeros(n, 1);
+	s = zeros(1,n);
+    sp = s;
     
 	iterating = 1;
 	k = 1;
@@ -99,56 +122,95 @@ function [label,centroid] = kmeans(x, K, z0)
     
 	while iterating,
 		iter = iter + 1;
+        
+        tic
+        t0 = toc;
 
 		%
 		% step 2
 		%
-		for l=1:K,
-            y(:,l) = colnorm( (x - ones(n,1)*z(l,:))' )';
-			[zz,ind] = min(y');
-			s = ind';	% assign index of closest set
-        end
-			
+
+        s = closest(x, z);
+        			
 		%
 		% step 3
 		%
 		for j=1:K
-			zp(j,:) = mean( x(s==j,:) );
+            k = find(s==j);
+            if isempty(k)
+                if strcmp(opt.init, 'random')
+                    k = randi(n, 1, 1);
+                    z0 = x(:,k);
+                elseif strcmp(opt.init, 'spread')
+                    % this cluster has no elements, randomly assign it
+                    zp(:,j) = (mx-mn) * rand(1,1) + mn;
+                end
+            else
+                % else, assign it to the mean of its elements
+                zp(:,j) = mean( x(:,k)' );
+                dd = sum( (repmat(zp(:,j),1,length(k)) - x(:,k)).^2 );
+                dd = dd / numrows(x);
+                maxerr(j) = max( sqrt(dd) );
+            end
         end
 
 		%
 		% step 4
 		%
-		nm = norm( colnorm( (z - zp)') );
-		if deb>0,
-			nm
-		end
-		if nm == 0,
+        %  determine the change in cluster centres over the last step
+		delta = sum( sum( (z - zp).^2 ) );
+
+        if opt.verbose
+            t = toc;
+            fprintf('%d: norm=%g, delta=%g, took %.1f seconds\n', iter, mean(maxerr), delta, t);
+        end
+
+		if delta == 0,
+            fprintf('delta to zero\n');
 			iterating = 0;
 		end
 		z = zp;
-		if deb>0,
-			plot(z);
+		if opt.plot
+            if numrows(z) == 2
+                plot(z(1,:), z(2,:));
+            else
+                plot3(z(1,:), z(2,:), z(3,:));
+            end
 			pause(.1);
-		end
-	end
-	if deb>0,
-		disp('iterations ');
-		disp(iter);
-    end
-    
-    if nargout == 0,
-        % if no output arguments display results        
-        for i=1:K,
-            fprintf('cluster %d: %s (%d elements)\n', i, ...
-                sprintf('%11.4g ', z(i,:)), length(find(s==i)));
         end
         
-        fprintf('\n%d iterations\n', iter);
+        % if no point assignments changed then we are done
+        if all(sp == s)
+            fprintf('no point assignments changed\n');
+            iterating = 0;
+        end
+        sp = s;
+	end
+    
+    if nargout == 0
+        % if no output arguments display results        
+        if numrows(z) < 5
+            for i=1:K,
+                fprintf('cluster %d: %s (%d elements)\n', i, ...
+                    sprintf('%11.4g ', z(i,:)), length(find(s==i)));
+            end
+        end
+        
     end
-    if nargout > 0,
+    if nargout > 0
         centroid = z;
     end
-    if nargout > 1,
+    if nargout > 1
         label = s;
+    end
+    if nargout > 2
+        % compute the residual
+        resid = norm( x - z(:,s) );
+    end
+
+    dt = toc - t0;
+    if dt > 10
+        fprintf('that took %.1f seconds\n', dt);
+    elseif dt > 60
+        fprintf('that took %.1f minutes\n', dt/60);
     end
