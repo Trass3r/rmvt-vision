@@ -1,19 +1,34 @@
-%HOMTRANS	transform points by homography
+% Copyright (C) 1995-2009, by Peter I. Corke
 %
-%	ph = homtrans(H, p)
-%
-% Apply the homography H to the image-plane points p.  p is an nx2 or
-% nx3 matrix whose rows correspond to individual points.  Each row is of
-% the form [u v w].  If w is not specified, ie. p has 2 columns, then it is
-% assumed to be 1.
-%
-% Returns points as ph, an nx3 matrix where each row is the homogeneous
-% point coordinates.
-%
+% This file is part of The Machine Vision Toolbox for Matlab (MVTB).
+% 
+% MVTB is free software: you can redistribute it and/or modify
+% it under the terms of the GNU Lesser General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% MVTB is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU Lesser General Public License for more details.
+% 
+% You should have received a copy of the GNU Leser General Public License
+% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-function p = homtrans(H, p1)
 
-	if numcols(p1) == 2,
-		p1 = [p1 ones(numrows(p1),1)];
-	end
-	p = h2e( H* e2h(p1) );
+function pt = homtrans(T, p)
+
+    %TODO: check type of first arg
+
+	% do the camera perspective transform
+
+    if numrows(p) == numrows(T)
+        pt = T * p;
+    elseif (numrows(T)-numrows(p)) == 1
+        pt = h2e( T * e2h(p) );
+    else
+        error('matrices and point data do not conform')
+    end
+		
+
+
