@@ -1,44 +1,4 @@
-%IRECTIFY Rectify stereo image pair
-%
-% [OUT1,OUT2] = IRECTIFY(F, M, IM1, IM2) is a rectified pair of images
-% corresponding to IM1 and IM2.  F (3x3) is the fundamental matrix relating 
-% the two views and M is a FeatureMatch object containing point correspondences 
-% between the images.
-%
-% [OUT1,OUT2,H1,H2] = IRECTIFY(F, M, IM1, IM2) as above but also returns
-% the homographies H1 and H2 that warp IM1 to OUT1 and IM2 to OUT2 respectively.
-%
-% Notes::
-% - The resulting image pair are epipolar aligned, equivalent to the view
-%   if the two original camera axes were parallel.
-% - Rectified images are required for dense stereo matching.
-% - The effect of lense distortion is not removed, use the camera calibration
-%   toolbox to unwarp each image prior to rectification.
-% - The resulting images may have negative disparity.
-% - Some output pixels may have no corresponding input pixels and will be
-%   set to NaN.
-%
-% See also FeatureMatch, ISTEREO, HOMWARP, CentralCamera.
-
-
-% Copyright (C) 1993-2011, by Peter I. Corke
-%
-% This file is part of The Machine Vision Toolbox for Matlab (MVTB).
-% 
-% MVTB is free software: you can redistribute it and/or modify
-% it under the terms of the GNU Lesser General Public License as published by
-% the Free Software Foundation, either version 3 of the License, or
-% (at your option) any later version.
-% 
-% MVTB is distributed in the hope that it will be useful,
-% but WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-% GNU Lesser General Public License for more details.
-% 
-% You should have received a copy of the GNU Leser General Public License
-% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
-
-function [Img1_new, Img2_new, H12,H21] = irectify(F, m, Img1, Img2)
+function [Img1_new, Img2_new, H12,H21,F12] = irectify(F, m, Img1, Img2)
 % http://se.cs.ait.ac.th/cvwiki/matlab:tutorial:rectification
 
 F12 = F';
