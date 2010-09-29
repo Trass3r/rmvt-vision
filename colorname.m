@@ -56,8 +56,13 @@ function r = colorname(a, opt)
         end
     elseif iscell(a)
         % map multiple names to rgb
+        r = [];
         for name=a,
-            r = [r; name2rgb(rgbtable, a, opt)];
+            rgb = name2rgb(rgbtable, name{1}, opt);
+            if isempty(rgb)
+                warning('Color %s not found', name{1});
+            end
+            r = [r; rgb];
         end
     else
         if numel(a) == 3
