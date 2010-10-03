@@ -34,6 +34,10 @@ classdef PointFeature < handle
             val = [f.v_];
         end
 
+        function val = p(f)
+            val = [[f.u_]; [f.v_]];
+        end
+
         function val = strength(f)
             val = [f.strength_];
         end
