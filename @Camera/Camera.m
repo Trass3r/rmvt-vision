@@ -27,13 +27,14 @@
 %   C.sv          pixel height
 %   C.u0          principal point, u coordinate
 %   C.v0          principal point, v coordinate
+%   C.pp          principal point (u0, v0)
 % 
 % Object methods
 %
 %   C.fov         return camera half field-of-view angles (2x1 rads)
 %   C.K           return camera intrinsic matrix (3x3)
-%   C.P           return camera project matrix for camera pose (3x4)
-%   C.P(T)        return camera intrinsic matrix for specified camera pose (3x4)
+%   C.C           return camera project matrix for camera pose (3x4)
+%   C.C(Tcam)     return camera intrinsic matrix for specified camera pose (3x4)
 %
 %   C.H(T, n, d)  return homography for plane: normal n, distance d  (3x3)
 %   C.F(T)        return fundamental matrix from pose 3x3
@@ -47,7 +48,17 @@
 %   C.rpy(rpy)
 %
 %   uv = C.project(P)       return image coordinates for world points  P
-%   uv = C.project(P, T)    return image coordinates for world points P transformed by T
+%   uv = C.project(P, Tp)    return image coordinates for world points P transformed by Tp
+%
+% GRAPHICS:
+%   C.clf
+%   C.hold             turn hold on
+%   C.hold(e)          turn hold on or off
+%
+%  Image plane primitives
+%
+%   C.point(Ph, opt)    plot points given in homogeneous form
+%   C.line(Ph, opt)    plot lines given in homogeneous form
 %
 %  P is a list of 3D world points and the corresponding image plane points are returned in uv.
 % If P has 3 columns it is treated as a number of 3D points in  world coordinates, one point per row.
@@ -65,10 +76,8 @@
 % Optionally returns image plane coordinates uv.
 %
 %   C.create
-%   C.create(name)
 %
-%   Create a graphical camera with name, and pixel dimensions given by C.npix.  Automatically
-%  called on first call to plot().
+%   Return handle to the axes for this camera's graphical display, if it doesn't exist then create it.
 
 % Copyright (C) 1995-2009, by Peter I. Corke
 %
@@ -97,19 +106,23 @@ classdef Camera < handle
     properties
         name    % camera name
         type
-        s       % pixel dimensions 1x2
+        rho     % pixel dimensions 1x2
         pp      % principal point 1x2
         npix    % number of pixel 1x2
-        Tcam    % camera pose
+        T       % camera pose
         noise   % pixel noise 1x2
+        image
     end
 
     properties (SetAccess = protected)
         handle
         limits
         perspective
-        h_show % handle for camera view
-        h_plot % handle for image plane
+        h_image % handle for image plane
+        h_visualize % handle for camera 3D view
+        h_camera3D    % handle for camera animation transform
+        P           % world points, last plotted
+        holdon
     end
 
     properties (GetAccess = protected, SetAccess = protected)
@@ -122,10 +135,12 @@ classdef Camera < handle
     properties (Dependent = true, SetAccess = protected)
         u0
         v0
-        su
-        sv
         nu
         nv
+    end
+    
+    methods (Abstract)
+        p = project(c, T1, T2);
     end
     
     methods
@@ -140,41 +155,52 @@ classdef Camera < handle
 
             % default values
             c.type = '**abstract**';
-            c.Tcam = eye(4,4);
-            c.s = [1 1];
+            c.T = eye(4,4);
+            c.rho = [1 1];
+            c.f = 1;
             c.pp = [];
             c.limits = [-1 1 -1 1];
             c.npix = [];
             c.noise = [];
             c.name = 'unnamed';
             c.perspective = false;
-            c.h_plot = [];
-            c.h_show = [];
-
+            c.h_image = [];
+            c.h_camera3D = [];
+            c.h_visualize = [];
+            c.holdon = false;
+            c.image = [];
+            sensor = [];
 
             if nargin == 0,
                 c.name = 'canonic';
                 c.pp = [0 0];
+            elseif nargin == 1 && isa(varargin{1}, 'Camera')
+                return;
             else
                 c.name = 'noname';
 
                 count = 1;
-                args = varargin{:};
+                args = varargin;
                 while count <= length(args)
                     switch lower(args{count})
                     case 'name'
                         c.name = args{count+1}; count = count+1;
+                    case 'image'
+                        c.image = args{count+1}; count = count+1;
+                        c.npix = [size(c.image,2) size(c.image,1)];
                     case 'resolution'
                         v = args{count+1}; count = count+1;
                         if length(v) == 1
                             v = [v v];
                         end
                         c.npix = v;
-                    case 'centre'
+                    case {'principal', 'centre'}
                         c.pp = args{count+1}; count = count+1;
+                    case 'sensor'
+                            sensor = args{count+1}; count = count+1;
                     case 'pixel'
                         s = args{count+1}; count = count+1;
-                        c.s = s;
+                        c.rho = s;
                     case 'noise'
                         v = args{count+1}; count = count+1;
                         if length(v) == 1
@@ -182,7 +208,7 @@ classdef Camera < handle
                         end
                         c.noise = v;
                     case 'pose'
-                        c.Tcam = args{count+1}; count = count+1;
+                        c.T = args{count+1}; count = count+1;
                     otherwise
                         % if the parameter is not known by the base class, call
                         % the parameter handler in the derived class.
@@ -192,17 +218,27 @@ classdef Camera < handle
                     end
                     count = count + 1;
                 end
-                if isempty(c.pp)
-                    fprintf('principal point not specified, setting it to centre of image plane\n');
-                    c.pp = c.npix / 2;
-                end
             end
+            if ~isempty(sensor)
+                c.rho = sensor ./ c.npix;
+            end
+            if length(c.rho) == 1
+                c.rho = ones(1,2) * c.rho;
+            end
+            if isempty(c.pp)
+                fprintf('principal point not specified, setting it to centre of image plane\n');
+                c.pp = c.npix / 2;
+            end
+            c.pp
         end
 
         function delete(c)
-            h = findobj('Tag', c.name);
-            if ~isempty(h)
-                delete( get(h, 'Parent') );
+            disp('delete camera object');
+            if ~isempty(c.h_image)
+                delete(get(c.h_image, 'Parent'));
+            end
+            if ~isempty(c.h_visualize)
+                delete(get(c.h_visualize, 'Parent'));
             end
         end
 
@@ -223,8 +259,8 @@ classdef Camera < handle
 
         function s = char(c, s)
             s = '';
-            if ~isempty(c.s)
-                s = strvcat(s, sprintf('  pixel size:     (%.4g, %.4g)', c.su, c.sv));
+            if ~isempty(c.rho)
+                s = strvcat(s, sprintf('  pixel size:     (%.4g, %.4g)', c.rho(1), c.rho(2)));
             end
             if ~isempty(c.pp)
                 s = strvcat(s, sprintf('  principal pt:   (%.4g, %.4g)', c.u0, c.v0));
@@ -235,8 +271,8 @@ classdef Camera < handle
             if ~isempty(c.noise)
                 s = strvcat(s, sprintf('  noise: %.4g,%.4g pix', c.noise));
             end
-            s = strvcat(s, sprintf('  Tcam:'));
-            s = strvcat(s, [repmat('      ', 4,1) num2str(c.Tcam)]);
+            s = strvcat(s, sprintf('  T:'));
+            s = strvcat(s, [repmat('      ', 4,1) num2str(c.T)]);
         end
 
         function v = get.u0(c)
@@ -247,12 +283,8 @@ classdef Camera < handle
             v = c.pp(2);
         end
 
-        function v = get.su(c)
-            v = c.s(1);
-        end
-
-        function v = get.sv(c)
-            v = c.s(2);
+        function v = get.rho(c)
+            v = c.rho;
         end
 
         function v = get.nu(c)
@@ -269,23 +301,33 @@ classdef Camera < handle
                 yaw = roll(3);
                 roll = roll(1);
             end
-            c.Tcam = r2t( rotz(roll) * roty(pitch) * rotx(yaw) );
+            c.T = r2t( rotz(roll) * roty(pitch) * rotx(yaw) );
         end
 
-        function c = set.Tcam(c, Tc)
-            if ~ishomog(Tc)
+        function c = set.T(c, Tc)
+            if isempty(Tc)
+                c.T = eye(4,4);       
+            elseif ~ishomog(Tc)
                 error('camera pose must be a homogeneous transform');
+            else
+                c.T = Tc;
             end
-            c.Tcam = Tc;
+            if ~isempty(c.h_camera3D) && ishandle(c.h_camera3D)
+                set(c.h_camera3D, 'Matrix', c.T);
+            end
         end
 
-        function c = set.s(c, sxy)
+        function c = centre(c)
+            c = transl(c.T);
+        end
+
+        function c = set.rho(c, sxy)
             if isempty(sxy)
-                c.s = sxy;
+                c.rho = sxy;
             elseif length(sxy) == 1,
-                c.s = [sxy sxy];
+                c.rho = [sxy sxy];
             elseif length(sxy) == 2,
-                c.s = sxy(:)';
+                c.rho = sxy(:)';
             else
                 error('need 1 or 2 scale elements');
             end
@@ -320,148 +362,313 @@ classdef Camera < handle
             if nargin < 2
                 flag = true;
             end
-            h = findobj('Tag', c.name);
-            if ~isempty(h),
-                if flag
-                    set(h, 'NextPlot', 'add');
-                else
-                    set(h, 'NextPlot', 'replacechildren');
-                end
+            c.holdon = flag;
+            if flag
+                set(c.h_image, 'NextPlot', 'add');
+            else
+                set(c.h_image, 'NextPlot', 'replacechildren');
             end
         end
 
+        function v = ishold(c)
+            v = c.holdon;
+        end
+
         function clf(c, flag)
-            h = findobj('Tag', c.name);
-            if ~isempty(h),
+            h = c.h_image;
+            if ~isempty(h) && ishandle(h)
                 children = get(h, 'Children');
                 for child=children
                     delete(child)
                 end
-                c.h_plot = [];
             end
         end
 
-        function h = create(c, name)
-            if (nargin == 2) && isstr(name),
-                c.name = name;  % allow camera to be renamed
+        % Return the graphics handle for this camera's image plane
+        % and create the graphics if it doesnt exist
+        %
+        function h = plot_create(c, hin)
+
+            % if this camera is created from an image, then display that image
+            if ~isempty(c.image)
+                idisp(c.image, 'nogui');
+                set(gcf, 'name', [class(c) ':' c.name]);
+                set(gcf, 'MenuBar', 'none');
+                hold on
+                h = gca;
+                title(h, c.name);
+                c.h_image = h;
+                set(gcf, 'HandleVisibility', 'off');
+                set(h, 'HandleVisibility', 'off');
+                return;
             end
 
-            if (nargin == 2) && ishandle(name),
+            if ishandle(c.h_image)
+                h = c.h_image;
+                return;
+            end
+
+            disp('creating new figure for camera')
+            if (nargin == 2) && ishandle(hin),
                 % draw camera in an existing axes
-                h = name;
+                h = hin;
+                set(h, 'HandleVisibility', 'off');
             else
-                % we need an axis to draw in
-                h = findobj('Tag', c.name);
-                if isempty(h)
-                    disp('no camera axis found');
-                    if findobj(gcf, 'Tag', 'camera')
-                        % this figure is already a camera
-                        disp('this fig is a camera, make a new one');
-                    end
-                    h = axes
-                    disp('make axes');
-                    axis square
-                    set(gcf, 'MenuBar', 'none');
-                    set(gcf, 'Tag', 'camera');
-                    set(gca, 'Color', [0.9 0.9 0]);
-                else
-                    disp('found existing axis')
-                end
+                clf
+                h = axes
+                fig = get(h, 'Parent');
+                disp('make axes');
+                axis square
+                set(fig, 'MenuBar', 'none');
+                set(fig, 'Tag', 'camera');
+                set(h, 'Color', [1 1 0.8]);
+                set(fig, 'HandleVisibility', 'off');
+                set(fig, 'name', [class(c) ':' c.name]);
             end
             % create an axis for camera view
             set(h, 'XLim', c.limits(1:2), 'YLim', c.limits(3:4), ...
                 'DataAspectRatio', [1 1 1], ...
                 'Xgrid', 'on', 'Ygrid', 'on', ...
                 'Ydir' , 'reverse', ...
-                'DefaultLineLineStyle', 'none', ...
-                'DefaultLineColor', 'black', ...
-                'DefaultLineMarker', 'o', ...
-                'DefaultLineMarkerEdgeColor', 'black', ...
-                'DefaultLineMarkerFaceColor', 'black', ...
-                'NextPlot', 'replacechildren', ...
+                'NextPlot', 'add', ...
                 'Tag', c.name ...
                 );
-            if ~isempty(c.npix)
-                xlabel('u (pixels)');
-                ylabel('v (pixels)');
-            else
-                xlabel('x (m)');
-                ylabel('y (m)');
-            end
+            c.h_image = h;       % keep this around
+            c.newplot();
             title(h, c.name);
-            figure( get(h, 'Parent') );   % raise the camera view
-
-            c.handle = h;       % keep this around
+            figure( fig );   % raise the camera view
+            set(h, 'NextPlot', 'replacechildren');
         end
+        
+        function newplot(c)
+            h = c.h_image;
+            if ~isempty(c.npix)
+                xlabel(h, 'u (pixels)');
+                ylabel(h, 'v (pixels)');
+            else
+                xlabel(h, 'x (m)');
+                ylabel(h, 'y (m)');
+            end
+        end
+        
 
-        %   uv = GCAMERA(H, POINTS, Tcam, Tobj)
+        %   C.plot(P)   plot 3D world points  3xN
+        %   C.plot(p)   plot 2D image plane points 2xN
         function v =  plot(c, points, varargin)
-            %% animate points
 
-            Tobj = eye(4,4);
+            opt.Tobj = [];
+            opt.Tcam = [];
+            opt.fps = 5;
+            opt.sequence = false;
+            opt.textcolor = 'k';
+            opt.textsize = 12;
 
-            if nargin > 2 && (ishomog(varargin{1}) || isempty(varargin{1}))
+            [opt,arglist] = tb_optparse(opt, varargin);
+
+            % get handle for this camera image plane
+            h = c.plot_create();
+
+            nr = numrows(points);
+
+            if nr == 3
+                % plot 3D world points
+                uv = c.project(points, varargin{:});
+            else
+                uv = points;
+            end
+
+            if isempty(arglist)
+                % set default style if none given
+                %disp('set default plot args');
+                arglist = {'Marker', 'o', 'MarkerFaceColor', 'k', 'LineStyle', 'none'};
+            end
+
+            for i=1:size(uv,3)
+                % for every frame in the animation sequence
+                plot(uv(1,:,i), uv(2,:,i), arglist{:}, 'Parent', h);
+                if opt.sequence
+                    for j=1:size(uv,2)
+                        text(uv(1,j,i), uv(2,j,i), sprintf('  %d', j), ...
+                            'HorizontalAlignment', 'left', ...
+                            'VerticalAlignment', 'middle', ...
+                            'FontUnits', 'pixels', ...
+                            'FontSize', opt.textsize, ...
+                            'Color', opt.textcolor, ...
+                            'Parent', h);
+                    end
+                end
+
+                if size(uv,3) > 1
+                    pause(1/opt.fps);
+                end
+            end
+
+            if nargout > 0,
+                v = uv;
+            end
+        end % plot
+
+        %   C.mesh(X,Y,Z)   plot 3D world line segments  6xN
+        function v =  mesh(c, X, Y, Z, varargin)
+
+            % check that mesh matrices conform
+            if ~(all(size(X) == size(Y)) && all(size(X) == size(Z)))
+                error('matrices must be the same size');
+            end
+
+            % first two optional arguments can be
+            %       Tobj
+            %       [], Tcam
+            %       Tobj, Tcam
+            Tobj = [];
+            Tcam = [];
+
+            if nargin > 4 && (ishomog(varargin{1}) || isempty(varargin{1}))
                 Tobj  = varargin{1};
                 varargin = varargin(2:end);
             end
-
-            % look for an axis that displays this camera
-            h = findobj('Tag', c.name);
-
-            if isempty(h)
-                disp('creating new figure for camera')
-                h = c.create
+            if nargin > 5 && (ishomog(varargin{1}) || isempty(varargin{1}))
+                Tcam  = varargin{1};
+                varargin = varargin(2:end);
+            end
+            if isempty(Tobj)
+                Tobj = eye(4,4);
+            end
+            if isempty(Tcam)
+                Tcam = c.T;
             end
 
-            axes(h);        % make them the current axes:w
+            % get handle for this camera image plane
+            h = c.create
 
-            nr = numrows(points);
-            if (nr == 3) || (nr == 4),
-                % TODO: why nr==4?  for homog points?
+            % draw 3D line segments
+            nsteps = 21;
 
-                % draw points
-                uv = c.project(points, Tobj);
-                varargin{:}
-                if isempty(c.h_plot) || ~ishandle(c.h_plot)
-                    % create a line
-                    c.h_plot = line('xdata', uv(1,:), 'ydata', uv(2,:), varargin{:});
-                else
-                    set(c.h_plot, 'xdata', uv(1,:), 'ydata', uv(2,:), varargin{:});
-                end
-                if nargout > 0,
-                    v = uv;
-                end
-            elseif nr == 6,
-                % draw line segments
-                nsteps = 21;
+            c.clf();
 
-                c.clf();
+            for i=1:numrows(X)-1
+                for j=1:numcols(X)-1
+                    P0 = [X(i,j), Y(i,j), Z(i,j)]';
+                    P1 = [X(i+1,j), Y(i+1,j), Z(i+1,j)]';
+                    P2 = [X(i,j+1), Y(i,j+1), Z(i,j+1)]';
 
-                hold on
-
-                for i=1:numcols(points)
-                    P0 = points(1:3,i);
-                    P1 = points(4:6,i);
                     if c.perspective
                         % straight world lines are straight on the image plane
-                        uv = c.project([P0 P1], Tobj);
+                        whos
+                        uv = c.project([P0 P1], Tobj, Tcam);
                     else
                         % straight world lines are not straight, plot them piecewise
                         P = [];
                         for j=1:nsteps
                             s = (j-1)/(nsteps-1);   % distance along line
                             P = [P (1-s)*P0 + s*P1];
-                            uv = c.project(P, Tobj);
                         end
+                        uv = c.project(P, Tobj, Tcam);
                     end
-                    plot(uv(1,:)', uv(2,:)');
-                end
+                    plot(uv(1,:)', uv(2,:)', 'Parent', c.h_image);
 
-                hold off
-            else
-                error('Points matrix should be 3 or 6 rows');
+                    if c.perspective
+                        % straight world lines are straight on the image plane
+                        uv = c.project([P0 P2], Tobj, Tcam);
+                    else
+                        % straight world lines are not straight, plot them piecewise
+                        P = [];
+                        for j=1:nsteps
+                            s = (j-1)/(nsteps-1);   % distance along line
+                            P = [P (1-s)*P0 + s*P2];
+                        end
+                        uv = c.project(P, Tobj, Tcam);
+                    end
+                    plot(uv(1,:)', uv(2,:)', 'Parent', c.h_image);
+                end
+            end
+
+            for j=1:numcols(X)-1
+                P0 = [X(end,j), Y(end,j), Z(end,j)]';
+                P1 = [X(end,j+1), Y(end,j+1), Z(end,j+1)]';
+
+                if c.perspective
+                    % straight world lines are straight on the image plane
+                    uv = c.project([P0 P1], Tobj, Tcam);
+                else
+                    % straight world lines are not straight, plot them piecewise
+                    P = [];
+                    for j=1:nsteps
+                        s = (j-1)/(nsteps-1);   % distance along line
+                        P = [P (1-s)*P0 + s*P1];
+                    end
+                    uv = c.project(P, Tobj, Tcam);
+                end
+                plot(uv(1,:)', uv(2,:)');
+            end
+
+        end % mesh
+
+        % plot multiple points given in homogeneous form
+        %  one column per point
+        function h =  point(c, p, varargin)
+
+            % get handle for this camera image plane
+            h = c.create
+
+            uv = e2h(p);
+            h = plot(uv(1,:), uv(2,:), varargin{:});
+        end % point
+
+        % plot multiple lines given in homogeneous form
+        %  one column per line
+        function h =  line(c, lines, varargin)
+
+            hold on
+
+            % get handle for this camera image plane
+            h = c.plot_create
+            xlim = get(h, 'XLim');
+            ylim = get(h, 'YLim');
+
+            if numel(lines) == 3
+                lines = lines(:);
+            end
+
+            for l=lines
+                if abs(l(1)/l(2)) > 1
+                    % steeper than 45deg
+                    x = (-l(3) - l(2)*ylim) / l(1);
+                    h = plot(x, ylim, varargin{:}, 'Parent', c.h_image);
+                else
+                    % less than 45deg
+                    y = (-l(3) - l(1)*xlim) / l(2);
+                    xlim
+                    y
+                    h = plot(xlim, y, varargin{:}, 'Parent', c.h_image);
+                end
+            end
+        end % line
+
+        function newcam = move(cam, T)
+            newcam = CentralCamera(cam);
+            newcam.T = newcam.T * T;
+        end
+
+        function movedby(c, robot)
+            robot.addlistener('Moved', @(src,data)cameramove_callback(src,data,c));
+
+            function cameramove_callback(robot, event, camera)
+                camera.T = robot.fkine(robot.q);
             end
         end
 
+        function help(c)
+            disp(' C.plot(P)     return image coordinates for world points  P');
+            disp(' C.point(P)     return image coordinates for world points  P');
+            disp(' C.line(P)     return image coordinates for world points  P');
+            disp(' C.clf     return image coordinates for world points  P');
+            disp(' C.hold     return image coordinates for world points  P');
+            disp(' C.project(P)     return image coordinates for world points  P');
+            disp(' C.project(P, Tobj)  return image coordinates for world points P ');
+            disp(' C.project(P, To, Tcm)  return image coordinates for world points P ');
+            disp(' transformed by T prior to projection');
+        end
     end % methods
+
 end % class
