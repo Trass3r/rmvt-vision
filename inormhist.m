@@ -4,6 +4,7 @@
 %
 %	Returns a histogram normalized image.  Assumes that pixels lie in the
 %	range 0-255.
+%   WORKS WITH FLOAT
 %
 % SEE ALSO:	ihist
 
@@ -29,6 +30,7 @@ function [ni,ch] = inormhist(im)
     end
 	[cdf,x] = ihist(im, 'cdf');
 	[nr,nc] = size(im);
+    cdf = cdf/max(cdf);
     
     if isfloat(im)
         ni = interp1(x', cdf', im(:), 'nearest');
