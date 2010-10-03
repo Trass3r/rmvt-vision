@@ -109,17 +109,19 @@
 %                 breaks in code introduced in last update fixed.
 % December 2008 - Octave compatibility mods
 
-function [M, inliers, resid] = ransac(fittingfn, x, t, feedback, ...
-                               maxDataTrials, maxTrials)
+function [M, inliers, resid] = ransac(fittingfn, x, t, varargin);
 
-    useRandomsample = ~exist('randsample');
+    %useRandomsample = ~exist('randsample');
 
     % Test number of parameters
-    error ( nargchk ( 3, 6, nargin ) );
-    
-    if nargin < 6; maxTrials = 1000;    end; 
-    if nargin < 5; maxDataTrials = 100; end; 
-    if nargin < 4; feedback = 0;        end;
+    %if nargin < 6; maxTrials = 1000;    end; 
+    %if nargin < 5; maxDataTrials = 100; end; 
+    %if nargin < 4; feedback = 0;        end;
+
+    opt.maxTrials = 1000;
+    opt.maxDataTrials = 100;
+
+    opt = tb_optparse(opt, varargin);
     
     [rows, npts] = size(x);                 
     
@@ -131,12 +133,12 @@ function [M, inliers, resid] = ransac(fittingfn, x, t, feedback, ...
     bestscore =  0;    
     N = 1;            % Dummy initialisation for number of trials.
     
-    out = invoke('size', fittingfn, feedback, []);
+    out = invoke('size', fittingfn, opt.verbose, []);
     s = out.s;
 
 
     in.X = x;
-    out = invoke('condition', fittingfn, feedback, in);
+    out = invoke('condition', fittingfn, opt.verbose, in);
     x = out.X;
     misc = out.misc;
     
@@ -153,16 +155,20 @@ function [M, inliers, resid] = ransac(fittingfn, x, t, feedback, ...
             % Generate s random indicies in the range 1..npts
             % (If you do not have the statistics toolbox, or are using Octave,
             % use the function RANDOMSAMPLE from my webpage)
+        if 0
 	    if useRandomsample
             ind = randomsample(npts, s);
 	    else
             ind = randsample(npts, s);
 	    end
+        else
+            ind = randi(npts, 1, s);
+        end
 
             % Test that these points are not a degenerate configuration.
 
             in.X = x(:,ind);
-            out = invoke('valid', fittingfn, feedback, in);
+            out = invoke('valid', fittingfn, opt.verbose, in);
             degenerate = ~out.valid;
             
             if ~degenerate
@@ -171,7 +177,7 @@ function [M, inliers, resid] = ransac(fittingfn, x, t, feedback, ...
                 % this case M will be a cell array of models
 
                 in.X = x(:,ind);
-                out = invoke('estimate', fittingfn, feedback, in);
+                out = invoke('estimate', fittingfn, opt.verbose, in);
                 M = out.theta;
                 
                 % Depending on your problem it might be that the only way you
@@ -185,7 +191,7 @@ function [M, inliers, resid] = ransac(fittingfn, x, t, feedback, ...
             
             % Safeguard against being stuck in this loop forever
             count = count + 1;
-            if count > maxDataTrials
+            if count > opt.maxDataTrials
                 warning('Unable to select a nondegenerate data set');
                 break
             end
@@ -201,7 +207,7 @@ function [M, inliers, resid] = ransac(fittingfn, x, t, feedback, ...
         in.t = t;
         in.theta = M;
         in.X = x;
-        out = invoke('error', fittingfn, feedback, in);
+        out = invoke('error', fittingfn, opt.verbose, in);
         inliers = out.inliers;
         M = out.theta;
         
@@ -223,15 +229,15 @@ function [M, inliers, resid] = ransac(fittingfn, x, t, feedback, ...
         end
         
         trialcount = trialcount+1;
-        if feedback > 1
+        if opt.verbose > 1
             fprintf('trial %d out of %d         \r',trialcount, ceil(N));
         end
 
         % Safeguard against being stuck in this loop forever
-        if trialcount > maxTrials
+        if trialcount > opt.maxTrials
             warning( ...
             sprintf('ransac reached the maximum number of %d trials',...
-                    maxTrials));
+                    opt.maxTrials));
             break
         end     
     end
@@ -249,35 +255,34 @@ function [M, inliers, resid] = ransac(fittingfn, x, t, feedback, ...
     % Now do a final least squares fit on the data points considered to
     % be inliers.
     [M,resid] = feval(fittingfn, x(:,inliers)); % with conditioned data
-    resid
 
     % then decondition it
     in.theta = M;
     in.misc = misc;
-    out = invoke('decondition', fittingfn, feedback, in);
+    out = invoke('decondition', fittingfn, opt.verbose, in);
     M = out.theta;
 
-    if feedback || (nargout == 0)
+    if opt.verbose || (nargout == 0)
         fprintf('%d trials\n', trialcount);
         fprintf('%d outliers\n', npts-length(inliers));
-        fprintf('%.4g final residual\n', resid);
+        fprintf('%g final residual\n', resid);
     end
 end
 
-function out = invoke(cmd, func, feedback, in)
+function out = invoke(cmd, func, verbose, in)
     if isempty(in) || (nargin < 4)
         in = [];
     end
-    in.debug = feedback > 1;
+    in.debug = verbose > 1;
     in.cmd = cmd;
     
-    if feedback > 2,
+    if verbose > 2,
         fprintf('---------------------------------------------\n');
         in
     end
     out = feval(func, in);
     
-    if feedback > 2,
+    if verbose > 2,
         out
     end
 end
