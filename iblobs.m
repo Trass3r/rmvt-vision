@@ -146,7 +146,7 @@ function [F,labimg] = iblobs(im, varargin)
             if boundary_opt
                 [y,x]
                 ff.edge = edgelist(im, [x y])';
-                ff.perimeter = numrows(ff.edge);
+                ff.perimeter = numcols(ff.edge);
                 ff.perimeter
                 ff.circularity = 4*pi*ff.area/ff.perimeter^2;
             end
