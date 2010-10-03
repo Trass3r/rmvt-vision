@@ -216,7 +216,7 @@ irank(const mxArray * msrc, const mxArray * mmask, const mxArray * morder, int h
 	int             band_offset, row_offset, col_offset;
 	int             src_band, src_row, src_col, dest_band, dest_row,
 	                mask_row, mask_col, dest_col, i, j, k, iorder;
-	unsigned int	*hist, *ph, cumsum, count;
+	unsigned int	*hist, *ph, cumsum, count, nbinned;
 
 	src_nrows = mxGetM(msrc);
 	src_ncols = mxGetN(msrc);
@@ -316,6 +316,7 @@ irank(const mxArray * msrc, const mxArray * mmask, const mxArray * morder, int h
 			/* zero the histogram */
 			for (i=0, ph=hist; i<histbins; i++)
 				*ph++ = 0;
+            nbinned = 0;
 
             // index over the mask matrix
 			for (j = 0; j < mask_nrows; j++) {
@@ -330,20 +331,26 @@ irank(const mxArray * msrc, const mxArray * mmask, const mxArray * morder, int h
 
                         // get the pixel
 						p = SPixel(src_row, src_col);
-
-                        // update the histogram of values
-						t = (int) ((p-offset)*scale);
-						hist[t]++;
+                        if (!isnan(p)) {
+                            // update the histogram of values
+                            t = (int) ((p-offset)*scale);
+                            hist[t]++;
+                            nbinned++;
+                        }
 					}
 				}
 			}
 	END:		;
             // compute cumulative sum of histogram, break when the
             // sum exceeds the specified rank
-			for (ph=hist, cumsum=0; cumsum<iorder; ph++)
-				cumsum += *ph;
-			/* convert bin index to value */
-			DPixel(dest_row, dest_col) = (double)(ph - hist) / scale + offset;
+            if (nbinned > iorder) {
+                for (ph=hist, cumsum=0; cumsum<iorder; ph++)
+                    cumsum += *ph;
+                /* convert bin index to value */
+                DPixel(dest_row, dest_col) = (double)(ph - hist) / scale + offset;
+            } else {
+                DPixel(dest_row, dest_col) = NAN;
+            }
 		}
 
     if (mxGetNumberOfElements(mmask) == 1) {
