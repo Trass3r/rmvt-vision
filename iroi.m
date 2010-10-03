@@ -3,6 +3,10 @@
 %	si = IROI(image)
 %	[si,region] = IROI(image)
 %
+% TODO
+%   IROI(image, centre, width)
+%   IROI(image, [], width)     prompts to pick the centre point
+%
 %	si = IROI(image,region)
 %
 %	The first two forms display the image and a rubber band box to
@@ -42,31 +46,21 @@ function [im, region] = iroi(image, reg, wh)
     elseif nargin == 2
 		im = image(reg(2,1):reg(2,2),reg(1,1):reg(1,2),:);
 	else
-		% save old event handlers, otherwise may interfere with
-		% other tools operating on the figure, eg. idisp()
-
-		clf
-		imagesc(image);
-
-		upfunc = get(gcf, 'WindowButtonUpFcn');
-		downfunc = get(gcf, 'WindowButtonDownFcn');
-		set(gcf, 'WindowButtonUpFcn', '');
-		set(gcf, 'WindowButtonDownFcn', '');
+        clf
+		idisp(image, 'nogui');
+        oldpointer = get(gcf, 'pointer');
+        set(gcf, 'pointer', 'fullcrosshair');
 
 		% get the rubber band box
 		waitforbuttonpress
+        disp('pressed');
 		cp0 = floor( get(gca, 'CurrentPoint') );
 
 		rect = rbbox;	    % return on up click
+        disp('rrbox returns');
         
         cp1 = floor( get(gca, 'CurrentPoint') );
         
-		%disp('rbbox done, restore handlers');
-		% restore event handlers
-		set(gcf, 'WindowButtonUpFcn', upfunc);
-		set(gcf, 'WindowButtonDownFcn', downfunc);
-
-
 		ax = get(gca, 'Children');
 		img = get(ax, 'CData');			% get the current image
 
@@ -85,6 +79,9 @@ function [im, region] = iroi(image, reg, wh)
             left = right;
             right = t;
         end
+
+        % restore the pointer
+        set(gcf, 'pointer', oldpointer);
         
         % extract the ROI
 		im = img(top:bot,left:right,:);
