@@ -76,8 +76,10 @@ classdef FeatureMatch < handle
         function s = show(m)
             s = sprintf('%d corresponding points\n', length(m));
             in = [m.inlier_];
-            s = [s sprintf('%d inliers\n', sum(in==true))];
-            s = [s sprintf('%d outliers\n', sum(in==false)) ];
+            s = [s sprintf('%d inliers (%.1f%%)\n', ...
+                sum(in==true), sum(in==true)/length(m)*100)];
+            s = [s sprintf('%d outliers (%.1f%%)\n', ...
+                sum(in==false), sum(in==false)/length(m)*100) ];
         end
         
         function v = subset(m, n)
