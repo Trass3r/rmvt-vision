@@ -47,6 +47,8 @@
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 function [disp,sim, x] = stereo(L, R, drange, h, varargin)
 
+% TODO: score cube is float, can return it
+
     opt.metric = 'zncc';
     opt.interp = false;
 
@@ -81,7 +83,8 @@ function [disp,sim, x] = stereo(L, R, drange, h, varargin)
         [s,d] = max(scores, [], 3);
     end
 
-    d = d + drange(1)-1;
+    d(isnan(s)) = NaN;
+
 
     if opt.interp
         % interpolated result required
@@ -148,6 +151,7 @@ function [disp,sim, x] = stereo(L, R, drange, h, varargin)
         d = d + dx;
 
    end
+   d = d + drange(1)-1;
 
     if nargout > 1,
         sim = s;
