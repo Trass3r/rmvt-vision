@@ -60,7 +60,7 @@ function idisp(im, varargin)
     opt.axes = true;
     opt.square = false;
     opt.wide = false;
-    opt.colormap = 'grey';
+    opt.colormap = [];
     opt.print = [];
     opt.bar = false;
     opt.frame = true;
@@ -69,7 +69,8 @@ function idisp(im, varargin)
     opt.xydata = [];
     opt.plain = false;
     opt.flatten = false;
-
+    opt.colormap_std = {[], 'grey', 'signed', 'invsigned', 'random', 'invert', 'dark'};
+    
     [opt,arglist] = tb_optparse(opt, varargin);
 
     if opt.plain
@@ -102,12 +103,13 @@ function idisp(im, varargin)
 
     ud.size = size(im);
     
+    set(gca, 'CLimMode', 'Manual');
+    set(gca, 'CLim', [min(im(:)) max(im(:))]);
     if ~isempty(opt.xydata)
         hi = image(opt.xydata{1}, opt.xydata{2}, im);
     else
-        hi = image(im);
+        hi = image(im, 'CDataMapping', 'scaled');
     end
-  
 
     if opt.wide
         set(gcf, 'units', 'norm');
@@ -115,18 +117,31 @@ function idisp(im, varargin)
         set(gcf, 'pos', [0.0 pos(2) 1.0 pos(4)]);
     end
 
-    if isstr(opt.colormap)
-        switch opt.colormap
+
+    if isempty(opt.colormap_std)
+        if isempty(opt.colormap)
+            % default colormap
+            disp('default color map');
+            cmap = gray(opt.ncolors);
+        else
+            % load a Matlab color map
+            disp('matlab color map');
+            cmap = feval(opt.colormap);
+        end
+    else
+        % a builtin shorthand color map was specified
+        disp(['builtin color map: ', opt.colormap_std]);
+        switch opt.colormap_std
         case 'random'
-            colormap(rand(opt.ncolors,3));
+            cmap = rand(opt.ncolors,3);
         case 'dark'
-            colormap(gray(opt.ncolors)*0.5);
+            cmap = gray(opt.ncolors)*0.5;
         case 'grey'
-            colormap(gray(opt.ncolors));
+            cmap = gray(opt.ncolors);
         case 'invert'
                 % invert the monochrome color map: black <-> white
             cmap = gray(opt.ncolors);
-            colormap( cmap(end:-1:1,:) );
+            cmap = cmap(end:-1:1,:);
         case {'signed', 'invsigned'}
                 % signed color map, red is negative, blue is positive, zero is black
                 % inverse signed color map, red is negative, blue is positive, zero is white
@@ -165,13 +180,9 @@ function idisp(im, varargin)
             elseif mx < 0
                 set(gca, 'CLim', [-mn mn]);
             end
-            colormap(cmap);
-        otherwise
-            colormap( feval(opt.colormap) );
         end
-    else
-        colormap(opt.colormap);
     end
+    colormap(cmap);
 
     if opt.bar
         colorbar
