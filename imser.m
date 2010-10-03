@@ -1,4 +1,4 @@
-function [all,nsets] = mser(im, varargin)
+function [all,nsets] = imser(im, varargin)
     if size(im,3) > 1
         error('monochrome images only');
     end
@@ -6,20 +6,16 @@ function [all,nsets] = mser(im, varargin)
     % process the argument list.
     %  we add two arguments 'light', 'dark' for the wrapper, the rest get
     % get passed to MSER.
-    argc = 1;
+    opt.invert = {'dark', 'light'};
+
+    [opt,mser_args] = tb_optparse(opt, varargin);
+
     invert = true;
-    mser_args = {};
-    while argc <= length(varargin)
-        switch lower(varargin{argc})
+    switch opt.invert
         case 'dark'
             invert = false;
         case 'light'
             invert = true;
-        otherwise
-            % pass through to MSER
-            mser_args = [mser_args varargin{argc}];
-        end
-        argc = argc + 1;
     end
 
     % MSER operates on a uint8 image
@@ -35,11 +31,9 @@ function [all,nsets] = mser(im, varargin)
     end
 
     % add default args if none given
-    mser_args
     if isempty(mser_args)
         mser_args = {'MinArea', 0.0001, 'MaxArea', 0.1};
     end
-    mser_args
 
 
     [R,F] = vl_mser(im, mser_args{:});
