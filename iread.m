@@ -56,6 +56,7 @@ function [I,info] = iread(filename, varargin)
     opt.gamma = [];
     opt.reduce = 1;
     opt.roi = [];
+    opt.disp = [];
 
     opt = tb_optparse(opt, varargin);
 
@@ -206,6 +207,10 @@ function im = loadimg(name, opt)
     % optionally gamma correct it
     if ~isempty(opt.gamma)
         im = igamma(im, opt.gamma);
+    end
+
+    if opt.disp
+        idisp(im);
     end
 
 end
