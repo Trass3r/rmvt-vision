@@ -38,7 +38,13 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-function [h,x] = ihist(im, varargin)
+function [h,xbin] = ihist(im, varargin)
+
+% TODO add optparse
+%   ihist(im)
+%   ihist(im, nbins)
+%   ihist(im, options)
+%   ihist(im, nbins, options)
 
     if size(im, 3) > 1
         % color or multiband image
@@ -65,14 +71,16 @@ function [h,x] = ihist(im, varargin)
     end
 
     if (nargin > 1) && isinteger(varargin(1))
-        N = varargin(1);
+        nbins = varargin(1);
     else
-        N = 256;
+        nbins = 256;
     end
 
     if isinteger(im)
+        % use quick mex function if data is integer
         [hh,xx] = fhist(im);
     else
+        % remove NaN and Infs from floating point data
         z = im(:);
         k = find(isnan(z));
         z(k) = [];
@@ -84,37 +92,43 @@ function [h,x] = ihist(im, varargin)
         if length(k) > 0
             warning('%d Infs removed', length(k));
         end
-        [hh,xx] = hist(z, N);
+        [n,x] = hist(z, nbins);
     end
 
-    % compute CDF if requested
-    if (nargin > 1) && strcmp(varargin(1), 'cdf')
-        hh = cumsum(hh);
-    elseif (nargin > 1) && strcmp(varargin(1), 'normcdf')
-        hh = cumsum(hh);
-        hh = hh ./ hh(end);
+    % handle options
+    if nargin > 1
+        switch varargin{1}
+        case 'cdf'
+            % compute CDF if requested
+            n = cumsum(n);
+        case 'normcdf'
+            n = cumsum(n);
+            n = n ./ n(end);
+        case 'sorted'
+            n = sort(n, 'descend');
+        end
     end
 
     opt = varargin;
 	if nargout == 0,
         if (nargin > 1) && ~isempty(findstr('cdf', opt{1}))
             opt = opt(2:end);
-            plot(xx, hh, opt{:});
+            plot(x, n, opt{:});
             if min(size(im)) > 1
                 xlabel('Greylevel')
             end
             ylabel('CDF');
         else
-            bar(xx, hh, opt{:});
-            xaxis(min(xx), max(xx));
+            bar(x, n, opt{:});
+            xaxis(min(x), max(x));
             if min(size(im)) > 1
                 xlabel('Greylevel')
             end
             ylabel('Number of pixels');
         end
 	elseif nargout == 1,
-		h = hh;
+		h = n;
 	elseif nargout == 2,
-		h = hh;
-		x = xx;
+		h = n;
+		xbin = x;
 	end
