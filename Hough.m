@@ -69,7 +69,7 @@ classdef Hough < handle
         Nrho
         Ntheta
         border
-        radius
+        suppress
         edgeThresh
         interpWidth
         houghThresh
@@ -86,48 +86,40 @@ classdef Hough < handle
 
             h.Nrho = 401;
             h.Ntheta = 400;
-            h.edgeThresh = 0.1;
-            h.interpWidth = 3;
-            h.houghThresh = 0.5;
-            h.radius = [];
-            if nargin > 0,
-                count = 1;
-                while count <= length(varargin)
-                    switch lower(varargin{count})
-                    case 'nbins'
-                        nbins = varargin{count+1}; count = count+1;
-                        if length(nbins) == 1
-                            h.Ntheta = nbins;
-                            h.Nrho = nbins;
-                         elseif length(nbins) == 2
-                            h.Ntheta = nbins(1);
-                            h.Nrho = nbins(2);
-                        else
-                            error('1 or 2 elements for nbins');
-                        end
-                        
-                    case 'distance'
-                        h.radius = varargin{count+1}; count = count+1;
-                    case 'interpwidth'
-                        h.interpWidth = 2*varargin{count+1}+1; count = count+1;
-                    case 'houghthresh'
-                        h.houghThresh = varargin{count+1}; count = count+1;
-                    case 'edgethresh'
-                        h.edgeThresh = varargin{count+1}; count = count+1;
-                    otherwise
-                        error( sprintf('unknown option <%s>', varargin{count}));
-                    end
-                    count = count + 1;
+
+            opt.interpwidth = 3;
+            opt.houghthresh = 0.5;
+            opt.edgethresh = 0.1;
+            opt.suppress = [];
+            opt.nbins = [];
+
+            opt = tb_optparse(opt, varargin);
+
+            % copy options into the Hough object
+            if ~isempty(opt.nbins)
+                if length(opt.nbins) == 1
+                    h.Ntheta = opt.nbins;
+                    h.Nrho = opt.nbins;
+                 elseif length(opt.nbins) == 2
+                    h.Ntheta = opt.nbins(1);
+                    h.Nrho = opt.nbins(2);
+                else
+                    error('1 or 2 elements for nbins');
                 end
             end
 
-
             h.Nrho = bitor(h.Nrho, 1);            % Nrho must be odd
             h.Ntheta = floor(h.Ntheta/2)*2; % Ntheta must even
+
+            h.interpWidth = opt.interpwidth;
+            h.houghThresh = opt.houghthresh;
+            h.edgeThresh = opt.edgethresh;
+            h.suppress = opt.suppress;
             
-            if isempty(h.radius)
-                h.radius = (h.interpWidth-1)/2;
+            if isempty(opt.suppress)
+                h.suppress = (h.interpWidth-1)/2;
             end
+
             [nr,nc] = size(IM);
 
             % find the significant edge pixels
@@ -159,7 +151,7 @@ classdef Hough < handle
 
         function s = char(h)
             s = sprintf('Hough: nd=%d, ntheta=%d, interp=%dx%d, distance=%d', ...
-                h.Nrho, h.Ntheta, h.interpWidth, h.interpWidth, h.radius);
+                h.Nrho, h.Ntheta, h.interpWidth, h.interpWidth, h.suppress);
         end
         
         function show(h)
@@ -171,7 +163,7 @@ classdef Hough < handle
             set(gca, 'Ycolor', [1 1 1]*0.5);
             grid on
             xlabel('\theta (rad)');
-            ylabel('d (pixels)');
+            ylabel('\rho (pixels)');
             colormap(hot)
         end
             
@@ -246,7 +238,7 @@ classdef Hough < handle
             [x,y] = meshgrid(1:h.Ntheta, 1:h.Nrho);
 
             nw2= floor((h.interpWidth-1)/2);
-            nr2= floor((h.radius-1)/2);
+            nr2= floor((h.suppress-1)/2);
 
             [Wx,Wy] = meshgrid(-nw2:nw2,-nw2:nw2);
             globalMax = max(h.A(:));
@@ -292,7 +284,7 @@ classdef Hough < handle
                 end
                 
                 % remove the region around the peak
-                k = Hough.nhood2ind(A, ones(2*h.radius+1,2*h.radius+1), [cp,rp]);
+                k = Hough.nhood2ind(A, ones(2*h.suppress+1,2*h.suppress+1), [cp,rp]);
                 A(k) = 0;
 
             end
