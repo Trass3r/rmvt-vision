@@ -5,7 +5,7 @@ function out = ipaste(canvas, pattern, topleft, varargin)
 
     opt.centre = false;
     opt.zero = false;
-    opt.add = false;
+    opt.mode = {'set', 'add', 'mean'};
 
     opt = tb_optparse(opt, varargin);
 
@@ -39,9 +39,14 @@ function out = ipaste(canvas, pattern, topleft, varargin)
     if np < nc
         pattern = repmat(pattern, [1 1 nc]);
     end
-    if opt.add
-        out(top:top+ph-1,left:left+pw-1,:) = out(top:top+ph-1,left:left+pw-1,:) +pattern;
-    else
+    switch opt.mode
+    case 'set'
         out(top:top+ph-1,left:left+pw-1,:) = pattern;
+    case 'add'
+        out(top:top+ph-1,left:left+pw-1,:) = out(top:top+ph-1,left:left+pw-1,:) +pattern;
+    case 'mean'
+        old = out(top:top+ph-1,left:left+pw-1,:);
+        k = ~isnan(pattern);
+        old(k) = 0.5 * (old + pattern);
+        out(top:top+ph-1,left:left+pw-1,:) = old;
     end
-        
