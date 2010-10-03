@@ -17,10 +17,6 @@ classdef BagOfWords < handle
         wv          % cached word vectors
     end
 
-    properties (Dependent=true)
-        wordvectors
-    end
-
     methods
         % bag = BagOfWords(features, K)
         % bag = BagOfWords(features, existingBag)
@@ -59,6 +55,8 @@ classdef BagOfWords < handle
                 bag.words(k) = [];
                 bag.words = oldbag.map(bag.words);
                 bag.features(k) = [];
+
+                bag.compute_wv(oldbag);
 
             end
         end
@@ -99,14 +97,15 @@ classdef BagOfWords < handle
 
         end
 
-        function wv = get.wordvectors(bag)
+        function wv = wordvector(bag, k)
             if isempty(bag.wv)
                 bag.compute_wv();
             end
-            wv = bag.wv;
-        end
-
-        function set.wordvectors(bag)
+            if nargin > 1
+                wv = bag.wv(:,k);
+            else
+                wv = bag.wv;
+            end
         end
 
         % image-word frequency
@@ -170,10 +169,10 @@ classdef BagOfWords < handle
             [w,f] = count_unique(bag.words);
         end
 
-        % computer similarity matrix
+        % compute similarity matrix
         function sim = similarity(bag1, bag2)
-            wv1 = bag1.wordvectors;
-            wv2 = bag2.wordvectors;
+            wv1 = bag1.wordvector;
+            wv2 = bag2.wordvector;
             whos
             for i=1:bag1.nimages
                 for j=1:bag2.nimages
@@ -206,6 +205,10 @@ classdef BagOfWords < handle
         end
 
 
+        function v = contains(bag, word)
+            v = unique([bag.isword(word).image_id]);
+        end
+            
         function exemplars(bag, words, images, varargin)
 
             nwords = length(words);
@@ -225,7 +228,7 @@ classdef BagOfWords < handle
                 % for each word specified
                 word = words(i);
 
-                features = all.isword(word);  % find features corresponding to the word
+                features = bag.isword(word);  % find features corresponding to the word
 
                 image_prev = [];
                 count = 1;
@@ -262,7 +265,7 @@ classdef BagOfWords < handle
             for i=1:nwords
                 % for each word specified
                 word = words(i);
-                features = all.isword(word);  % find features corresponding to the word
+                features = bag.isword(word);  % find features corresponding to the word
 
                 image_prev = [];
                 count = 1;
@@ -287,6 +290,6 @@ classdef BagOfWords < handle
                     end
                 end
             end
-
+        end
     end
 end
