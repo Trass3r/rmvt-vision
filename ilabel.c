@@ -260,11 +260,11 @@ ilabel(PIXEL *im, int width, int height, int connectivity, int minsize,
                     (northwest != curlab)
                 ) {
 #ifdef  DEBUG
-#endif
                     printf("(%d,%d): label %d encloses %d\n",
                         row, col,
-                        curlab, northwest);
-                    /* we have an enclosure */
+						curlab, northwest);
+#endif
+					/* we have an enclosure */
                     if (blobsize[curlab] > THRESH) {
                         // mark the parent of this blob
                         parents[northwest] = curlab;
