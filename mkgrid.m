@@ -34,8 +34,12 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-function p = mkgrid(N, s, T)
+function p = mkgrid(N, s, varargin)
+    
+    opt.T = [];
 
+
+    opt = tb_optparse(opt, varargin);
     if length(s) == 1,
         sx = s; sy = s;
     else
@@ -64,9 +68,6 @@ function p = mkgrid(N, s, T)
     end
     
     % optionally transform the points
-    if nargin == 3,
-        if isvec(T)
-            T = transl(T);
-        end
-        p = transformp(T, p);
+    if ~isempty(opt.T)
+        p = homtrans(opt.T, p);
     end
