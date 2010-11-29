@@ -44,8 +44,8 @@ function im2 = irotate(im, angle, varargin)
     % rotation and scale
     R = rotz(angle);
     uc = nc/2; vc = nr/2;
-    Uo2 = 1/opt.scale*(R(1,1)*(Uo-uc)+R(1,2)*(Vo-vc))+uc;
-    Vo2 = 1/opt.scale*(R(2,1)*(Uo-uc)+R(2,2)*(Vo-vc))+vc;
+    Uo2 = 1/opt.scale*(R(1,1)*(Uo-uc)+R(2,1)*(Vo-vc))+uc;
+    Vo2 = 1/opt.scale*(R(1,2)*(Uo-uc)+R(2,2)*(Vo-vc))+vc;
 
     Uo = Uo2;
     Vo = Vo2;
