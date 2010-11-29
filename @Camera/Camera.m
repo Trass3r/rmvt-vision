@@ -157,7 +157,6 @@ classdef Camera < handle
             c.type = '**abstract**';
             c.T = eye(4,4);
             c.rho = [1 1];
-            c.f = 1;
             c.pp = [];
             c.limits = [-1 1 -1 1];
             c.npix = [];
@@ -391,15 +390,21 @@ classdef Camera < handle
 
             % if this camera is created from an image, then display that image
             if ~isempty(c.image)
-                idisp(c.image, 'nogui');
-                set(gcf, 'name', [class(c) ':' c.name]);
-                set(gcf, 'MenuBar', 'none');
-                hold on
-                h = gca;
-                title(h, c.name);
-                c.h_image = h;
-                set(gcf, 'HandleVisibility', 'off');
-                set(h, 'HandleVisibility', 'off');
+
+                if isempty(c.h_image) || ~ishandle(c.h_image)
+                    idisp(c.image, 'nogui');
+                    set(gcf, 'name', [class(c) ':' c.name]);
+                    set(gcf, 'MenuBar', 'none');
+                    hold on
+                    h = gca;
+                    title(h, c.name);
+                    c.h_image = h;
+                    set(gcf, 'HandleVisibility', 'off');
+                    set(h, 'HandleVisibility', 'off');
+                else
+                    h = c.h_image;
+                end
+                h
                 return;
             end
 
@@ -462,6 +467,7 @@ classdef Camera < handle
             opt.sequence = false;
             opt.textcolor = 'k';
             opt.textsize = 12;
+            opt.drawnow = false;
 
             [opt,arglist] = tb_optparse(opt, varargin);
 
@@ -503,6 +509,10 @@ classdef Camera < handle
                 end
             end
 
+            if opt.drawnow
+                drawnow
+            end
+
             if nargout > 0,
                 v = uv;
             end
@@ -520,31 +530,24 @@ classdef Camera < handle
             %       Tobj
             %       [], Tcam
             %       Tobj, Tcam
-            Tobj = [];
-            Tcam = [];
 
-            if nargin > 4 && (ishomog(varargin{1}) || isempty(varargin{1}))
-                Tobj  = varargin{1};
-                varargin = varargin(2:end);
-            end
-            if nargin > 5 && (ishomog(varargin{1}) || isempty(varargin{1}))
-                Tcam  = varargin{1};
-                varargin = varargin(2:end);
-            end
-            if isempty(Tobj)
-                Tobj = eye(4,4);
-            end
-            if isempty(Tcam)
-                Tcam = c.T;
+            opt.Tobj = [];
+            opt.Tcam = [];
+
+
+            [opt,arglist] = tb_optparse(opt, varargin);
+            if isempty(opt.Tcam)
+                opt.Tcam = c.T;
             end
 
             % get handle for this camera image plane
-            h = c.create
+            h = c.plot_create();
 
             % draw 3D line segments
             nsteps = 21;
 
             c.clf();
+            c.hold(1);
 
             for i=1:numrows(X)-1
                 for j=1:numcols(X)-1
@@ -554,8 +557,7 @@ classdef Camera < handle
 
                     if c.perspective
                         % straight world lines are straight on the image plane
-                        whos
-                        uv = c.project([P0 P1], Tobj, Tcam);
+                        uv = c.project([P0 P1], 'setopt', opt);
                     else
                         % straight world lines are not straight, plot them piecewise
                         P = [];
@@ -563,13 +565,13 @@ classdef Camera < handle
                             s = (j-1)/(nsteps-1);   % distance along line
                             P = [P (1-s)*P0 + s*P1];
                         end
-                        uv = c.project(P, Tobj, Tcam);
+                        uv = c.project(P, 'setopt', opt);
                     end
                     plot(uv(1,:)', uv(2,:)', 'Parent', c.h_image);
 
                     if c.perspective
                         % straight world lines are straight on the image plane
-                        uv = c.project([P0 P2], Tobj, Tcam);
+                        uv = c.project([P0 P2], 'setopt', opt);
                     else
                         % straight world lines are not straight, plot them piecewise
                         P = [];
@@ -577,7 +579,7 @@ classdef Camera < handle
                             s = (j-1)/(nsteps-1);   % distance along line
                             P = [P (1-s)*P0 + s*P2];
                         end
-                        uv = c.project(P, Tobj, Tcam);
+                        uv = c.project(P, 'setopt', opt);
                     end
                     plot(uv(1,:)', uv(2,:)', 'Parent', c.h_image);
                 end
@@ -589,7 +591,7 @@ classdef Camera < handle
 
                 if c.perspective
                     % straight world lines are straight on the image plane
-                    uv = c.project([P0 P1], Tobj, Tcam);
+                    uv = c.project([P0 P1], 'setopt', opt);
                 else
                     % straight world lines are not straight, plot them piecewise
                     P = [];
@@ -597,10 +599,11 @@ classdef Camera < handle
                         s = (j-1)/(nsteps-1);   % distance along line
                         P = [P (1-s)*P0 + s*P1];
                     end
-                    uv = c.project(P, Tobj, Tcam);
+                    uv = c.project(P, 'setopt', opt);
                 end
-                plot(uv(1,:)', uv(2,:)');
+                plot(uv(1,:)', uv(2,:)', 'Parent', c.h_image);
             end
+            c.hold(0);
 
         end % mesh
 
@@ -618,8 +621,6 @@ classdef Camera < handle
         % plot multiple lines given in homogeneous form
         %  one column per line
         function h =  line(c, lines, varargin)
-
-            hold on
 
             % get handle for this camera image plane
             h = c.plot_create
