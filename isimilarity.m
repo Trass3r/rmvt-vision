@@ -1,6 +1,7 @@
 %IFIND	Locate template in image
 %
-%	S = ifind(T, im)
+%	S = isimilarity(T, im)
+%	S = isimilarity(T, im, metric)
 %
 % Return the similarity score for the template T at every location
 % in image im.  S is same size as im.
@@ -25,18 +26,23 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-function S = ifind(T, im)
+function S = ifind(T, im, metric)
 
+%TODO add all the other similarity metrics, including rank and census
+
+    if nargin < 3
+        metric = @zncc;
+    end
 	[nr,nc] = size(im);
-    wc = floor( (numcols(T)-1)/2 );
-    wr = floor( (numrows(T)-1)/2 );
-    wr1 = wr+1;
-    wc1 = wc+1;
+    hc = floor( (numcols(T)-1)/2 );
+    hr = floor( (numrows(T)-1)/2 );
+    hr1 = hr+1;
+    hc1 = hc+1;
 
-    S = zeros(size(im)) * NaN;
+    S = NaN(size(im));
     
-	for c=wc1:nc-wc1,
-		for r=wr1:nr-wr1,
-			S(r,c) = zncc(T, im(r-wr:r+wr,c-wc:c+wc));
+	for c=hc1:nc-hc1
+		for r=hr1:nr-hr1
+			S(r,c) = metric(T, im(r-hr:r+hr,c-hc:c+hc));
 		end
 	end
