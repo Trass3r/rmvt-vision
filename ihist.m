@@ -78,7 +78,7 @@ function [h,xbin] = ihist(im, varargin)
 
     if isinteger(im)
         % use quick mex function if data is integer
-        [hh,xx] = fhist(im);
+        [n,x] = fhist(im);
     else
         % remove NaN and Infs from floating point data
         z = im(:);
@@ -93,6 +93,7 @@ function [h,xbin] = ihist(im, varargin)
             warning('%d Infs removed', length(k));
         end
         [n,x] = hist(z, nbins);
+        n = n'; x = x';
     end
 
     % handle options
