@@ -69,7 +69,7 @@ function [o1,o2,o3] = mkcube(s, varargin)
 
     % offset it
     if ~isempty(opt.centre)
-        cube = bsxfun(@minus, opt.centre(:));
+        cube = bsxfun(@plus, cube, opt.centre(:));
     end
     % optionally transform the vertices
     if ~isempty(opt.T)
