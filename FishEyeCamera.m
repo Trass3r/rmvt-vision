@@ -131,7 +131,7 @@ classdef FishEyeCamera < Camera
 
 
             % invoke the superclass constructor
-            c = c@Camera(varargin);
+            c = c@Camera(varargin{:});
             c.type = 'FishEye';
 
             if nargin == 0,
@@ -197,21 +197,24 @@ classdef FishEyeCamera < Camera
         end
 
         % do the fisheye projection
-        function uv = project(c, P, Tobj, Tcam)
+        function uv = project(c, P, varargin)
 
             np = numcols(P);
                 
-            if nargin < 4
-                Tcam = c.Tcam;
+            opt.Tobj = [];
+            opt.Tcam = [];
+
+            [opt,arglist] = tb_optparse(opt, varargin);
+            
+            if isempty(opt.Tcam)
+                opt.Tcam = c.T;
             end
-            if nargin == 3,
-                if isempty(Tobj)
-                    C = c.C(Tcam);
-                end
+            if isempty(opt.Tobj)
+                opt.Tobj = eye(4,4);
             end
             
             % transform all the points to camera frame
-            X = inv(Tcam) * Tobj * e2h(P);         % project them
+            X = homtrans(inv(opt.Tcam) * opt.Tobj, P);         % project them
 
             R = colnorm(X(1:3,:));
             phi = atan2( X(2,:), X(1,:) );
