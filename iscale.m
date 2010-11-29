@@ -26,32 +26,32 @@ function im2 = iscale(im, factor, varargin)
         is_int = true;
         im = idouble(im);
     end
-    im = ismooth(im, 1);
+    im = ismooth(im, 1);    % smooth the image to prevent aliasing % TODO should depend on scale factor
 
     [nr,nc,np] = size(im);
 
     if isempty(opt.outsize)
-        ncs = nc;
-        nrs = nr;
-    else
-        % else from specified size
-    % output image size is determined by input size and scale factor
         nrs = floor(nr*factor);
         ncs = floor(nc*factor);
+    else
+        % else from specified size
+        % output image size is determined by input size and scale factor
+        ncs = outsize(1);
+        nrs = outsize(2);
     end
 
 
     % create the coordinate matrices for warping
     [U,V] = imeshgrid(im);
-    [Up,Vp] = imeshgrid(nrs, ncs);
+    [Uo,Vo] = imeshgrid(ncs, nrs);
 
-
-    Up = Up/factor;
-    Vp = Vp/factor;
+    % the inverse function
+    Uo = Uo/factor;
+    Vo = Vo/factor;
 
     
     for k=1:size(im,3)
-        im2(:,:,k) = interp2(U, V, im(:,:,k), Up, Vp, 'linear', opt.extrapval);
+        im2(:,:,k) = interp2(U, V, im(:,:,k), Uo, Vo, 'linear', opt.extrapval);
     end
 
     if is_int
