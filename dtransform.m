@@ -12,23 +12,22 @@
 %
 % See also IMORPH, DISTANCEXFORM, DXform.
 
-
 % Copyright (C) 1993-2011, by Peter I. Corke
 %
-% This file is part of The Machine Vision Toolbox for Matlab (MVTB).
+% This file is part of The Robotics Toolbox for Matlab (RTB).
 % 
-% MVTB is free software: you can redistribute it and/or modify
+% RTB is free software: you can redistribute it and/or modify
 % it under the terms of the GNU Lesser General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
 % 
-% MVTB is distributed in the hope that it will be useful,
+% RTB is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU Lesser General Public License for more details.
 % 
 % You should have received a copy of the GNU Leser General Public License
-% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
+% along with RTB.  If not, see <http://www.gnu.org/licenses/>.
 
 function d = dtransform(world, varargin)
 
@@ -55,7 +54,7 @@ function d = dtransform(world, varargin)
     while 1
         world = imorph(world, m, 'plusmin');
         count = count+1;
-        if opt.show
+        if ~isempty(opt.show)
             cmap = gray(256);
             cmap = [1 0 0; cmap];
             colormap(cmap)
@@ -71,7 +70,7 @@ function d = dtransform(world, varargin)
         end
     end
 
-    if opt.show
+    if show
         fprintf('%d iterations\n', count);
     end
 
