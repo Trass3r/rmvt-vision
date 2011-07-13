@@ -1,3 +1,22 @@
+%SiftPointFeature.support Support region of SURF feature
+%
+% OUT = F.support(IM, W) is an image of the support region of the 
+% feature F, extracted from the image IM in which the feature appears.
+% The support region is scaled to WxW and rotated so that the feature's
+% orientation axis is upward.
+%
+% OUT = F.support(IMAGES, W) as above but if the features were extracted
+% from an image sequence then the feature is located in the appropriate
+% image in the same sequence IMAGES.
+%
+% [OUT,T] = F.support(IMAGES, W) as above but returns the pose of the feature
+% as a 3x3 homogeneous transform in SE(2) that comprises the feature position
+% and orientation.
+%
+% F.support(IM, W) as above but the support region is displayed.
+%
+% See also SiftPointFeature.
+
 function [out,TT] = support(sf, images, N)
 
     if nargin < 3

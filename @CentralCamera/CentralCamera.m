@@ -1,12 +1,6 @@
-%CentralCamera  Central perspective camera class
+%CentralCamera  Perspective camera class
 %
-%   C = camera         default camera, 1024x1024, f=8mm, 10um pixels, camera at 
-%                             origin, optical axis is z-axis, u||x, v||y).
-%   C = camera(f, s, pp, npix, name)
-%   C = camera(0)           f=sx=sy=1, u0=v0=0: normalized coordinates
-%
-%   This camera model assumes central projection, that is, the focal point
-%   is at z=0 and the image plane is at z=f.  The image is not inverted.
+% A concrete class a central-projection perspective camera.
 %
 %   The camera coordinate system is:
 %
@@ -15,98 +9,94 @@
 %       |
 %       |   + (principal point)
 %       |
-%       |
+%       |         Z-axis is into the page.
 %       v Y
-%              Z-axis is into the page.
 %
-% Object properties (read/write)
+% This camera model assumes central projection, that is, the focal point
+% is at z=0 and the image plane is at z=f.  The image is not inverted.
 %
-%   C.f           intrinsic: focal length 
-%   C.s           intrinsic: pixel size 2x1
-%   C.pp          intrinsic: principal point 2x1
-%   C.np          size of the virtual image plane (pixels) 2x1
 %
-%   C.Tcam        extrinsic: pose of the camera
-%   C.name        name of the camera, used for graphical display
+% Methods::
 %
-% Object properties (read only)
+% project          project world points
+% K                camera intrinsic matrix
+% C                camera matrix
+% H                camera motion to homography
+% invH             decompose homography
+% F                camera motion to fundamental matrix
+% E                camera motion to essential matrix
+% invE             decompose essential matrix
+% fov              field of view
+% ray              Ray3D corresponding to point
 %
-%   C.su          pixel width
-%   C.sv          pixel height
-%   C.u0          principal point, u coordinate
-%   C.v0          principal point, v coordinate
-% 
-% Object methods
+% plot             plot/return world point on image plane
+% hold             control hold for image plane
+% ishold           test figure hold for image plane
+% clf              clear image plane
+% figure           figure holding the image plane
+% mesh             draw shape represented as a mesh
+% point            draw homogeneous points on image plane
+% line             draw homogeneous lines on image plane
+% plot_camera      draw camera
+% plot_line_tr     draw line in theta/rho format
+% plot_epiline     draw epipolar line
 %
-%   C.fov         return camera half field-of-view angles (2x1 rads)
-%   C.K           return camera intrinsic matrix (3x3)
-%   C.P           return camera project matrix for camera pose (3x4)
-%   C.P(T)        return camera intrinsic matrix for specified camera pose (3x4)
+% flowfield        compute optical flow
+% visjac_p         image Jacobian for point features
+% visjac_p_polar   image Jacobian for point features in polar coordinates
+% visjac_l         image Jacobian for line features
+% visjac_e         image Jacobian for ellipse features
 %
-%   C.H(T, n, d)  return homography for plane: normal n, distance d  (3x3)
-%   C.F(T)        return fundamental matrix from pose 3x3
-%   C.E(T)        return essential matrix from pose 3x3
-%   C.E(F)        return essential matrix from fundamental matrix 3x3
+% rpy              set camera attitude
+% move             copy of Camera after motion
+% centre           get world coordinate of camera centre
+% estpose          estimate pose
 %
-%   C.plot_epiline(F, p)
+% delete           object destructor
+% char             convert camera parameters to string
+% display          display camera parameters
 %
-%   C.invH(H)     return solutions for camera motion and plane normal
-%   C.invE(E)     return solutions for pose from essential matrix 4x4x4
+% Properties (read/write)::
+% npix         image dimensions in pixels (2x1)
+% pp           intrinsic: principal point (2x1)
+% rho          intrinsic: pixel dimensions (2x1) in metres
+% f            intrinsic: focal length
+% k            intrinsic: radial distortion vector
+% p            intrinsic: tangential distortion parameters
+% distortion   intrinsic: camera distortion [k1 k2 k3 p1 p2]
+% T            extrinsic: camera pose as homogeneous transformation
 %
-%   C.rpy(r,p,y)   set camera rpy angles
-%   C.rpy(rpy)
+% Properties (read only)::
+% nu    number of pixels in u-direction
+% nv    number of pixels in v-direction
+% u0    principal point u-coordinate
+% v0    principal point v-coordinate
 %
-%   uv = C.project(P)     return image coordinates for world points  P
-%   uv = C.project(P, T)  return image coordinates for world points P 
-%                          transformed by T prior to projection
+% Note::
+%  - Camera is a reference object.
+%  - Camera objects can be used in vectors and arrays
 %
-% P is a list of 3D world points and the corresponding image plane points are 
-% returned in uv.  Each point is represented by a column in P and uv.
-%
-% If P has 3 columns it is treated as a number of 3D points in  world 
-% coordinates, one point per row.
-%
-% If POINTS has 6 columns, each row is treated as the start and end 3D 
-% coordinate for a line segment, in world coordinates.  
-%
-% The optional arguments, T, represents a transformation that can be applied
-% to the object data, P, prior to 'imaging'.  The camera pose, C.Tcam, is also 
-% taken into account.
-%
-%   uv = C.plot(P)    display image coordinates for world points P
-%   uv = C.plot(P, T) isplay image coordinates for world points P transformed by T
-%
-% Points are displayed as a round marker.  Lines are displayed as line segments.
-% Optionally returns image plane coordinates uv.
-%
-%   C.show
-%   C.show(name)
-%
-% Create a graphical camera with name, and pixel dimensions given by C.npix.  
-% Automatically called on first call to plot().
+% See also Camera.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
-% This file is part of The Machine Vision Toolbox for Matlab (MVTB).
+% This file is part of The Robotics Toolbox for Matlab (RTB).
 % 
-% MVTB is free software: you can redistribute it and/or modify
+% RTB is free software: you can redistribute it and/or modify
 % it under the terms of the GNU Lesser General Public License as published by
 % the Free Software Foundation, either version 3 of the License, or
 % (at your option) any later version.
 % 
-% MVTB is distributed in the hope that it will be useful,
+% RTB is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 % GNU Lesser General Public License for more details.
 % 
 % You should have received a copy of the GNU Leser General Public License
-% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
+% along with RTB.  If not, see <http://www.gnu.org/licenses/>.
 
-% TODO:
-%   make a parent imaging class and subclass perspective, fisheye, panocam
-%   test for points in front of camera and set to NaN if not
-%   test for points off the image plane and set to NaN if not
-%     make clipping/test flags
 classdef CentralCamera < Camera
 
     properties
@@ -131,13 +121,33 @@ classdef CentralCamera < Camera
 
     methods
 
-        %
-        %   Return a camera intrinsic parameter structure:
-        %       focal length 8mm
-        %       pixel size 10um square
-        %       image size 1024 x 1024
-        %       principal point (512, 512)
         function c = CentralCamera(varargin)
+        %CentralCamera.CentralCamera Create central projection camera object
+        %
+        % C = CentralCamera() creates a central projection camera with canonic
+        % parameters: f=1 and name='canonic'.
+        %
+        % C = CentralCamera(OPTIONS) as above but with specified parameters.
+        %
+        % Options::
+        % 'name',N                  Name of camera
+        % 'focal',F                 Focal length (metres)
+        % 'distortion',D            Distortion vector [k1 k2 k3 p1 p2]
+        % 'distortion-bouguet',D    Distortion vector [k1 k2 p1 p2 k3]
+        % 'default'                 Default camera parameters: 1024x1024, f=8mm,
+        %                           10um pixels, camera at origin, optical axis
+        %                           is z-axis, u||x, v||y.
+        % 'image',IM                Display an image rather than points
+        % 'resolution',N            Image plane resolution: NxN or N(1)xN(2)
+        % 'sensor',S                Image sensor size in metres (2x1)
+        % 'centre',P                Principal point (2x1)
+        % 'pixel',S                 Pixel size: SxS or S(1)xS(2)
+        % 'noise',SIGMA             Standard deviation of additive Gaussian 
+        %                           noise added to returned image projections
+        % 'pose',T                  Pose of the camera as a homogeneous 
+        %                           transformation
+        %
+        % See also Camera, FisheyeCamera, CatadioptricCamera, SphericalCamera.
             % invoke the superclass constructor
             c = c@Camera(varargin{:});
             c.type = 'central-perspective';
@@ -178,7 +188,7 @@ classdef CentralCamera < Camera
                     error('distortion vector is [k1 k2 k3 p1 p2]');
                 end
                 c.distortion = v;
-            case 'distortion-bouget'
+            case 'distortion-bouguet'
                 v = args{2}; n = 1;
                 if length(v) ~= 5
                     error('distortion vector is [k1 k2 p1 p2 k3]');
@@ -206,16 +216,21 @@ classdef CentralCamera < Camera
             s = strvcat(s, char@Camera(c) );
         end
 
-        % intrinsic parameter matrix
         function v = K(c)
+        %CentralCamera.K Intrinsic parameter matrix
+        %
+        % K = C.K() is the 3x3 intrinsic parameter matrix.
             v = [   c.f/c.rho(1)   0           c.pp(1) 
                     0          c.f/c.rho(2)    c.pp(2)
                     0          0           1%/c.f
                 ] ;
         end
 
-        % camera calibration or projection matrix
         function v = C(c, Tcam)
+        %CentralCamera.C Camera matrix
+        %
+        % C = C.C() is the 3x4 camera matrix, also known as the camera 
+        % calibration or projection matrix.
             if nargin == 1,
                 Tcam = c.T;
             end
@@ -233,6 +248,14 @@ classdef CentralCamera < Camera
         end
 
         function HH = H(c, T, n, d)
+        %CentralCamera.H Homography matrix
+        %
+        % H = C.H(T, N, D) is a 3x3 homography matrix for the camera observing the plane
+        % with normal N and at distance D, from two viewpoints.  The first view is from 
+        % the current camera pose C.T and the second is a relative motion by the 
+        % homogeneous transformation T.
+        %
+        % See also CentralCamera.H.
             
             if (d < 0) || (n(3) < 0)
                 error('plane distance must be > 0 and normal away from camera');
@@ -254,6 +277,30 @@ classdef CentralCamera < Camera
         end
         
         function s = invH(c, H, varargin)
+        %CentralCamera.invH Decompose homography matrix
+        %
+        % S = C.invH(H) decomposes the homography H (3x3)into the camera motion
+        % and the normal to the plane.
+        %
+        % In practice there are multiple solutions and S is a vector of structures 
+        % with elements:
+        %  T   camera motion as a homogeneous transform matrix (4x4), translation not to scale
+        %  n   normal vector to the plane (3x3)
+        %
+        % Notes:
+        % - there are up to 4 solutions
+        % - only those solutions that obey the positive depth constraint are returned
+        % - the required camera intrinsics are taken from the camera object
+        % - the transformation is from view 1 to view 2.
+        %
+        %
+        % Reference::
+        % An invitation to 3D vision,
+        % Ma etal.
+        % section 5.3
+        %
+        % See also CentralCamera.H.
+
             if nargout == 0
                 invhomog(H, 'K', c.K, varargin{:});
             else
@@ -262,10 +309,22 @@ classdef CentralCamera < Camera
         end
         
         function fmatrix = F(c, X)
-            % cam.F(X)
-            % cam.F(cam2)   with 
+        %CentralCamera.F Fundamental matrix
+        %
+        % F = C.F(T) is the fundamental matrix relating two camera views.  The first
+        % view is from the current camera pose C.T and the second is a relative motion
+        % by the homogeneous transformation T.
+        %
+        % F = C.F(C2) is the fundamental matrix relating two camera views described
+        % by camera objects C (first view) and C2 (second view).
+        %
+        % Reference::
+        % An invitation to 3D vision,
+        % Ma etal.
+        % p.177
+        %
+        % See also CentralCamera.E.
             
-            % REF: An Invitation to 3D geometry, p.177
             
             % T is the pose for view 1 
             % c.T is the pose for view 2
@@ -283,11 +342,25 @@ classdef CentralCamera < Camera
             end
         end
         
-        % E = cam1.E(F)     convert F matrix to E using camera intrinsics
-        % E = cam1.E(T12)   compute E for second view displaced by T12 from first
-        % E = cam1.E(cam2)  compute E for second view given by cam2 and first view given
-        %                    by cam1
         function ematrix = E(c, X)
+        %CentralCamera.E Essential matrix
+        %
+        % E = C.E(T) is the essential matrix relating two camera views.  The first
+        % view is from the current camera pose C.T and the second is a relative motion
+        % by the homogeneous transformation T.
+        %
+        % E = C.F(C2) is the essential matrix relating two camera views described
+        % by camera objects C (first view) and C2 (second view).
+        %
+        % E = C.F(F) is the essential matrix based on the fundamental matrix F (3x3)
+        % and the intrinsc parameters of camera C.
+        %
+        % Reference::
+        % An invitation to 3D vision,
+        % Ma etal.
+        % p.177
+        %
+        % See also CentralCamera.F, CentralCamera.invE.
 
             % essential matrix from pose.  Assume the first view is associated
             % with the passed argument, either a hom.trans or a camera.
@@ -307,24 +380,34 @@ classdef CentralCamera < Camera
                 error('unknown argument type');
             end
 
-            % T = (R,t) is the transform from transform from 2 --> 1
-            %
-            % as per Hartley & Zisserman p.244
-            %   P' = K' [R t] where [R t] is inverse camera pose, PIC book (8.5)
-            %
-            % as per Ma etal. p.100
-            %   X2 = RX1 + t, so [R t] is the transform from C2 to C1
-
-            [R,t] = t2rt(T21);
+            [R,t] = tr2rt(T21);
             
-            % REF: An Invitation to 3D geometry, p.177
-            %   E = Sk(t) R
-
             ematrix = skew(t) * R;
         end
         
         function s = invE(c, E, P)
-            % REF: Hartley & Zisserman, Chap 9, p. 259
+        %CentralCamera.invE Decompose essential matrix
+        %
+        % S = C.invE(E) decomposes the essential matrix E (3x3)into the camera motion.
+        % In practice there are multiple solutions and S (4x4xN) is a number of homogeneous
+        % transformations representing possible camera motion.
+        %
+        % S = C.invE(E, P) as above but only solutions in which the world point P is visible
+        % are returned.
+        %
+        % Reference::
+        % Multiview Geometry,
+        % Hartley & Zisserman, 
+        % Chap 9, p. 259
+        %
+        % An invitation to 3D vision,
+        % Ma etal.
+        % p116, p120-122
+        %
+        % Note::
+        % - the transformation is from view 1 to view 2.
+        %
+        % See also CentralCamera.E.
 
             % we return T from view 1 to view 2
             
@@ -383,8 +466,13 @@ classdef CentralCamera < Camera
             end
         end
         
-        % plot a line specified in theta-rho format
         function plot_line_tr(cam, lines, varargin)
+        %CentralCamera.plot_line_tr  Plot line in theta-rho format
+        %
+        % CentralCamera.plot_line_tr(L) plots lines on the camera's image plane that
+        % are described by columns of L with rows theta and rho respectively.
+        %
+        % See also Hough.
 
             x = get(cam.h_image, 'XLim');
             y = get(cam.h_image, 'YLim');
@@ -405,6 +493,15 @@ classdef CentralCamera < Camera
         end
 
         function handles = plot_epiline(c, F, p, varargin)
+        %CentralCamera.plot_epiline Plot epipolar line
+        %
+        % C.plot_epiline(F, P) plots the epipolar lines due to the fundamental matrix F
+        % and the image points P.
+        %
+        % C.plot_epiline(F, P, LS) as above but draw lines using the line style arguments LS.
+        %
+        % H = C.plot_epiline(F, P) as above but return a vector of graphic handles, one per
+        % line.
 
             % for all input points
             l = F * e2h(p);
@@ -412,15 +509,36 @@ classdef CentralCamera < Camera
             c.line(l, varargin{:});
         end
 
-        % return field-of-view angle for x and y direction (rad)
         function th = fov(c)
+        %CentralCamera.fov Camera field-of-view angles.
+        %
+        % A = C.fov() are the field of view angles (2x1) in radians for x and y direction.
             th = 2*atan(c.npix/2.*c.rho / c.f);
         end
 
 
-        % do the camera perspective transform
-        %   P is 3xN matrix of points to plot
+
         function uv = project(c, P, varargin)
+        %CentralCamera.project Project world points to image plane
+        %
+        % UV = C.project(P, OPTIONS) are the image plane coordinates for the world
+        % points P.  The columns of P (3xN) are the world points and the columns 
+        % of UV (2xN) are the corresponding image plane points.
+        %
+        % Options::
+        % 'Tobj',T         Transform all points by the homogeneous transformation T before
+        %                  projecting them to the camera image plane.
+        % 'Tcam',T         Set the camera pose to the homogeneous transformation T before
+        %                  projecting points to the camera image plane.  Overrides the current
+        %                  camera pose C.T.
+        %
+        % If Tcam is a transform sequence (4x4xS) then UV is (2xNxS) representing the projected
+        % points as the camera moves in the world.
+        %
+        % If Tobj is a transform sequence (4x4xS) then UV is (2xNxS) representing the projected
+        % points as the object moves in the world.
+        %
+        % See also Camera.plot.
 
             opt.Tobj = [];
             opt.Tcam = [];
@@ -467,7 +585,7 @@ classdef CentralCamera < Camera
 
                 % transform the object
                 if ~isempty(opt.Tobj)
-                    P = transformp(Tobj, P);
+                    P = transformp(opt.Tobj, P);
                 end
 
                 % make the world points homogeneous
@@ -493,7 +611,19 @@ classdef CentralCamera < Camera
         end
 
         function r = ray(cam, p)
-            % from HZ p 162
+        %CentralCamera.ray 3D ray for image point
+        %
+        % R = C.ray(P) returns a vector of Ray3D objects, one for each point
+        % defined by the columns of P.
+        %
+        % Reference::
+        %
+        % Multiview Geometry,
+        % Hartley & Zisserman, 
+        % p 162
+        %
+        % See also Ray3D.
+
             C = cam.C();
             Mi = inv(C(1:3,1:3));
             p4 = C(:,4);

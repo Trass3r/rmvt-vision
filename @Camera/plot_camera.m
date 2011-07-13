@@ -1,20 +1,20 @@
-%SHOWCAMERA Display a camera icon in 3D
+%Camera.plot_camera Display a camera icon in 3D
 %
-%   c.showcamera(T)
+% C.plot_camera(OPTIONS) draw a camera as a simple 3D model in the current
+% figure.
 %
-%  Create a new camera at pose T, and return the graphics handle.
+% Options::
+% 'Tcam',T     Camera displayed in pose T (homogeneous transformation 4x4)
+% 'scale',S    Overall scale factor (default inferred from axis settings)
 %
-% The camera is depicted as a pyramid with the apex as the camera
-% origin and the base plane normal to the optical axis.
-% The sides are colored red, green, blue corresponding to the X, Y, Z axes
-% respectively.
-
+% Notes::
+% - the graphic handles are stored within the Camera object.
 
 function h = plot_camera(c, varargin)
 
     opt.Tcam = c.T;
     opt.scale = [];
-    opt.square = false;
+    opt.square = false;  %??
 
     [opt,arglist] = tb_optparse(opt, varargin);
 
@@ -22,7 +22,6 @@ function h = plot_camera(c, varargin)
         % get the overall scale factor from the existing graph
         sz = [get(gca, 'Xlim'); get(gca, 'Ylim'); get(gca, 'Zlim')];
         sz = max(sz(:,2)-sz(:,1));
-        sz
         opt.scale = sz / 5;
     end
     
@@ -32,6 +31,7 @@ function h = plot_camera(c, varargin)
         set(c.h_visualize, 'Matrix', opt.Tcam);
 
     else
+        % old representation as a colored pyramid
         % define pyramid dimensions from the size parameter
         w = opt.scale;
         l = w*2;

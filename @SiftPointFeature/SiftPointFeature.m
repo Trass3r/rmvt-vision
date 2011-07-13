@@ -1,6 +1,35 @@
-%SiftCornerFeature  SIFT Corner feature object
+%SiftCornerFeature SIFT point corner feature object
 %
-% A superclass for image corner features.
+% A subclass of PointFeature for SIFT features.
+%
+% Methods::
+% plot         Plot feature position
+% plot_scale   Plot feature scale
+% distance     Descriptor distance
+% match        Match features
+% ncc          Descriptor similarity
+% uv           Return feature coordinate
+% display      Display value
+% char         Convert value to string
+%
+% Properties::
+% u             horizontal coordinate
+% v             vertical coordinate
+% strength      feature strength
+% theta         feature orientation [rad]
+% scale         feature scale
+% descriptor    feature descriptor (vector)
+% image_id      index of image containing feature
+%
+% Properties of a vector of SiftPointFeature objects are a vector whose elements
+% are the named property of the corresponding element of the feature vector.
+%
+% Note::
+% - The SIFT algorithm is patented and not distributed with this toolbox.
+%   You can download a SIFT implementation which this class can utilize.
+%   See README.SIFT.
+%
+% See also isift, PointFeature, ScalePointFeature, SurfPointFeature.
 
 classdef SiftPointFeature < ScalePointFeature
 
@@ -11,11 +40,19 @@ classdef SiftPointFeature < ScalePointFeature
 
     methods
         function f = SiftPointFeature(varargin)
-            f = f@ScalePointFeature(varargin{:});  % invoke the superclass constructor
-        end
+        %SiftPointFeature.SiftPointFeature Create a SIFT point feature object
+        %   
+        % F = SiftPointFeature() is a point feature object with null parameters.
+        %   
+        % F = PointFeature(U, V) is a point feature object with specified
+        % coordinates.
+        %   
+        % F = PointFeature(U, V, STRENGTH) as above but with specified strength.
+        %
+        % See also isift.
 
-        function val = theta_v(features)
-            val = [features.theta];
+
+            f = f@ScalePointFeature(varargin{:});  % invoke the superclass constructor
         end
 
         function val = theta(features)
@@ -26,49 +63,55 @@ classdef SiftPointFeature < ScalePointFeature
             val = [features.image_id_];
         end
 
-        % accepts all the same options as imarker, first option must be the fill color
         function plot_scale(features, varargin)
-            arglist = {};
+        %SiftPointFeature.plot_scale Plot feature scale
+        %   
+        % F.plot_scale(OPTIONS) overlay a marker at the feature position.
+        %   
+        % F.plot_scale(OPTIONS, LS) as above but the optional line style arguments LS are
+        % passed to plot.
+        %   
+        % If F is a vector then each element is plotted.
+        %   
+        % Options::
+        % 'circle'    Indicate scale by a circle (default)
+        % 'clock'     Indicate scale by circle with one radial line for orientation
+        % 'arrow'     Indicate scale and orientation by an arrow
+        % 'disk'      Indicate scale by a translucent disk
+        % 'color',C   Color of circle or disk (default green)
+        % 'alpha',A   Transparency of disk, 1=opaque, 0=transparent (default 0.2)
 
-            argc = 1;
-            opt.display = 'circle';
-            while argc <= length(varargin)
-                switch lower(varargin{argc})
-                case 'circle'
-                    opt.display = varargin{argc};
-                case 'clock'
-                    opt.display = varargin{argc};
-                case 'disk'
-                    opt.display = varargin{argc};
-                case 'arrow'
-                    opt.display = varargin{argc};
-                otherwise
-                    arglist = [arglist varargin(argc)];
-                end
-                argc = argc + 1;
-            end
+            opt.display = {'circle', 'clock', 'arrow', 'disk'};
+            opt.color = 'g';
+            opt.alpha = 0.2;
+            [opt,args] = tb_optparse(opt, varargin);
+
             holdon = ishold;
             hold on
 
+            s = 20/sqrt(pi);    % circle of same area as 20s x 20s square support region
+
             switch (opt.display)
             case 'circle'
-                circle([ [features.u_]', [features.v_]' ], [features.scale_]', arglist{:});
+                plot_circle([ [features.u_]; [features.v_] ], s*[features.scale_]', ...
+                'color', opt.color, args{:});
             case 'clock'
-                circle([ [features.u_]', [features.v_]' ], [features.scale_]', arglist{:});
+                plot_circle([ [features.u_]; [features.v_] ], s*[features.scale_]', ...
+                'color', opt.color, args{:});
+                % plot radial lines
                 for f=features
-                    plot([f.u_, f.u_+f.scale_*cos(f.theta_)], ...
-                        [f.v_, f.v_+f.scale_*sin(f.theta_)], ...
-                        arglist{:});
+                    plot([f.u_, f.u_+s*f.scale_*cos(f.theta_)], ...
+                        [f.v_, f.v_+s*f.scale_*sin(f.theta_)], ...
+                        'color', opt.color, args{:});
                 end
             case 'disk'
-                for f=features
-                    imarker( [f.u_ f.v_], 'circle', 'size', f.scale_, ...
-                        'fillcolor', arglist{:});
-                end
+                plot_circle([ [features.u_]; [features.v_] ], s*[features.scale_]', ...
+                        'fillcolor', opt.color, 'alpha', opt.alpha);
             case 'arrow'
                 for f=features
-                    quiver(f.u_, f.v_, f.scale_.*cos(f.theta_), ...
-                            f.scale_.*sin(f.theta_), arglist{:});
+                    quiver(f.u_, f.v_, s*f.scale_.*cos(f.theta_), ...
+                            s*f.scale_.*sin(f.theta_), ...
+                            'color', opt.color, args{:});
                 end
             end
             if ~holdon
@@ -77,6 +120,25 @@ classdef SiftPointFeature < ScalePointFeature
         end % plot
 
         function [m,corresp] = match(f1, f2)
+        %SiftPointFeature.match Match SIFT point features
+        %   
+        % M = F.match(F2, OPTIONS) is a vector of FeatureMatch objects that 
+        % describe candidate matches between the two vectors of SIFT 
+        % features F and F2.
+        %
+        % [M,C] = F.match(F2, OPTIONS) as above but returns a correspodence
+        % matrix where each row contains the indices of corresponding features
+        % in F and F2  respectively.
+        %
+        % See also FeatureMatch.
+
+        % TODO
+        % Options::
+        % 'thresh',T    Match threshold (default 0.05)
+        % 'median'      Threshold at the median distance
+        % ambiguity threshold, defaults to 1.5 in siftmatch
+        % use distance
+        %
 
             [matches,dist] = siftmatch([f1.descriptor], [f2.descriptor]);
 
