@@ -1,14 +1,19 @@
-%ZNCC  Normalized cross correlation
+%NCC Normalized cross correlation
 %
-%	m = zncc(w1, w2)
+% M = NCC(I1, I2) is the normalized cross-correlation between the 
+% two equally sized image patches I1 and I2.  The result M is a scalar in
+% the interval -1 (non match) to 1 (perfect match) that indicates similarity.
 %
-% Compute the zero-mean normalized cross-correlation between the two
-% equally sized image patches w1 and w2.  Result is in the range -1 to 1, with
-% 1 indicating identical pixel patterns.
+% Notes::
+% - A value of 1 indicates identical pixel patterns.
+% - The NCC similarity measure is invariant to scale changes in image
+%   intensity.
 %
-% SEE ALSO:	isimilarity
+% See also ZNCC, SAD, SSD, ISIMILARITY.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 

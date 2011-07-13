@@ -1,10 +1,17 @@
-%IMONO	Convert color image to monochrome
+%IMONO Convert color image to monochrome
 %
-%	im = imono(rgb)
+% OUT = IMONO(IM, OPTIONS) is a greyscale equivalent to the color image IM.
+% Different conversion functions are supported.
 %
-% SEE ALSO:	rgb2hsv
+% Options::
+% 'r601'       ITU recommendation 601 (default)
+% 'r709'       ITU recommendation 709
+%
+% See also COLORIZE, ICOLOR, COLORSPACE.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 

@@ -1,22 +1,41 @@
-%IREAD	Load an image
+%IREAD  Read image from file
 %
-%	im = iread
-%	im = iread(directory, options)
-%	im = iread([], options)
+% IM = IREAD() presents a file selection GUI from which the user can select
+% an image file which is returned as 2D or 3D matrix.  On subsequent calls 
+% the initial folder is as set on the last call.
 %
-%	Presents a file selection GUI from which the user can pick a file.
-%	Uses the same path as previous call.
+% IM = IREAD(FILE, OPTIONS) reads the specified file and returns a matrix.  If
+% the path is relative it is searched for on Matlab search path.
 %
-%   im = iread(filename, options)
+% Wildcards are allowed in file names.  If multiple files match a 3D or 4D image
+% is returned where the last dimension is the number of images in the sequence.
 %
-%   Load the specified file. If the path is relative look for it along the
-%   Matlab search path.
-%	Wildcards are allowed in file names.  If multiple files match
-%	a 3D image is returned where the last dimension is the number
-%	of images contained.
+% Options::
+% 'uint8'      return an image with 8-bit unsigned integer pixels in 
+%              the range 0 to 255
+% 'single'     return an image with single precision floating point pixels
+%              in the range 0 to 1.
+% 'double'     return an image with double precision floating point pixels
+%              in the range 0 to 1.
+% 'grey'       convert image to greyscale if it's color using ITU rec 601
+% 'grey_709'   convert image to greyscale if it's color using ITU rec 709
+% 'gamma',G    gamma value, either numeric or 'sRGB'
+% 'reduce',R   decimate image by R in both dimensions
+% 'roi',R      apply the region of interest R to each image, 
+%              where R=[umin umax; vmin vmax].
+% Notes::
+% - A greyscale image is returned as an HxW matrix
+% - A color image is returned as an HxWx3 matrix
+% - A greyscale image sequence is returned as an HxWxN matrix where N is the 
+%   sequence length 
+% - A color image sequence is returned as an HxWx3xN matrix where N is the 
+%   sequence length 
 %
+% See also IDISP, IMONO, IGAMMA, IMWRITE, PATH.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -35,7 +54,7 @@
 
 
 function [I,info] = iread(filename, varargin)
-	persistent path
+    persistent mypath
 
     % options
     %
@@ -52,7 +71,7 @@ function [I,info] = iread(filename, varargin)
     %   'reduce', n
 
     opt.type = {[], 'double', 'single', 'uint8'};
-    opt.mkGrey = {[], 'grey', 'gray', 'mono', '601', 'gray_709', 'value'};
+    opt.mkGrey = {[], 'grey', 'gray', 'mono', '601', 'grey_601', 'grey_709'};
     opt.gamma = [];
     opt.reduce = 1;
     opt.roi = [];
@@ -62,8 +81,8 @@ function [I,info] = iread(filename, varargin)
 
     im = [];
     
-	if nargin == 0,
-		% invoke file browser GUI
+    if nargin == 0,
+        % invoke file browser GUI
         [file, npath] = uigetfile(...
             {'*.png;*.pgm;*.ppm;*.jpg;*.tif', 'All images';
             '*.pgm', 'PGM images';
@@ -73,26 +92,26 @@ function [I,info] = iread(filename, varargin)
             }, 'iread');
         if file == 0,
             fprintf('iread canceled from GUI\n');
-            return;	% cancel button pushed
+            return; % cancel button pushed
         else
             % save the path away for next time
-            path = npath;
-            filename = fullfile(path, file);
+            mypath = npath;
+            filename = fullfile(mypath, file);
             im = loadimg(filename, opt);
         end
     elseif (nargin == 1) & exist(filename,'dir'),
-		% invoke file browser GUI
+        % invoke file browser GUI
         if isempty(findstr(filename, '*')),
             filename = strcat(filename, '/*.*');
         end
         [file,npath] = uigetfile(filename, 'iread');
         if file == 0,
             fprintf('iread canceled from GUI\n');
-            return;	% cancel button pushed
+            return; % cancel button pushed
         else
             % save the path away for next time
-            path = npath;
-            filename = fullfile(path, file);
+            mypath = npath;
+            filename = fullfile(mypath, file);
             im = loadimg(filename, opt);
         end
     else
@@ -100,26 +119,30 @@ function [I,info] = iread(filename, varargin)
         if ~isempty(strfind(filename, '*')) | ~isempty(strfind(filename, '?')),
             % wild card files, eg.  'seq/*.png', we need to look for a folder
             % seq somewhere along the path.
+                        [pth,name,ext] = fileparts(filename);
+
             if opt.verbose
-                fprintf('wildcard lookup\n');
+                fprintf('wildcard lookup: %s %s %s\n', pth, name, ext);
             end
             
-            [pth,name,ext] = fileparts(filename);
             % search for the folder name along the path
             folderonpath = pth;
-            for p=path2cell(userpath)'
+            for p=path2cell(path)'  % was userpath
                 if exist( fullfile(p{1}, pth) ) == 7
                     folderonpath = fullfile(p{1}, pth);
+                    if opt.verbose
+                        fprintf('folder found\n');
+                    end
                     break;
                 end
             end
-            s = dir( fullfile(folderonpath, [name, ext]));		% do a wildcard lookup
+            s = dir( fullfile(folderonpath, [name, ext]));      % do a wildcard lookup
 
             if length(s) == 0,
                 error('no matching files found');
             end
 
-            for i=1:length(s),
+            for i=1:length(s)
                 im1 = loadimg( fullfile(folderonpath, s(i).name), opt);
                 if i==1
                     % preallocate storage, much quicker

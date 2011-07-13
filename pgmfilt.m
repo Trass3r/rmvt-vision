@@ -1,14 +1,18 @@
-%PGMFILT	Pipe image through PGM utility
+%PGMFILT Pipe image through PGM utility
 %
-%	f = pgmfilt(im, cmd)
+% OUT = PGMFILT(IM, PGMCMD) pipes the image IM through a Unix filter program
+% and returns its output as an image. The program given by the string PGMCMD
+% must accept and return images in PGM format.
 %
-%	Pipe image through a Unix filter program.  Input and output image 
-%	formats	are PGM.
+% Notes::
+% - Provides access to a large number of Unix command line utilities such
+%   as ImageMagick.
 %
-% SEE ALSO: xv
-%
+% See also PNMFILT, IREAD.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -28,15 +32,15 @@
 
 function im2 = pgmfilt(im, cmd)
 
-	% MATLAB doesn't support pipes, so it all has to be done via temp files...
+    % MATLAB doesn't support pipes, so it all has to be done via temp files...
 
-	% make up two file names
-	fname = tempname;
-	fname2 = tempname;
+    % make up two file names
+    fname = tempname;
+    fname2 = tempname;
 
-	savepgm(fname, im);
-	%cmd
-	unix([cmd ' < ' fname ' > ' fname2]);
-	%fname2
-	im2 = imread(fname2, 'pgm');
-	unix(['/bin/rm ' fname ' ' fname2]);
+    imwrite(im, fname, 'pgm');
+    %cmd
+    unix([cmd ' < ' fname ' > ' fname2]);
+    %fname2
+    im2 = imread(fname2, 'pgm');
+    unix(['/bin/rm ' fname ' ' fname2]);

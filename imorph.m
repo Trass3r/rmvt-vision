@@ -1,25 +1,39 @@
-%IMORPH		Morphological neighbourhood processing
+%IMORPH Morphological neighbourhood processing
 %
-%		mi = IMORPH(image, se, op)
-%		mi = IMORPH(image, se, op, edge)
-%
-%	Performs grey scale or binary morphology of the input image using the
-%	binary structuring element se.  The operation, op, can be one of 
-%	 	'min'	minimum value over the structuring element
-%		'max'	maximum value over the structuring element
-%		'diff'	maximum - minimum value over the structuring element
-%
-%	Edge handling flags control what happens when the processing window
-%	extends beyond the edge of the image. 	EDGE is either
-%		'border' the border value is replicated (default)
-%		'none'	 pixels beyond the border are not included in the window
-%		'trim'	 output is not computed for pixels whose window crosses
-%			 the border, hence output image had reduced dimensions.
-%		'wrap'	 the image is assumed to wrap around
-%
-% SEE ALSO:  icircle
+% OUT = IMORPH(IM, SE, OP) is the image IM after morphological processing 
+% with the operator OP and structuring element SE.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+% The structuring element SE is a small matrix with binary values that indicate
+% which elements of the template window are used in the operation. 
+%
+% The operation OP is:
+% 'min'       minimum value over the structuring element
+% 'max'       maximum value over the structuring element
+% 'diff'      maximum - minimum value over the structuring element
+% 'plusmin'   the minimum of the pixel value and the pixelwise sum of the
+%             structuring element and source neighbourhood.
+%
+% OUT = IMORPH(IM, SE, OP, EDGE) as above but performance of edge pixels
+% can be controlled.  The value of EDGE is:
+% 'border'   the border value is replicated (default)
+% 'none'     pixels beyond the border are not included in the window
+% 'trim'     output is not computed for pixels where the structuring element
+%            crosses the image border, hence output image had reduced 
+%            dimensions.
+% 'wrap'     the image is assumed to wrap around, left to right, top to
+%            bottom.
+%
+% Notes::
+% - Is a MEX file.
+% - Performs greyscale morphology.
+% - For binary image 'min' = EROSION, 'max' = DILATION.
+% - The 'plusmin' operation can be used to compute the distance transform.
+%
+% See also IRANK, IVAR, HITORMISS, IOPEN, ICLOSE, DTRANSFORM.
+
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -34,4 +48,5 @@
 % GNU Lesser General Public License for more details.
 % 
 % You should have received a copy of the GNU Leser General Public License
+% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.

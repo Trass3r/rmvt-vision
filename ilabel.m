@@ -1,31 +1,40 @@
 %ILABEL	Label an image
 %
-%		li = ilabel(image [, connect])
-%		[li,maxlabel] = ilabel(image [, connect])
-%		[li,maxlabel,parents] = ilabel(image [, connect])
+% L = ILABEL(IM) performs connectivity analysis on the image IM and returns a
+% label image L, same size as IM, where each pixel value represents the integer
+% region label assigned to the corresponding pixel in IM.  Region labels are in
+% the range 1 to M.
 %
-%	Perform connectivity analysis and return a label image LI, same size as 
-%	IMAGE where each pixel value represents the label of the region of its
-%	corresponding pixel in IMAGE.
+% [L,M] = ILABEL(IM) as above but returns the value of the maximum
+% label value.
 %
-%	Connectivity is performed using 4 or 8 nearest neighbour as controlled
-%	by the optional connect argument.  Default is 4 way but can be changed
-%	to 8.  The function compares the pixel values so the image can be 
-%	greyscale or binary.
+% [L,M,PARENTS] = ILABEL(IM) as above but also returns region hierarchy
+% information.  The value of PARENTS(I) is the label of the parent or 
+% enclosing	region of region I.  A value of 0 indicates that the region has
+% no single enclosing region, for a binary image this means the region
+% touches the edge of the image, for a multilevel image it means that it
+% touches more than one other region.
 %
-%	Also returns the maximum label assigned to the image.  Labels lie in
-%	the range 1 to MAXLABEL.
+% [L,MAXLABEL,PARENTS,CLASS] = ILABEL(IM) as above but also returns the class
+% of pixels within each region.  The value of CLASS(I) is the value of the
+% pixels that comprise region I.
 %
-%	The third form also returns region hierarchy information.  The
-%	value of parents[i] is the label of the 'parent' or enclosing
-%	region of region i.  A value of 0 indicates that the region has
-%	no enclosing region.
+% [L,MAXLABEL,PARENTS,CLASS,EDGE] = ILABEL(IM) as above but also returns the
+% edge-touch status of each region.  If EDGE(I) is 1 then region I touches
+% edge of the image, otherwise it does not.
 %
-% SEE ALSO:	imoments iblobs
+% Notes::
+% - Is a MEX file.
+% - The image can be binary or multi-level
+% - Connectivity is performed using 4 nearest neighbours by default. To use
+%   8-way connectivity pass a second argument of 8, eg. ILABEL(IM, 8).
+% - This is a "low level" function, IBLOBS is a higher level interface.
 %
-% LIMITATIONS:	should allow for different connectivity modes
+% See also IBLOBS, IMOMENTS.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 

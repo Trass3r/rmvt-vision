@@ -1,19 +1,30 @@
-%COLORIZE Colorize a greyscale image according to binary mask
+%COLORIZE Colorize a greyscale image
 %
-%   c = colorize(grey, mask, color)
+% OUT = COLORIZE(IM, MASK, COLOR) is a color image where each pixel in OUT
+% is set to the corresponding element of the greyscale image IM or a specified
+% COLOR according to whether the corresponding value of MASK is true or false 
+% respectively.  The color is specified as a 3-vector (R,G,B).
 %
-%  The result is a color image where each pixel is greyscale where
-%  the mask image is false, and the specified color where it is true.
-%  The color is specified as a 3-vector (R,G,B)
+% OUT = COLORIZE(IM, FUNC, COLOR) as above but a the mask is the return value
+% of the function handle FUNC applied to the image IM, and returns a per-pixel
+% logical result, eg. @isnan.
 %
-%   c = colorize(grey, func, color)
+% Examples::
 %
-%  Instead of a mask we pass in a handle to a function that returns
-% a logical result, eg. @isnan
+% Display image with values < 100 in blue
+%    out = colorize(im, im<100, [0 0 1])
 %
-%  If no output argument the resulting image is displayed using image()
+% Display image with NaN values shown in red
+%    out = colorize(im, @isnan, [1 0 0])
+%
+% Notes::
+% - With no output arguments the image is displayed.
+%
+% See also IMONO, ICOLOR, IPIXSWITCH.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 

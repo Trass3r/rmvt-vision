@@ -1,62 +1,71 @@
-%IHARRIS		Harris corner detector
+%ICORNER Corner detector
 %
-%	hp = iharris
-%	F = iharris(im)
-%	F = iharris(im, hp)
-%	[F,C] = iharris(im, hp)
+% F = ICORNER(IM, OPTIONS) is a vector of PointFeature objects describing
+% detected corner features.  This is a non-scale space detector and by
+% default the Harris method is used.  If IM is an image sequence a cell array
+% of PointFeature vectors is returned.
 %
-%	The return value is a vector of structures, each with the elements:
-%		F.x	x-coordinate of feature
-%		F.y	y-coordinate of feature
-%		F.Ix	the smoothed x-gradient at the point
-%		F.Iy	the smoothed y-gradient at the point
-%		F.Ixy	the smoothed xy-gradient at the point
-%		F.c	corner strength at the point
+% The PointFeature object has many properties including:
+%  u            horizontal coordinate
+%  v            vertical coordinate
+%  strength     corner strength
+%  descriptor   corner descriptor (vector)
 %
-%  C is the cornerness image corresponding to im.
+% Options::
+% 'cmin',CM         minimum corner strength
+% 'cminthresh',CT   minimum corner strength as a fraction of maximum corner 
+%                   strength
+% 'edgegap',E       don't return features closer than E to the edge of 
+%                   image (default 2)
+% 'suppress',R      don't return a feature closer than R pixels to an earlier 
+%                   feature (default 0)
+% 'nfeat',N         return the N strongest corners (default Inf)
+% 'detector',D      choose the detector where D is one of 'harris' (default),
+%                   'noble' or 'klt'
+% 'sigma',S         kernel width for smoothing (default 2)
+% 'deriv',D         kernel for gradient (default kdgauss(2))
+% 'k',K             set the value of k for Harris detector
+% 'patch',P         use a PxP patch of surrounding pixel values as the 
+%                   feature vector.  The vector has zero mean and unit norm.
+% 'color'           specify that IM is a color image not a sequence
 %
-% The corners are processed in order from strongest to weakest.  The function
-% stops when:
-%	- the corner strength drops below P.cmin
-%	- the corner strenght drops below P.cMinThresh * strongest corner
-%	- the list of corners is exhausted
+% Notes::
+% - Corners are processed in order from strongest to weakest.
+% - The function stops when:
+%     - the corner strength drops below cmin
+%     - the corner strenght drops below cMinThresh x strongest corner
+%     - the list of corners is exhausted
+% - Features are returned in descending strength order
+% - If IM has more than 2 dimensions it is either a color image or a sequence
+% - If IM is NxMxP it is taken as an image sequence and F is a cell array whose
+%   elements are feature vectors for the corresponding image in the sequence.
+% - If IM is NxMx3 it is taken as a sequence unless the option 'color' is given
+% - If IM is NxMx3xP it is taken as a sequence of color images and F is a cell
+%   array whose elements are feature vectors for the corresponding color image 
+%   in the sequence.
+% - The default descriptor is a vector [Ix* Iy* Ixy*] which are the unique
+%   elements of the structure tensor, where * denotes squared and smoothed.
+% - The descriptor is a vector of float types to save space
 %
-% PARAMETERS:
+% References::
+% - "A combined corner and edge detector", 
+%   C.G. Harris and M.J. Stephens,
+%   Proc. Fourth Alvey Vision Conf., Manchester, pp 147-151, 1988.
 %
-% This function has a number of parameters which are combined into a single
-% structure (default values shown):
+% - "Finding corners", 
+%   J.Noble, 
+%   Image and Vision Computing, vol.6, pp.121-128, May 1988.
+%   
+% - "Good features to track",
+%   J. Shi and C. Tomasi, 
+%   Proc. Computer Vision and Pattern Recognition, pp. 593-593,
+%   IEEE Computer Society, 1994.
 %
-%	hopt.k = 0.04;		Harris parameter
-%	hopt.cmin = 0;		Minimum corner strength
-%	hopt.cMinThresh = 0.01;	Minimum relative corner strength
-%	hopt.deriv = [-1 0 1; -1 0 1; -1 0 1] / 3;
-%	hopt.sigma = 1;		Standard dev. for the smoothing step
-%	hopt.edgegap = 2;		Corners this close to the border are ignored
-%	hopt.nfeat = Inf;		Maximum number of features to return
-%	hopt.harris = 1;		1 for Harris, 0 for inverse Noble detector
-%	hopt.tiling = 0;		if set to N, evaluate corners in NxN tiles
-%	hopt.distance = 0;		minimum distance between features
-%
-% The default parameter setting can be obtained with a call of the form:
-%		P = iharris
-%
-% Passing in P will override those elements provided.
-%
-% In order to have good spatial layout of features set for example:
-%
-%	P.nfeat = 20;
-%	P.tiling = 3;
-%
-% which will place 20 features in each of 9 tiles that cover the image in
-% a 3x3 pattern.
-%
-%
-% REF:	"A combined corner and edge detector", C.G. Harris and M.J. Stephens
-%	Proc. Fourth Alvey Vision Conf., Manchester, pp 147-151, 1988.
-%
-% SEE ALSO:	showcorners
+% See also PointFeature, ISURF.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -82,23 +91,18 @@ function [features, corner_strength] = icorner(im, varargin)
     % parse options into parameter struct
     opt.k = 0.04;
     opt.deriv = kdgauss(2);
-    opt.suppress = 0;
 
     opt.cmin = 0;
     opt.cminthresh = 0.0;
     opt.edgegap = 2;
     opt.nfeat = Inf;
-    opt.sigma_i = 2;
-    opt.verbose = false;
+    opt.sigma = 2;
     opt.patch = 0;
     opt.detector = {'harris', 'noble', 'st'};
     opt.color = false;
 
-    opt = tb_optparse(opt, varargin);
-
     opt.suppress = 0;
     opt.nfeat = 100;
-    opt.supress = 0;
 
     [opt,arglist] = tb_optparse(opt, varargin);
 
@@ -189,10 +193,10 @@ function [features, corner_strength] = icorner(im, varargin)
     end
 
     % smooth them
-    if opt.sigma_i > 0
-        Ix = ismooth(Ix, opt.sigma_i);
-        Iy = ismooth(Iy, opt.sigma_i);
-        Ixy = ismooth(Ixy, opt.sigma_i);
+    if opt.sigma > 0
+        Ix = ismooth(Ix, opt.sigma);
+        Iy = ismooth(Iy, opt.sigma);
+        Ixy = ismooth(Ixy, opt.sigma);
     end
 
     [nr,nc] = size(Ix);
@@ -268,7 +272,7 @@ function [features, corner_strength] = icorner(im, varargin)
         % ok, this one is for keeping
         f = PointFeature(x, y, c);
         if opt.patch == 0
-            f.descriptor_ = [Ix(K) Iy(K) Ixy(K)]';
+            f.descriptor_ = cast([Ix(K) Iy(K) Ixy(K)]', 'single');
         else
             % if opt.patch is finite, then return a vector which is the local image
             % region as a vector, zero mean, and normalized by the norm.

@@ -1,14 +1,33 @@
-%ISCALE scale and rotate an image
+%ISCALE Scale an image
 %
-%  out = iscale(im, factor)
-%       Returns an image that is larger or smaller than the input image
-%       according to the scale factor. >1 is larger, <1 is smaller.
+% OUT = ISCALE(IM, S) is a version of IM scaled in both directions by S
+% which is a real scalar.  S>1 makes the image larger, S<1 makes it smaller.
 %
-%  out = iscale(im, factor, angle)
-%       Returns an image of the same size as the input image that has been
-%       scaled and rotated about its centre.  Rotation is defined with 
-%       respect to a z-axis into the image. Counter-clockwise is a
-%       positive angle.
+% Options::
+% 'outsize',S     set size of OUT to HxW where S=[W,H]
+% 'extrapval',V   set background pixels to V (default 0)
+% 'smooth',S      smooth image with Gaussian of standard deviation S.
+%                 S=[] means no smoothing (default S=1)
+%
+% See also IREPLICATE, IDECIMATE, IROTATE.
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
+%
+% This file is part of The Machine Vision Toolbox for Matlab (MVTB).
+% 
+% MVTB is free software: you can redistribute it and/or modify
+% it under the terms of the GNU Lesser General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% MVTB is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU Lesser General Public License for more details.
+% 
+% You should have received a copy of the GNU Leser General Public License
+% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
 function im2 = iscale(im, factor, varargin)
 
@@ -17,6 +36,7 @@ function im2 = iscale(im, factor, varargin)
     
     opt.outsize = [];
     opt.extrapval = 0;
+    opt.smooth = 1;
 
     opt = tb_optparse(opt, varargin);
     
@@ -26,7 +46,10 @@ function im2 = iscale(im, factor, varargin)
         is_int = true;
         im = idouble(im);
     end
-    im = ismooth(im, 1);    % smooth the image to prevent aliasing % TODO should depend on scale factor
+
+    if ~isempty(opt.smooth)
+        im = ismooth(im, opt.smooth);    % smooth the image to prevent aliasing % TODO should depend on scale factor
+    end
 
     [nr,nc,np] = size(im);
 

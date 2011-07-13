@@ -10,7 +10,9 @@
 %   'spread' use k-means 'spread' initializer instead of random point
 %   'pick' interactively pick cluster centres
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -44,15 +46,14 @@ function [labels,C] = colorseg(im, k, varargin)
     if length(varargin) > 0,
         if varargin{1} == 'pick',
             z0 = pickpoints(k, im, x, y);
-            [L,C] = kmeans([x y], k, z0);
+            [L,C] = kmeans([x y]', k, z0);
         end
     else
-        [L,C] = kmeans([x y], k);
+        [L,C] = kmeans([x y]', k);
     end
     
-    
     % convert labels back to an image
-    L = col2im(L, im);
+    L = col2im(L', im);
     
     idisp(L);
     

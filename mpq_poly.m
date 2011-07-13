@@ -1,15 +1,21 @@
-%MPQ	Compute moments of polygon
+%MPQ_POLY Polygon moments
 %
-% M = MPQ(iv, p, q)
-%	compute the pq'th moment of the polygon whose vertices are iv.
+% M = MPQ_POLY(V, P, Q) is the PQ'th moment of the polygon with vertices 
+% described by the columns of V.
 %
-%	Note that the points must be sorted such that they follow the 
-%	perimeter in sequence (counter-clockwise).  If the points are clockwise
-%   the moments will all be negated, so centroids will be still be correct.
+% Notes::
+% - The points must be sorted such that they follow the perimeter in 
+%   sequence (counter-clockwise).  
+% - If the points are clockwise the moments will all be negated, so centroids
+%   will be still be correct.
+% - If the first and last point in the list are the same, they are considered
+%   to be a single vertex.
 %
-% SEE ALSO: imoments
+% See also MPQ, NPQ_POLY, UPQ_POLY, Polygon.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -27,18 +33,18 @@
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
 function m = mpq(iv, p, q)
-	if ~all(iv(:,1) == iv(:,end))
-		disp('closing the polygon')
-		iv = [iv iv(:,1)];
-	end
-	[nr,n] = size(iv);
-	if nr < 2,
-		error('must be at least two rows of data')
-	end
-	x = iv(1,:);
-	y = iv(2,:);
+    if ~all(iv(:,1) == iv(:,end))
+        %disp('closing the polygon')
+        iv = [iv iv(:,1)];
+    end
+    [nr,n] = size(iv);
+    if nr < 2,
+        error('must be at least two rows of data')
+    end
+    x = iv(1,:);
+    y = iv(2,:);
  
-	m = 0.0;
+    m = 0.0;
     for l=1:n
         if l == 1
             dxl = x(l) - x(n);
@@ -57,11 +63,11 @@ function m = mpq(iv, p, q)
         end
         m = m + Al * s;
     end
-	m = m / (p+q+2);
+    m = m / (p+q+2);
 
 function c = combin(n, r)
 % 
 % COMBIN(n,r)
-%	compute number of combinations of size r from set n
+%   compute number of combinations of size r from set n
 %
-	c = prod((n-r+1):n) / prod(1:r);
+    c = prod((n-r+1):n) / prod(1:r);

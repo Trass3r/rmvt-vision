@@ -1,43 +1,68 @@
 %IDISP	Interactive image display tool
 %
-%	IDISP(image)
-%	IDISP(image, options)
+% IDISP(IM, OPTIONS) displays an image and allows interactive investigation
+% of pixel value, linear profile, histogram and zooming.  The image is
+% displayed in a figure with a toolbar across the top.  If IM is a cell
+% array of images, they are first concatenated (horizontally).
 %
-%   options
-%       'signed'
-%       'flatten'
-%       'colors', N
-%            'nogui'
-%            'noframe'
-%            'ynormal'
-%            'plain' no frame or gui
-%            'noaxes'
-%            'square'
-%            'bar'
-%            'print'
-%            'wide'
-%            'colormap'
-%            {'invert', 'signed', 'invsigned', 'random'}
-%            'flatten'
+% User interface:
 %
-%	Display the image in current figure and create buttons for:
-%		* region zooming
-%		* unzooming
-%		* drawing a cross-section line.  Intensity along line will be
-%		  displayed in a new figure.
+% - Left clicking on a pixel will display its value in a box at the top.
 %
-%	Left clicking on a pixel will display its value in a box at the top.
+% - The "line" button allows two points to be specified and a new figure
+%   displays intensity along a line between those points.
 %
-%	The second form will limit the displayed greylevels.  If CLIP is a
-%	scalar pixels greater than this value are set to CLIP.  If CLIP is
-%	a 2-vector pixels less than CLIP(1) are set to CLIP(1) and those
-%	greater than CLIP(2) are set to CLIP(2).  CLIP can be set to [] for
-%	no clipping.
-%	The N argument sets the length of the greyscale color map (default 64).
+% - The "histo" button displays a histogram of the pixel values in a new figure.
+%   If the image is zoomed, the histogram is computed over only those pixels in 
+%   view.
 %
-% SEE ALSO:	iroi, image, colormap, gray
+% -  The "zoom" button requires a left-click and drag to specify a box which
+%    defines the zoomed view.
+%
+% Options::
+% 'ncolors',N    number of colors in the color map (default 256)
+% 'nogui'        display the image without the GUI
+% 'noaxes'       no axes on the image
+% 'noframe'      no axes or frame on the image
+% 'plain'        no axes, frame or GUI
+% 'bar'          add a color bar to the image
+% 'print',F      write the image to file F in EPS format
+% 'square'       display aspect ratio so that pixels are squate
+% 'wide'         make figure very wide, useful for displaying stereo pair
+% 'flatten'      display image planes (colors or sequence) as horizontally 
+%                adjacent images
+% 'ynormal'      y-axis increases upward, image is inverted
+% 'cscale',C     C is a 2-vector that specifies the grey value range that spans
+%                the colormap.
+% 'xydata',XY    XY is a cell array whose elements are vectors that span the 
+%                x- and y-axes respectively.
+% 'colormap',C   Set colormap C (Nx3)
+% 'grey'         color map: greyscale unsigned, zero is black, maximum value 
+%                is white
+% 'invert'       color map: greyscale unsigned, zero is white, maximum value 
+%                is black
+% 'signed'       color map: greyscale signed, positive is blue, negative is red,
+%                zero is black
+% 'invsigned'    color map: greyscale signed, positive is blue, negative is red,
+%                zero is white
+% 'random'       color map: random values, highlights fine structure
+% 'dark'         color map: greyscale unsigned, darker than 'grey', good for 
+%                superimposed graphics
+%
+% Notes::
+% - Color images are displayed in true color mode: pixel triples map to display
+%   pixels
+% - Grey scale images are displayed in indexed mode: the image pixel value is 
+%   mapped through the color map to determine the display pixel value.
+% - The minimum and maximum image values are mapped to the first and last 
+%   element of the color map, which by default ('greyscale') is the range black
+%   to white.
+%
+% See also IMAGE, CAXIS, COLORMAP, ICONCAT.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -69,8 +94,9 @@ function idisp(im, varargin)
     opt.xydata = [];
     opt.plain = false;
     opt.flatten = false;
+    opt.toolbar = false;
     opt.colormap_std = {[], 'grey', 'signed', 'invsigned', 'random', 'invert', 'dark'};
-    
+
     [opt,arglist] = tb_optparse(opt, varargin);
 
     if opt.plain
@@ -104,7 +130,20 @@ function idisp(im, varargin)
     ud.size = size(im);
     
     set(gca, 'CLimMode', 'Manual');
-    set(gca, 'CLim', [min(im(:)) max(im(:))]);
+    i_min = min(im(:));
+    i_max = max(im(:));
+
+    if i_min == i_max
+        if isfloat(im)
+            i_min = 0;
+            i_max = 1;
+        else
+            i_min = 0;
+            i_max = intmax(class(im));
+        end
+    end
+    set(gca, 'CLim', [i_min, i_max]);
+    
     if ~isempty(opt.xydata)
         hi = image(opt.xydata{1}, opt.xydata{2}, im);
     else
@@ -215,8 +254,10 @@ function idisp(im, varargin)
         return
     end
     if opt.gui
-        set(gcf, 'MenuBar', 'none');
-        set(gcf, 'ToolBar', 'none');
+        if ~opt.toolbar
+            set(gcf, 'MenuBar', 'none');
+            set(gcf, 'ToolBar', 'none');
+        end
         htf = uicontrol(gcf, ...
                 'style', 'text', ...
                 'units',  'norm', ...
@@ -291,7 +332,7 @@ end
 % invoked on a GUI event
 function idisp_callback(cmd, src)
 
-disp(['in callback: ', cmd]);
+%disp(['in callback: ', cmd]);
 	if isempty(cmd)
 		% mouse push or motion request
 		h = get(gcf, 'CurrentObject'); % image

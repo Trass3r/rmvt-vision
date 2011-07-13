@@ -1,6 +1,44 @@
 %PointFeature  PointCorner feature object
 %
 % A superclass for image corner features.
+%
+% Methods::
+% plot         Plot feature position
+% distance     Descriptor distance
+% ncc          Descriptor similarity
+% uv           Return feature coordinate
+% display      Display value
+% char         Convert value to string
+%
+% Properties::
+% u             horizontal coordinate
+% v             vertical coordinate
+% strength      feature strength
+% descriptor    feature descriptor (vector)
+%
+% Properties of a vector of PointFeature objects are a vector whose elements
+% are the named property of the corresponding element of the feature vector.
+%
+% See also ScalePointFeature, SurfPointFeature, SiftPointFeature.
+
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
+%
+% This file is part of The Machine Vision Toolbox for Matlab (MVTB).
+% 
+% MVTB is free software: you can redistribute it and/or modify
+% it under the terms of the GNU Lesser General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% MVTB is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU Lesser General Public License for more details.
+% 
+% You should have received a copy of the GNU Leser General Public License
+% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
 classdef PointFeature < handle
 
@@ -14,6 +52,15 @@ classdef PointFeature < handle
     methods
 
         function f = PointFeature(u, v, strength)
+        %PointFeature.PointFeature Create a point feature object
+        %
+        % F = PointFeature() is a point feature object with null parameters.
+        %
+        % F = PointFeature(U, V) is a point feature object with specified
+        % coordinates.
+        %
+        % F = PointFeature(U, V, STRENGTH) as above but with specified strength.
+
             if nargin == 0
                 return;
             end
@@ -26,6 +73,117 @@ classdef PointFeature < handle
             end
         end
 
+        function val = uv(features)
+            val = [[features.u]; [features.v]];
+        end
+
+        function plot(features, varargin)
+        %PointFeature.plot Plot feature
+        %
+        % F.plot() overlay a marker at the feature position.
+        %
+        % F.plot(LS) as above but the optional line style arguments LS are
+        % passed to plot.
+        %
+        % If F is a vector then each element is plotted.
+
+            holdon = ishold;
+            hold on
+
+            if nargin == 1
+                varargin = {'ws'};
+            end
+
+            for i=1:length(features)
+                plot(features(i).u_, features(i).v_, varargin{:});
+            end
+
+            if ~holdon
+                hold off
+            end
+        end % plot
+
+        function s = distance(f1, f2)
+        %PointFeature.distance Distance between feature descriptors
+        %
+        % D = F.distance(F1) is the distance between feature descriptors, the norm
+        % of the Euclidean distance.
+        %
+        % If F is a vector then D is a vector whose elements are the distance between
+        % the corresponding element of F and F1.
+            for i=1:length(f2)
+                s(i) = norm(f1.descriptor-f2(i).descriptor);
+            end
+        end
+
+        function s = ncc(f1, f2)
+        %PointFeature.ncc Feature descriptor similarity
+        %
+        % S = F.ncc(F1) is the similarty between feature descriptors which is a
+        % scalar in the interval -1 to 1, where 1 is perfect match.
+        %
+        % If F is a vector then D is a vector whose elements are the distance between
+        % the corresponding element of F and F1.
+            for i=1:length(f2)
+                s(i) = dot(f1.descriptor,f2(i).descriptor);
+            end
+        end
+
+        function [m,corresp] = match(f1, f2)
+        %PointFeature.match Match point features
+        %   
+        % M = F.match(F2, OPTIONS) is a vector of FeatureMatch objects that 
+        % describe candidate matches between the two vectors of point
+        % features F and F2.
+        %
+        % [M,C] = F.match(F2, OPTIONS) as above but returns a correspodence
+        % matrix where each row contains the indices of corresponding features
+        % in F and F2  respectively.
+        %
+        % Options::
+        % 'thresh',T    Match threshold (default 0.05)
+        % 'median'      Threshold at the median distance
+        %
+        % See also FeatureMatch.
+
+
+            [matches,dist,dist2] = closest([f1.descriptor], [f2.descriptor]);
+            matches = [1:length(f1); matches];
+   
+            % delete matches where distance of closest match is greater than 
+            % 0.7 of second closest match
+            k = dist > 0.7 * dist2;
+   
+            matches(:,k) = [];
+            dist(k) = [];
+   
+            % dist is a 1xM matrix of distance between the matched features, low is good.
+   
+            % matches is a 2xM matrix, one column per match, each column 
+            % is the index of the matching feature in images 1 and 2
+   
+            % sort into increasing distance
+            [z,k] = sort(dist, 'ascend');
+            matches = matches(:,k);
+            dist = dist(:,k);
+
+            m = [];
+            cor = [];
+
+            for i=1:numcols(matches),
+                k1 = matches(1,i);
+                k2 = matches(2,i);
+                mm = FeatureMatch(f1(k1), f2(k2), dist(i));
+                m = [m mm];
+                cor(:,i) = [k1 k2]';
+            end            
+
+            if nargout > 1
+                corresp = cor;
+            end
+        end
+
+        % methods to provide convenient access to properties of object vectors
         function val = u(f)
             val = [f.u_];
         end
@@ -47,6 +205,18 @@ classdef PointFeature < handle
         end
 
         function display(f)
+        %PointFeature.display Display the value of a region feature
+        %
+        % F.display() is a compact string representation of the region feature.
+        % If F is a vector then the elements are printed one per line.
+        %
+        % Notes::
+        % - this method is invoked implicitly at the command line when the result
+        %   of an expression is a PointFeature object and the command has no trailing
+        %   semicolon.
+        %
+        % See also PointFeature.char.
+
             disp(' ');
             disp([inputname(1), ' = '])
             disp(' ');
@@ -62,6 +232,11 @@ classdef PointFeature < handle
         end % display()
 
         function ss = char(features)
+        %PointFeature.char Create string representation of region feature
+        %
+        % S = F.char() is a compact string representation of the point feature.
+        % If F is a vector then the string has multiple lines, one per element.
+
             ss = [];
             for i=1:length(features)
                 f = features(i);
@@ -99,68 +274,7 @@ classdef PointFeature < handle
             end
         end
 
-        function val = uv(features)
-            val = [[features.u]; [features.v]];
-        end
-
-        % f.plot()
-        % f.plot(linespec)
-        function plot(features, varargin)
-            holdon = ishold;
-            hold on
-
-            if nargin == 1
-                varargin = {'ws'};
-            end
-
-            for i=1:length(features)
-                plot(features(i).u_, features(i).v_, varargin{:});
-            end
-
-            if ~holdon
-                hold off
-            end
-        end % plot
-
-        function s = similarity(f1, f2)
-            for i=1:length(f2)
-                s(i) = norm(f1.descriptor-f2(i).descriptor);
-            end
-        end
-
-        function s = ncc(f1, f2)
-            for i=1:length(f2)
-                s(i) = dot(f1.descriptor,f2(i).descriptor);
-            end
-        end
-
-        function [m,corresp] = match(f1, f2)
-
-        % TODO: extra args for distance measure, could be ncc, pass through to closest
-        % allow threshold, percentage of max
-
-            [corresp, dist]  = closest([f1.xy_], [f2.xy_]);
-
-            % sort into increasing distance
-            [z,k] = sort(dist, 'ascend');
-            corresp = corresp(:,k);
-            dist = dist(:,k);
-
-            m = [];
-            cor = [];
-
-            for i=1:numcols(corresp),
-                k1 = i;
-                k2 = corresp(i);
-                mm = FeatureMatch(f1(k1), f2(k2), dist(i));
-                m = [m mm];
-                cor(:,i) = [k1 k2]';
-            end            
-
-            if nargout > 1
-                corresp = cor;
-            end
-        end
 
     end % methods
 end % classdef
+

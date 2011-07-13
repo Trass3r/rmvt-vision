@@ -1,34 +1,31 @@
 %ANAGLYPH Convert stereo images to an anaglyph image
 %
-%   ag = anaglyph(left, right, disp)
-%   ag = anaglyph(stereopair, disp)
+% A = ANAGLYPH(LEFT, RIGHT) is an anaglyph image where the two images of
+% a stereo pair are combined into a single image by coding them in two 
+% different colors.  By default the left image is red, and the right 
+% image is cyan.
 %
-%  The left and right images are given separately or as a 3D image
-%  where the last index is 1 for left, and 2 for right.
+% A = ANAGLYPH(LEFT, RIGHT, COLOR) as above but the string COLOR describes
+% the color coding as a string with 2 letters, the first for left, the second 
+% for right, and each is one of:
 %
-%  The default color encoding is left=red, right=cyan, but can
-%  be changed with a trailing option (default is 'rc').
+%  'r'   red
+%  'g'   green
+%  'b'   green
+%  'c'   cyan
+%  'm'   magenta
 %
-%   ag = anaglyph(left, right, colors)
-%   ag = anaglyph(stereopair, colors)
+% A = ANAGLYPH(LEFT, RIGHT, COLOR, DISP) as above but allows for disparity 
+% correction.  If DISP is positive the disparity is increased, if negative it
+% is reduced.  These adjustments are achieved by trimming the images.  Use 
+% this option to make the images more natural/comfortable to view, useful 
+% if the images were captured with a non-human stereo baseline or field of view.
 %
-%  colors is a string wth 2 letters, the first for left, the second 
-%  for right, and each is one of:
-%    r   red
-%    g   green
-%    b   green
-%    c   cyan
-%    m   magenta
-%
-%   ag = anaglyph(left, right, colors, disp)
-%   ag = anaglyph(stereopair, colors, disp)
-%
-% disp allows for disparity correction, if positive the disparity is increased, if negative it
-% is reduced.  This is achieved by trimming the images.  Use this option to make the images more
-% natural/comfortable to view, useful if the images were achieved with a non-human stereo baseline
-% or field of view.
+% See also STDISP.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 

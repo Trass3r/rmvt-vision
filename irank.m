@@ -1,26 +1,39 @@
-%IRANK	Fast neighbourhood rank filter
+%IRANK Rank filter
 %
-%	ri = IRANK(image, order, se)
-%	ri = IRANK(image, order, se, nbins)
-%	ri = IRANK(image, order, se, nbins, edge)
+% OUT = IRANK(IM, ORDER, SE) is a rank filtered version of IM.  Only 
+% pixels corresponding to non-zero elements of the structuring element SE
+% are ranked and the ORDER'th value in rank becomes the corresponding output 
+% pixel value.  The highest rank, the maximum, is ORDER=1.
 %
-%	Performs a rank filter over the neighbourhood specified by SE.  
-%	The ORDER'th value in rank becomes the corresponding output pixel value.
-%   1 is highest rank, ie. maximum.
-%	A histogram method is used with NBINS (default 256).
+% OUT = IMORPH(IMAGE, SE, OP, NBINS) as above but the number of histogram
+% bins can be specified.
 %
-%	Edge handling flags control what happens when the processing window
-%	extends beyond the edge of the image. 	EDGE is either
-%		'border' the border value is replicated (default)
-%		'none'	 pixels beyond the border are not included in the window
-%		'trim'	 output is not computed for pixels whose window crosses
-%			 the border, hence output image had reduced dimensions.
-%		'wrap'	 the image is assumed to wrap around
+% OUT = IMORPH(IMAGE, SE, OP, NBINS, EDGE) as above but the processing of edge 
+% pixels can be controlled.  The value of EDGE is:
+% 'border'   the border value is replicated (default)
+% 'none'     pixels beyond the border are not included in the window
+% 'trim'     output is not computed for pixels whose window crosses
+%            the border, hence output image had reduced dimensions.
+% 'wrap'     the image is assumed to wrap around
 %
-% SEE ALSO:  icircle
+% Examples::
 %
+% 5x5 median filter:
+%    irank(im, 12, ones(5,5));
+%
+% 3x3 non-local maximum:
+%    se = ones(3,3); se(2,2) = 0;
+%    im > irank(im, 1, se);
+%
+% Notes::
+% - Is a MEX file.
+% - A histogram method is used with NBINS (default 256).
+%
+% See also IMORPH, IVAR, IWINDOW.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -35,4 +48,5 @@
 % GNU Lesser General Public License for more details.
 % 
 % You should have received a copy of the GNU Leser General Public License
+% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.

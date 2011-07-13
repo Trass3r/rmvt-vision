@@ -1,25 +1,38 @@
-%IWINDOW	General function of a neighbourhood
+%IWINDOW Generalized spatial operator
 %
-%	w = IWINDOW(image, se, matlabfunc)
-%	w = IWINDOW(image, se, matlabfunc, edge)
+% OUT = IWINDOW(IM, SE, FUNC) is an image where each pixel is the result
+% of applying the function FUNC to a neighbourhood centred on the corresponding
+% pixel in IM.  The neighbourhood is defined by the size of the structuring
+% element SE which should have odd side lengths.  The elements in the 
+% neighbourhood corresponding to non-zero elements in SE are packed into
+% a vector (in column order from top left) and passed to the specified
+% function handle FUNC.  The return value  becomes the corresponding pixel 
+% value in OUT.
 %
-%	For every pixel in the input image it takes all neighbours for which 
-%	the corresponding element in se are non-zero.  These are packed into
-%	a vector (in raster order from top left) and passed to the specified
-%	Matlab function.  The return value  becomes the corresponding output 
-%	pixel value.
+% OUT = IWINDOW(IMAGE, SE, FUNC, EDGE) as above but performance of edge 
+% pixels can be controlled.  The value of EDGE is:
+% 'border'   the border value is replicated (default)
+% 'none'     pixels beyond the border are not included in the window
+% 'trim'     output is not computed for pixels whose window crosses
+%            the border, hence output image had reduced dimensions.
+% 'wrap'     the image is assumed to wrap around
 %
-%	Edge handling flags control what happens when the processing window
-%	extends beyond the edge of the image. 	EDGE is either
-%		'border' the border value is replicated (default)
-%		'none'	 pixels beyond the border are not included in the window
-%		'trim'	 output is not computed for pixels whose window crosses
-%			 the border, hence output image had reduced dimensions.
-%		'wrap'	 the image is assumed to wrap around
+% Example::
+% Compute the maximum value over a 5x5 window:
+%      iwindow(im, ones(5,5), @max);
 %
-% SEE ALSO:  icircle
+% Compute the standard deviation over a 3x3 window:
+%      iwindow(im, ones(3,3), @std);
+%
+% Notes::
+% - Is a MEX file.
+% - Is slow since the function FUNC must be invoked once for every output pixel.
+%
+% See also IVAR, IRANK.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -34,4 +47,5 @@
 % GNU Lesser General Public License for more details.
 % 
 % You should have received a copy of the GNU Leser General Public License
+% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.

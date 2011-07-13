@@ -1,124 +1,98 @@
-% RANSAC - Robustly fits a model to data with the RANSAC algorithm
+%RANSAC Random sample and consensus
 %
-% Usage:
+% M = RANSAC(FUNC, X, T, OPTIONS) is the RANSAC algorithm that robustly fits
+% data X to the model represented by the function FUNC.  RANSAC classifies 
+% Points that support the model as inliers and those that do not as outliers.
 %
-% [M, inliers] = ransac(x, fittingfn, s, t, feedback, ...
-%                       maxDataTrials, maxTrials)
+% X typically contains corresponding point data, one column per point pair.
+% RANSAC determines the subset of points (inliers) that best fit the model 
+% described by the function FUNC and the parameter M.  T is a threshold on
+% how well a point fits the estimated, if the fit residual is aboe the
+% the threshold the point is considered an outlier.
 %
-% Arguments:
-%     x         - Data sets to which we are seeking to fit a model M
-%                 It is assumed that x is of size [d x Npts]
-%                 where d is the dimensionality of the data and Npts is
-%                 the number of data points.
+% [M,IN] = RANSAC(FUNC, X, T, OPTIONS) as above but returns the vector IN of
+% column indices of X that describe the inlier point set.
 %
-%     fittingfn - Handle to a function that fits a model to s
-%                 data from x.  It is assumed that the function is of the
-%                 form: 
-%                    M = fittingfn(x)
-%                 Note it is possible that the fitting function can return
-%                 multiple models (for example up to 3 fundamental matrices
-%                 can be fitted to 7 matched points).  In this case it is
-%                 assumed that the fitting function returns a cell array of
-%                 models.
-%                 If this function cannot fit a model it should return M as
-%                 an empty matrix.
+% [M,IN,RESID] = RANSAC(FUNC, X, T, OPTIONS) as above but returns the final
+% residual of applying FUNC to the inlier set.
 %
-%     distfn    - Handle to a function that evaluates the
-%                 distances from the model to data x.
-%                 It is assumed that the function is of the form:
-%                    [inliers, M] = distfn(M, x, t)
-%                 This function must evaluate the distances between points
-%                 and the model returning the indices of elements in x that
-%                 are inliers, that is, the points that are within distance
-%                 't' of the model.  Additionally, if M is a cell array of
-%                 possible models 'distfn' will return the model that has the
-%                 most inliers.  If there is only one model this function
-%                 must still copy the model to the output.  After this call M
-%                 will be a non-cell object representing only one model. 
+% Options::
+% 'maxTrials',N       maximum number of iterations (default 2000)
+% 'maxDataTrials',N   maximum number of attempts to select a non-degenerate 
+%                     data set (default 100)
 %
-%     degenfn   - Handle to a function that determines whether a
-%                 set of datapoints will produce a degenerate model.
-%                 This is used to discard random samples that do not
-%                 result in useful models.
-%                 It is assumed that degenfn is a boolean function of
-%                 the form: 
-%                    r = degenfn(x)
-%                 It may be that you cannot devise a test for degeneracy in
-%                 which case you should write a dummy function that always
-%                 returns a value of 1 (true) and rely on 'fittingfn' to return
-%                 an empty model should the data set be degenerate.
+% Model function::
 %
-%     s         - The minimum number of samples from x required by
-%                 fittingfn to fit a model.
+% OUT = FUNC(R) is the function passed to RANSAC and it must accept 
+% a single argument R which is a structure:
 %
-%     t         - The distance threshold between a data point and the model
-%                 used to decide whether the point is an inlier or not.
+%   R.cmd          the operation to perform which is either (string)
+%   R.debug        display what's going on (logical)
+%   R.X            data to work on, N point pairs (6xN)
+%   R.t            threshold (1x1)
+%   R.theta        estimated quantity to test (3x3)
+%   R.misc         private data (cell array)
 %
-%     feedback  - An optional flag 0/1. If set to one the trial count and the
-%                 estimated total number of trials required is printed out at
-%                 each step.  Defaults to 0.
+% The function return value is also a structure:
 %
-%     maxDataTrials - Maximum number of attempts to select a non-degenerate
-%                     data set. This parameter is optional and defaults to 100.
+%   OUT.s          sample size (1x1)
+%   OUT.X          conditioned data (2DxN)
+%   OUT.misc       private data (cell array)
+%   OUT.inlier     list of inliers (1xM)
+%   OUT.valid      if data is valid for estimation (logical)
+%   OUT.theta      estimated quantity (3x3)
+%   OUT.resid      model fit residual (1x1)
 %
-%     maxTrials - Maximum number of iterations. This parameter is optional and
-%                 defaults to 1000.
+% The values of R.cmd are:
+%  'size'          OUT.s is the minimum number of points required to compute
+%                  an estimate to OUT.s
+%  'condition'     OUT.x = CONDITION(R.X) condition the point data 
+%  'decondition'   OUT.theta = DECONDITION(R.theta) decondition the estimated 
+%                  model data
+%  'valid'         OUT.valid is true if a set of points is not degenerate,
+%                  that is they will produce a model.  This is used to discard
+%                  random samples that do not result in useful models.
+%  'estimate'      [OUT.theta,OUT.resid] = EST(R.X) returns the best fit model 
+%                  and residual for the subset of points R.X.  If this function 
+%                  cannot fit a model then OUT.theta = [].  If multiple models
+%                  are found OUT.theta is a cell array.
+%  'error'         [OUT.inlier,OUT.theta] = ERR(R.theta,R.X,T) evaluates the 
+%                  distance from the model(s) R.theta to the points R.X and
+%                  returns the best model OUT.theta and the subset of R.X that 
+%                  best supports (most inliers) that model.
 %
-% Returns:
-%     M         - The model having the greatest number of inliers.
-%     inliers   - An array of indices of the elements of x that were
-%                 the inliers for the best model.
+% Notes::
+% - For some algorithms (eg. fundamental matrix) it is necessary to condition
+%   the data to improve the accuracy of model estimation.  For efficiency
+%   the data is conditioned once, and the data transform parameters are kept 
+%   in the .misc element.  The inverse conditioning operation is applied to
+%   the model to transform the estimate based on conditioned data to a model
+%   applicable to the original data.
+% - The functions FMATRIX and HOMOG are written so as to be callable from
+%   RANSAC, that is, they detect a structure argument.
 %
-% For an example of the use of this function see RANSACFITHOMOGRAPHY or
-% RANSACFITPLANE 
-
-% References:
-%    M.A. Fishler and  R.C. Boles. "Random sample concensus: A paradigm
+% References::
+%  - M.A. Fishler and  R.C. Boles. "Random sample concensus: A paradigm
 %    for model fitting with applications to image analysis and automated
 %    cartography". Comm. Assoc. Comp, Mach., Vol 24, No 6, pp 381-395, 1981
 %
-%    Richard Hartley and Andrew Zisserman. "Multiple View Geometry in
+%  - Richard Hartley and Andrew Zisserman. "Multiple View Geometry in
 %    Computer Vision". pp 101-113. Cambridge University Press, 2001
-
-% Copyright (c) 2003-2006 Peter Kovesi
-% School of Computer Science & Software Engineering
-% The University of Western Australia
-% pk at csse uwa edu au    
-% http://www.csse.uwa.edu.au/~pk
-% 
-% Permission is hereby granted, free of charge, to any person obtaining a copy
-% of this software and associated documentation files (the "Software"), to deal
-% in the Software without restriction, subject to the following conditions:
-% 
-% The above copyright notice and this permission notice shall be included in 
-% all copies or substantial portions of the Software.
 %
-% The Software is provided "as is", without warranty of any kind.
+% Author::
+%  Peter Kovesi
+%  School of Computer Science & Software Engineering
+%  The University of Western Australia
+%  pk at csse uwa edu au    
+%  http://www.csse.uwa.edu.au/~pk
 %
-% May      2003 - Original version
-% February 2004 - Tidied up.
-% August   2005 - Specification of distfn changed to allow model fitter to
-%                 return multiple models from which the best must be selected
-% Sept     2006 - Random selection of data points changed to ensure duplicate
-%                 points are not selected.
-% February 2007 - Jordi Ferrer: Arranged warning printout.
-%                               Allow maximum trials as optional parameters.
-%                               Patch the problem when non-generated data
-%                               set is not given in the first iteration.
-% August   2008 - 'feedback' parameter restored to argument list and other
-%                 breaks in code introduced in last update fixed.
-% December 2008 - Octave compatibility mods
+% See also FMATRIX, HOMOGRAPHY.
 
 function [M, inliers, resid] = ransac(fittingfn, x, t, varargin);
 
     %useRandomsample = ~exist('randsample');
 
-    % Test number of parameters
-    %if nargin < 6; maxTrials = 1000;    end; 
-    %if nargin < 5; maxDataTrials = 100; end; 
-    %if nargin < 4; feedback = 0;        end;
-
-    opt.maxTrials = 1000;
+    opt.maxTrials = 2000;
     opt.maxDataTrials = 100;
 
     opt = tb_optparse(opt, varargin);

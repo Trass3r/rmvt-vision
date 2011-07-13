@@ -1,15 +1,19 @@
-%LOADSPECTRUM	Load spectrum data
+%LOADSPECTRUM Load spectrum data
 %
-%	s = loadspectrum(lambda, filename)
-%	[s,lambda] = loadspectrum(lambda, filename)
+% S = LOADSPECTRUM(LAMBDA, FILENAME) is spectral data (NxD) from file FILENAME 
+% interpolated to wavelengths [metres] specified in LAMBDA (Nx1).  The
+% spectral data can be scalar (D=1) or vector (D>1) valued.
 %
-%   Return spectral data interpolated to wavelengths specified in lambda.
+% [S,LAMBDA] = LOADSPECTRUM(LAMBDA, FILENAME) as above but also returns the 
+% passed wavelength LAMBDA.
 %
-%   File is assumed to have its first column as wavelength in metres, the remainding
-%   columns are interpolated and returned.
-%
+% Notes::
+% - The file is assumed to have its first column as wavelength in metres, the 
+%   remainding columns are linearly interpolated and returned as columns of S.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -29,7 +33,7 @@
 function [s,lam] = loadspectrum(lambda, filename)
 
     lambda = lambda(:);
-	tab = load(filename);
+    tab = load(filename);
 
     s = interp1(tab(:,1), tab(:,2:end), lambda);
 

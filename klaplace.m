@@ -1,15 +1,18 @@
-%KLAPLACE	Laplacian kernel
+%KLAPLACE Laplacian kernel
 %
-%	k = klaplace
+% K = KLAPLACE() is the Laplacian kernel:
+%       |0   1  0|
+%       |1  -4  1|
+%       |0   1  0|
 %
-%	Return the Laplacian kernel
-%		0  1  0
-%		1 -4  1
-%		0  1  0
+% Notes::
+% - This kernel has an isotropic response to gradient.
 %
-% SEE ALSO:	ilaplace conv2
+% See also ILAPLACE, ICONV.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -26,5 +29,5 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 function k = klaplace;
-	k = [0 1 0; 1 -4 1; 0 1 0];
+    k = [0 1 0; 1 -4 1; 0 1 0];
 

@@ -1,15 +1,21 @@
-%IOPEN	Morphological opening
+%IOPEN Morphological opening
 %
-%	b = iopen(im)
-%	b = iopen(im, se)
-%	b = iopen(im, se, n)
+% OUT = IOPEN(IM, SE) is the image IM after morphological opening with the
+% structuring element SE.  This is an erosion followed by dilation.
 %
-%	Return the image A after morphological opening with the structuring
-%	element SE.  N (default to 1) erosions then N dilations are performed.
+% OUT = IOPEN(IM, SE, N) as above but the structuring element SE is applied 
+% N times, that is N erosions followed by N dilations.
 %
-% SEE ALSO:	iclose imorph
+% Notes::
+% - Cheaper to apply a smaller structuring element multiple times than
+%   one large one, the effective structuing element is the Minkowski sum
+%   of the structuring element with itself N times.
+%
+% See also ICLOSE, IMORPH.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -29,9 +35,6 @@
 function b = iopen(a, se, n)
 	if nargin < 3,
 		n = 1;
-	end
-	if nargin < 2,
-		se = ones(3,3);
 	end
 
 	b = a;

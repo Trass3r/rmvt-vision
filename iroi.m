@@ -1,27 +1,24 @@
-%IROI	Extract region of interest from current image figure
+%IROI Extract region of interest
 %
-%	si = IROI(image)
-%	[si,region] = IROI(image)
+% OUT = IROI(IM,R) is a subimage of the image IM described by the 
+% rectangle R=[umin,umax; vmin,vmax].
 %
+% OUT = IROI(IM) as above but the image is displayed and the user is prompted to
+% adjust a rubber band box to select the region of interest.
+%
+% [OUT,R] = IROI(IM) as above but returns the selected region of 
+% interest R=[umin umax;vmin vmax].
+%
+% See also IDISP, ILINE.
+
 % TODO
 %   IROI(image, centre, width)
 %   IROI(image, [], width)     prompts to pick the centre point
 %
-%	si = IROI(image,region)
-%
-%	The first two forms display the image and a rubber band box to
-%	allow selection of the region of interest.
-%	The selected subimage s output and optionally the coordinates of 
-%	the region selected which is of the form [left right; top bottom].
-%
-%	The last form uses a previously created region matrix and outputs the
-%	corresponding subimage.  Useful for chopping the same region out of
-%	a different image.
-%
-%
-% SEE ALSO:	image, idisp
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -39,36 +36,36 @@
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 function [im, region] = iroi(image, reg, wh)
 
-	if nargin == 3
+    if nargin == 3
         xc = reg(1); yc = reg(2);
         w = round(wh(1)/2); h = round(h(2)/2);
-		im = image(yc-h:yc+h,xc-w:xc+w,:);
+        im = image(yc-h:yc+h,xc-w:xc+w,:);
     elseif nargin == 2
-		im = image(reg(2,1):reg(2,2),reg(1,1):reg(1,2),:);
-	else
+        im = image(reg(2,1):reg(2,2),reg(1,1):reg(1,2),:);
+    else
         clf
-		idisp(image, 'nogui');
+        idisp(image, 'nogui');
         oldpointer = get(gcf, 'pointer');
         set(gcf, 'pointer', 'fullcrosshair');
 
-		% get the rubber band box
-		waitforbuttonpress
+        % get the rubber band box
+        waitforbuttonpress
         disp('pressed');
-		cp0 = floor( get(gca, 'CurrentPoint') );
+        cp0 = floor( get(gca, 'CurrentPoint') );
 
-		rect = rbbox;	    % return on up click
+        rect = rbbox;       % return on up click
         disp('rrbox returns');
         
         cp1 = floor( get(gca, 'CurrentPoint') );
         
-		ax = get(gca, 'Children');
-		img = get(ax, 'CData');			% get the current image
+        ax = get(gca, 'Children');
+        img = get(ax, 'CData');         % get the current image
 
         % determine the bounds of the ROI
         top = cp0(1,2);
-		left = cp0(1,1);
-		bot = cp1(1,2);
-		right = cp1(1,1);
+        left = cp0(1,1);
+        bot = cp1(1,2);
+        right = cp1(1,1);
         if bot<top,
             t = top;
             top = bot;
@@ -84,14 +81,14 @@ function [im, region] = iroi(image, reg, wh)
         set(gcf, 'pointer', oldpointer);
         
         % extract the ROI
-		im = img(top:bot,left:right,:);
+        im = img(top:bot,left:right,:);
         
         figure
         idisp2(im);
         title(sprintf('ROI (%d,%d) %dx%d', left, top, right-left, bot-top));
         
-		if nargout == 2,
-			region = [left right; top bot];
-		end
-	end
+        if nargout == 2,
+            region = [left right; top bot];
+        end
+    end
 

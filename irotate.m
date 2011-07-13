@@ -1,11 +1,38 @@
-%IROTATE rotate image
+%IROTATE Rotate image
 %
-%  out = iscale(im, factor, angle)
-%       Returns an image of the same size as the input image or smaller.
-%   that has been
-%       scaled and rotated about its centre.  Rotation is defined with 
-%       respect to a z-axis into the image. Counter-clockwise is a
-%       positive angle. factor >1 is larger, <1 is smaller.
+% OUT = IROTATE(IM, ANGLE, OPTIONS) is a version of the image IM
+% that has been rotated about its centre.
+%
+% Options::
+% 'outsize',S     set size of OUT to HxW where S=[W,H]
+% 'crop'          return central part of image, same size as IM
+% 'scale',S       scale the image size by S (default 1)
+% 'extrapval',V   set background pixels to V (default 0)
+% 'smooth',S      smooth image with Gaussian of standard deviation S
+%
+% Notes::
+% - Rotation is defined with respect to a z-axis into the image.
+% - Counter-clockwise is a positive angle.
+%
+% See also ISCALE.
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
+%
+% This file is part of The Machine Vision Toolbox for Matlab (MVTB).
+% 
+% MVTB is free software: you can redistribute it and/or modify
+% it under the terms of the GNU Lesser General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% MVTB is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU Lesser General Public License for more details.
+% 
+% You should have received a copy of the GNU Leser General Public License
+% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
 function im2 = irotate(im, angle, varargin)
 
@@ -13,6 +40,7 @@ function im2 = irotate(im, angle, varargin)
     opt.crop = false;
     opt.scale = 1.0;
     opt.extrapval = 0;
+    opt.smooth = [];
     
     opt = tb_optparse(opt, varargin);
 
@@ -22,7 +50,10 @@ function im2 = irotate(im, angle, varargin)
         is_int = true;
         im = idouble(im);
     end
-    %im = ismooth(im, 1);
+
+    if ~isempty(opt.smooth)
+        im = ismooth(im, opt.smooth);
+    end
 
     [nr,nc,np] = size(im);
 
@@ -32,7 +63,7 @@ function im2 = irotate(im, angle, varargin)
 
     else
         % else from specified size
-        [Uo,Vo] = meshgrid(1:outsize(1), 1:outsize(2));
+        [Uo,Vo] = meshgrid(1:opt.outsize(1), 1:opt.outsize(2));
     end
 
 

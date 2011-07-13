@@ -1,8 +1,3 @@
-%RG_ADDTICKS Label spectral locus
-%
-% RG_ADDTICKS() adds wavelength ticks to the spectral locus.
-%
-% See also XYCOLOURSPACE.
 
 
 % Copyright (C) 1993-2011, by Peter I. Corke
@@ -21,21 +16,8 @@
 % 
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
-
-function rg_addticks(lam1, lam2, lamd)
-
-    % well spaced points around the locus
-    lambda = [460:10:540];
-    lambda = [lambda 560:20:600];
-
-    rgb = cmfrgb(lambda*1e-9);        
-    r = rgb(:,1)./sum(rgb')';    
-    g = rgb(:,2)./sum(rgb')';    
-    hold on
-    plot(r,g, 'o')
-    hold off
-
-    for i=1:numcols(lambda)
-        text(r(i), g(i), sprintf('  %d', lambda(i)));
-    end
-
+disp('Machine Vision Toolbox for Matlab (release 2)')
+disp('  (c) Peter Corke 1992-2008 http://www.petercorke.com')
+tbpath = fileparts(which('idisp'));
+disp(['  installed in ', tbpath])
+addpath( fullfile(tbpath, 'demos') );

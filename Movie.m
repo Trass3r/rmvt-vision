@@ -1,35 +1,48 @@
 %MOVIE Class to read movie file
 %
+% A concrete subclass of ImageSource that acquires images from a web camera
+% built by Axis Communications (www.axis.com).
+
+% Methods::
+% grab    Aquire and return the next image
+% size    Size of image
+% close   Close the image source
+% char    Convert the object parameters to human readable string
+%
+% See also ImageSource, Video.
+%
 %
 % SEE ALSO: Video
 %
 % Based on mmread by Micah Richert
 
-% mmread brings the whole movie into memory.  Not entirely sure what
-% libavbin uses memory-wise, it takes a long time to "open" the file.
 
-% Copyright 2008 Micah Richert
+% Copyright (C) 1993-2011, by Peter I. Corke
+%
+% This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
-% This file is part of mmread.
+% MVTB is free software: you can redistribute it and/or modify
+% it under the terms of the GNU Lesser General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
 % 
-% mmread is free software; you can redistribute it and/or modify it
-% under the terms of the GNU Lesser General Public License as
-% published by the Free Software Foundation; either version 3 of
-% the License, or (at your option) any later version.
+% MVTB is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU Lesser General Public License for more details.
 % 
-% mmread is distributed WITHOUT ANY WARRANTY.  See the GNU
-% General Public License for more details.
-% 
-% You should have received a copy of the GNU General Public
-% License along with mmread.  If not, see <http://www.gnu.org/licenses/>.
+% You should have received a copy of the GNU Leser General Public License
+% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-classdef Movie < handle
+
+classdef Movie < ImageSource
 
     properties
-        width           % width of each frame
-        height          % height of each frame
+
         rate            % frame rate at which movie was capture
 
+        nframes;
+        
         nrFramesCaptured
         nrFramesTotal
         totalDuration
@@ -39,104 +52,105 @@ classdef Movie < handle
         nrAudioStreams  % number of audio streams
 
         curFrame
+        skip
+        
+        movie
 
-        % options set at construction time
-        imageType
-        makeGrey
-        gamma
-        scaleFactor
     end
 
     methods
 
         function m = Movie(filename, varargin)
+        %Movie.Movie Image source constructor
+        %   
+        % M = Movie(FILE, OPTIONS) is an Movie object that returns frames
+        % from the movie file FILE.
+        %   
+        % Options::
+        % 'uint8'     Return image with uint8 pixels (default)
+        % 'float'     Return image with float pixels
+        % 'double'    Return image with double precision pixels
+        % 'grey'      Return image is greyscale
+        % 'gamma',G   Apply gamma correction with gamma=G
+        % 'scale',S   Subsample the image by S in both directions
+        % 'skip',S    read every S'th frame from the movie
 
-            % set default options
-            m.imageType = [];
-            m.makeGrey = false;
-            m.gamma = [];
-            m.scaleFactor = [];
-            time = [];      % time span
 
-            options = varargin;
-            k = 1;
-            while k<=length(options),
-                switch options{k},
-                case 'double',
-                    m.imageType = 'double';
-                case 'float',
-                    m.imageType = 'float';
-                case 'uint8',
-                    m.imageType = 'uint8';
-                case {'grey','gray', 'mono'},
-                    m.makeGrey = true;
-                case 'gamma'
-                    m.gamma = options{k+1}; k = k+1;
-                case 'reduce',
-                    m.scaleFactor = options{k+1}; k = k+1;
-                case 'time',
-                    time = options{k+1}; k = k+1;
-                otherwise,
-                    error( sprintf('unknown option: %s', options{k}) );
-                end
-                k = k + 1;
-            end
-    
-            currentdir = pwd;
-            if ~ispc
-                cd(fileparts(mfilename('fullpath'))); % FFGrab searches for AVbin in the current directory
-            end
+            % invoke the superclass constructor and process common arguments
+            m = m@ImageSource(varargin{:});
 
-            FFGrab('build',filename, '', 0, 1, 1);
+            m.curFrame = 1;
             
-            if ~isempty(time)
-                if numel(time) ~= 2
-                    error('time must be a vector of length 2: [startTime stopTime]');
-                end
-                FFGrab('setTime',time(1),time(2));
-            end
-
-            FFGrab('setMatlabCommand', '');
-
-            try
-                FFGrab('doCapture');
-            catch
-                err = lasterror;
-                if (~strcmp(err.identifier,'processFrame:STOP'))
-                    rethrow(err);
-                end
-            end
-
-            [m.nrVideoStreams, m.nrAudioStreams] = FFGrab('getCaptureInfo');
-
-            % loop through getting all of the video data from each stream
-            for i=1:m.nrVideoStreams
-                [m.width, m.height, m.rate, m.nrFramesCaptured, m.nrFramesTotal, m.totalDuration] = FFGrab('getVideoInfo',i-1);
-                m.skippedFrames = [];
-                fprintf('%d x %d @ %f, %d frames\n', m.width, m.height, m.rate, m.nrFramesTotal);
-
-                m.curFrame = 0;
-            end
+            % open the movie file and copy some of its parameters to object
+            % properties
+            m.movie = mmreader(filename);
+            m.width = m.movie.Width;
+            m.height = m.movie.Height;
+            m.rate = m.movie.FrameRate;
+            m.totalDuration = m.movie.Duration;
+            m.nframes = m.movie.NumberOfFrames;
+        
         end
 
+        function paramSet(m, varargin)
+            opt.skip = 1;
+            
+            disp(varargin)
+            opt = tb_optparse(opt, varargin);
+            opt
+            m.skip = opt.skip;
+        end
+        
         % destructor
         function delete(m)
-            FFGrab('cleanUp');
+            delete(m.movie);
         end
 
         function close(m)
-            FFGrab('cleanUp');
+        %Movie.close Close the image source
+        %
+        % M.close() closes the connection to the movie.
+
+            delete(m.movie);
         end
 
-        function [im, time] = grab(m)
-            if m.curFrame > m.nrFramesTotal
-                im = [];
+        function sz = size(m)
+            sz = [m.width m.height];
+        end
+
+        function [out, time] = grab(m, varargin)
+        %Movie.grab Acquire image from the movie
+        %
+        % IM = M.grab() acquires the next image from the movie
+        %
+        % IM = M.grab(OPTIONS) as above but allows the next frame to be
+        % specified.
+        %
+        % Options::
+        % 'skip',S    skip frames, and return current+S frame
+        % 'frame',F   return frame F within the movie
+        %
+
+            opt.skip = m.skip;
+            opt.frame = [];
+            
+            opt = tb_optparse(opt, varargin);
+            
+
+            if isempty(opt.frame)
+                m.curFrame = m.curFrame + opt.skip;
+            else
+                m.curFrame = opt.frame;
+            end
+            
+            % read next frame from the file
+            if m.curFrame <= m.nframes
+                data = read(m.movie, m.curFrame);
+            else
+                out = [];
                 return;
             end
 
-            % read next frame from the file
-            [data, time] = FFGrab('getVideoFrame', 0, m.curFrame);
-            m.curFrame = m.curFrame + 1;
 
             if (numel(data) > 3*m.width*m.height)
                 warning('Movie: dimensions do not match data size. Got %d bytes for %d x %d', numel(data), m.width, m.height);
@@ -146,48 +160,32 @@ classdef Movie < handle
                 warning('Movie: could not decode frame %d', m.curFrame);
             else
                 % the data ordering is wrong for matlab images, so permute it
-                data = permute(reshape(data, 3, m.width, m.height),[3 2 1]);
+                %data = permute(reshape(data, 3, m.width, m.height),[3 2 1]);
                 im = data;
             end
 
             % apply options specified at construction time
-            if m.scaleFactor > 1,
-                im = im(1:m.scaleFactor:end, 1:m.scaleFactor:end, :);
-            end
-            if m.makeGrey & (ndims(im) == 3),
-                im = imono(im);
-            end
-            if ~isempty(m.imageType)
-                im = cast(im, m.imageType);
-            end
-
-            if ~isempty(m.gamma)
-                im = igamma(im, m.gamma);
+            im = m.convert(im);
+            
+            if nargout == 0
+                idisp(im);
+            else
+                out = im;
             end
         end
 
         function s = char(m)
+        %Movie.char Convert camera object to string
+        %
+        % M.char() is a string representing the state of the movie object in 
+        % human readable form.
+
             s = '';
-            s = strvcat(s, sprintf('%d video streams', m.nrVideoStreams));
-            s = strvcat(s, sprintf('  %d x %d @ %d fps', m.width, m.height, m.rate));
-            s = strvcat(s, sprintf('  %d frames, %f sec', m.nrFramesTotal, m.totalDuration));
-            s = strvcat(s, sprintf('%d audio streams', m.nrAudioStreams));
+            %s = strvcat(s, sprintf('%d video streams', m.nrVideoStreams));
+            s = strvcat(s, sprintf('%d x %d @ %d fps; %d frames, %f sec', m.width, m.height, m.rate,  m.nframes, m.totalDuration));
+            s = strvcat(s, sprintf('cur frame %d/%d (skip=%d)', m.curFrame, m.nframes, m.skip));
         end
 
-        function display(m)
-            loose = strcmp( get(0, 'FormatSpacing'), 'loose');
-            if loose
-                disp(' ');
-            end
-            disp([inputname(1), ' = '])
-            if loose
-                disp(' ');
-            end
-            disp(char(m))
-            if loose
-                disp(' ');
-            end
-        end
     end
 end
 

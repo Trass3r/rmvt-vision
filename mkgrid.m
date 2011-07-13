@@ -1,23 +1,19 @@
-%MKGRID Make a planar grid of points
+%MKGRID Create grid of points
 %
-%   plane = mkgrid(size, side)
+% P = MKGRID(D, S, OPTIONS) is a set of points (3xD^2) that define a DxD planar
+% grid of points with side length S.  The points are the columns of P.
+% If D is a 2-vector the grid is D(1) x D(2) points.  If S is a 2-vector the 
+% side lengths are S(1) x S(2).
 %
-%   return a matrix, plane, with one point per column, and each column
-%   is the (x, y, z) coordinates of the point.
+% By default the grid lies in the XY plane, symmetric about the origin.
 %
-%   the plane is an Nx x Ny grid of points, where sizes is (Nx, Ny) or
-%   if scalar Nx = Ny.  The side length of the grid is side
-%   and is either (sx, sy) or if scalar sx = sy.
-%
-%   By default the grid lies in the XY plane, symmetric about the 
-%   origin.
-%
-%   plane = mkgrid(size, side, T)
-%
-%   applies the homogeneous transform, T, to all points, allowing the plane
-%   to be translated or rotated.
+% Options::
+% 'T',T   the homogeneous transform T is applied to all points, allowing the 
+%         plane to be translated or rotated.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -39,7 +35,11 @@ function p = mkgrid(N, s, varargin)
     opt.T = [];
 
 
-    opt = tb_optparse(opt, varargin);
+    [opt,args] = tb_optparse(opt, varargin);
+    
+    if length(args) > 0 && ishomog(args{1})
+        opt.T = args{1};
+    end
     if length(s) == 1,
         sx = s; sy = s;
     else

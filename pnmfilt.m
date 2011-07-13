@@ -1,13 +1,18 @@
-%PNMFILT	Pipe image through PNM utility
+%PNMFILT Pipe image through PNM utility
 %
-%	f = pnmfilt(im, cmd)
+% OUT = PNMFILT(IM, PNMCMD) pipes the image IM through a Unix filter program
+% and returns its output as an image. The program given by the string PNMCMD
+% must accept and return images in PNM format.
 %
-%	Pipe image through a Unix filter program.  Input and output image 
-%	formats	are PNM.
+% Notes::
+%  - Provides access to a large number of Unix command line utilities such
+%    as ImageMagick.
 %
-% SEE ALSO: xv savepnm
+% See also PGMFILT, IREAD.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -33,7 +38,7 @@ function im2 = pnmfilt(im, cmd)
 	ifile = sprintf('%s.pnm', tempname);
 	ofile = sprintf('%s.pnm', tempname);
 
-	savepnm(ifile, im);
+    imwrite(im, ifile, 'pgm');
 	%cmd
 	unix([cmd ' < ' ifile ' > ' ofile]);
 

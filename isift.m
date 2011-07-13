@@ -1,20 +1,61 @@
 %ISIFT SIFT feature extractor
 %
-%   kp = isift(im)
-%   kp = isift(im, opt)
+% SF = ISIFT(IM, OPTIONS) returns a vector of SiftPointFeature objects
+% representing scale and rotationally invariant interest points in the
+% image IM.
 %
-% kp is an array of structures, each of which has elements:
-%       x       x-coordinate of feature
-%       y       y-coordinate of feature
-%       sigma   scale of feature
-%       theta   orientation of feature (rad)
-%       d       128-element descriptor
+% The SiftPointFeature object has many properties including:
+%  u            horizontal coordinate
+%  v            vertical coordinate
+%  strength     feature strength
+%  descriptor   feature descriptor (128x1)
+%  sigma        feature scale
+%  theta        feature orientation [rad]
+%
+% Options::
+% 'nfeat',N      set the number of features to return (default Inf)
+% 'suppress',R   set the suppression radius (default 0)
+% 
+% Notes::
+% - Greyscale images only.
+% - Features are returned in descending strength order.
+% - Wraps a MEX file from www.vlfeat.org
+% - Corners are processed in order from strongest to weakest.
+% - If IM is HxWxN it is considered to be an image sequence and F is a cell 
+%   array with N elements, each of which is the feature vectors for the 
+%   corresponding image in the sequence.
+% - The SIFT algorithm is patented by Univerity of British Columbia.
+%
+% Reference::
+% David G. Lowe,
+% "Distinctive image features from scale-invariant keypoints",
+% International Journal of Computer Vision, 60, 2 (2004), pp. 91-110.
+%
+% See also SiftPointFeature, ISURF, ICORNER.
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
+%
+% This file is part of The Machine Vision Toolbox for Matlab (MVTB).
+% 
+% MVTB is free software: you can redistribute it and/or modify
+% it under the terms of the GNU Lesser General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% MVTB is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU Lesser General Public License for more details.
+% 
+% You should have received a copy of the GNU Leser General Public License
+% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
 function features = isift(im, varargin)
 
     opt.suppress = 0;
     opt.nfeat = Inf;
-    opt.supress = 0;
+    opt.id = [];
 
     [opt,arglist] = tb_optparse(opt, varargin);
 
@@ -24,10 +65,8 @@ function features = isift(im, varargin)
         fprintf('extracting SIFT features for %d greyscale images\n', length(im));
         features = {};
         for i=1:length(im)
-            sf = isift(im{i}, 'setopt', opt);
-            for j=1:length(sf)
-                sf(j).image_id = i;
-            end
+            sf = isift(im{i}, 'setopt', opt, 'id', i);
+
             features{i} = sf;
             fprintf('.');
         end
@@ -104,6 +143,7 @@ function features = isift(im, varargin)
         f.scale_ = 1.5*4*key(3,i);
         f.theta_ = key(4,i)';
         f.descriptor_ = cast(desc(:,i), 'single');
+        f.image_id_ = opt.id;
 
         features = [features f];
         i = i+1;

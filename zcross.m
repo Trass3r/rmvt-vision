@@ -1,15 +1,18 @@
-%ZCROSS		Zero-crossing detector
+%ZCROSS Zero-crossing detector
 %
-%	IZ = ZCROSS(image)
+% IZ = ZCROSS(IM) is a binary image with pixels set where the corresponding 
+% pixels in the signed image IM have a zero crossing, a positive pixel 
+% adjacent to a negative pixel.
 %
-%	Crude zero-crossing detector.  Returns a binary image in which set (1)
-%	pixels correspond to negative input pixels adjacent to a transition to
-%	transition to a non-negative value.
+% Notes::
+% - Can be used in association with a Lapalacian of Gaussian image to 
+%   determine edges.
 %
-% SEE ALSO:	ilog
-%
+% See also ILOG.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 

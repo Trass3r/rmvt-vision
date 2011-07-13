@@ -1,34 +1,53 @@
-%EDGELIST Return list of edge pixels for region
+%EDGELIST Edge pixels of region
 %
-%   e = edgelist(im, seed)
+% E = EDGELIST(IM, P, OPTIONS) is a list of edge pixels for a region.  IM is a 
+% binary image and P=[X,Y] is the coordinate of one point on the perimeter
+% of a region. E is a matrix with one column per edge point, and each column
+% is an edge point coordinate [X,Y].
+% 
+% Options::
+% 'clockwise'        Follow the perimeter in clockwise direction (default)
+% 'anticlockwise'    Follow the perimeter in anti-clockwise direction
 %
-%  Return the list of edge pixels as a matrix, each row is one edge
-% point (x,y).  im is a binary image where 0 is assumed to be background,
-% non-zero is an object.  seed is a starting point on the edge of the
-% blob to be traced.  The seed point is always the first element of
-% the edgelist.
+% Notes::
+% - Pixel values of 0 are assumed to be background, non-zero is a region.
+% - The given point is always the first element of the edgelist.
+% - Direction is with respect to y-axis upward.
+% - Where the region touches the edge of the image its edge is considered to be
+%   the image edge.
 %
-%   e = edgelist(im, seed, direction)
-%
-%  Choose the direction of edge following.  direction == 0 (default) means
-% clockwise, non zero is counter-clockwise.  Note that direction is with
-% respect to y-axis upward.
-%
-% SEE ALSO: ilabel
+% See also IBLOBS.
 
-function e = edgelist(im, P, direction)
 
-    % deal with direction argument
-    if nargin == 2
-        direction = 0;
-    end
+% Copyright (C) 1993-2011, by Peter I. Corke
+%
+% This file is part of The Machine Vision Toolbox for Matlab (MVTB).
+% 
+% MVTB is free software: you can redistribute it and/or modify
+% it under the terms of the GNU Lesser General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% MVTB is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU Lesser General Public License for more details.
+% 
+% You should have received a copy of the GNU Leser General Public License
+% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-    if direction == 0
+function e = edgelist(im, P, varargin)
+
+    opt.direction = {'clockwise', 'anticlockwise'};
+    opt = tb_optparse(opt, varargin);
+
+    if strcmp(opt.direction, 'clockwise')
         neighbours = [1:8]; % neigbours in clockwise direction
-    else
+    elseif strcmp(opt.direction, 'anticlockwise')
         neighbours = [8:-1:1];  % neigbours in counter-clockwise direction
     end
 
+    P = P(:)';
     P0 = P;     % make a note of where we started
     pix0 = im(P(2), P(1));  % color of pixel we start at
 
@@ -78,7 +97,7 @@ function e = edgelist(im, P, direction)
         end
 
         % keep going, add P to the edgelist
-        e = [e; P];
+        e = [e P'];
     end
 end
 

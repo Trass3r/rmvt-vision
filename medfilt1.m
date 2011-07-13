@@ -1,11 +1,15 @@
-%MEDFILT1	One-dimensional median filter
+%MEDFILT1 Median filter
 %
-%  	y = MEDFILT(x)
-%  	y = MEDFILT(x, w)
+% Y = MEDFILT1(X, W) is the one-dimensional median filter of the signal X
+% computed over a sliding window of width W.
 %
-% 	median filter the signal with window of width W (default is 5).
+% Notes::
+% - A median filter performs smoothing but preserves sharp edges, unlike
+%   traditional smoothing filters.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -22,20 +26,20 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 function m = medfilt1(s, w)
-	if nargin == 1,
-		w = 5;
-	end
-	
-	s = s(:)';
-	w2 = floor(w/2);
-	w = 2*w2 + 1;
+    if nargin == 1,
+        w = 5;
+    end
+    
+    s = s(:)';
+    w2 = floor(w/2);
+    w = 2*w2 + 1;
 
-	n = length(s);
-	m = zeros(w,n+w-1);
-	s0 = s(1); sl = s(n);
+    n = length(s);
+    m = zeros(w,n+w-1);
+    s0 = s(1); sl = s(n);
 
-	for i=0:(w-1),
-		m(i+1,:) = [s0*ones(1,i) s sl*ones(1,w-i-1)];
-	end
-	m = median(m);
-	m = m(w2+1:w2+n);
+    for i=0:(w-1),
+        m(i+1,:) = [s0*ones(1,i) s sl*ones(1,w-i-1)];
+    end
+    m = median(m);
+    m = m(w2+1:w2+n);

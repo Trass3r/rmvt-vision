@@ -1,11 +1,13 @@
 %FREFINE refine estimate of fundamental matrix
 %
-%	fr = frefine(F, uv1, uv2)
+% fr = frefine(F, uv1, uv2)
 %
 %  Return a refined estimate of fundamental matrix using non-linear
 % optimization and enforcing the rank-2 constraint.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 

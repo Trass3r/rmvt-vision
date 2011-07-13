@@ -1,28 +1,22 @@
-%HOMOGRAPHY	estimate homography between two sets of image points
+%HOMOGRAPHY Estimate homography
 %
-%	H = homography(p1, p2)
+% H = HOMOGRAPHY(P1, P2) is the homography (3x3) that relates two
+% sets of corresponding points P1 (2xN) and P2 (2xN) from two different
+% camera views of a planar object.
 %
-%	H is the homography that maps image plane points p1 -> p2.
+% Notes::
+% - The points must be corresponding, no outlier rejection is performed.
+% - The points must be projections of points lying on a world plane
+% - Contains a RANSAC driver, which means it can be passed to ransac().
 %
+% Author::
+% Based on homography code by
+% Peter Kovesi,
+% School of Computer Science & Software Engineering,
+% The University of Western Australia,
+% http://www.csse.uwa.edu.au/,
 %
-% SEE ALSO:	invhomog, homtrans, homtest, fmatrix
-
-% Copyright (C) 1995-2009, by Peter I. Corke
-%
-% This file is part of The Machine Vision Toolbox for Matlab (MVTB).
-% 
-% MVTB is free software: you can redistribute it and/or modify
-% it under the terms of the GNU Lesser General Public License as published by
-% the Free Software Foundation, either version 3 of the License, or
-% (at your option) any later version.
-% 
-% MVTB is distributed in the hope that it will be useful,
-% but WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-% GNU Lesser General Public License for more details.
-% 
-% You should have received a copy of the GNU Leser General Public License
-% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
+% See also RANSAC, INVHOMOG, FMATRIX.
 
 function [H,resid] = homography(X, p2, Ht)
 

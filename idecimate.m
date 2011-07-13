@@ -1,18 +1,26 @@
 %IDECIMATE	Decimate an image
 %
-%	s = idecimate(im, m)
-%	s = shrink(im, m, sigma)
-%	s = shrink(im, m, [])
+% S = IDECIMATE(IM, M) is a decimated version of the image IM whose
+% size is reduced by M (an integer) in both dimensions.  The image is smoothed
+% with a Gaussian kernel with standard deviation M/2 then subsampled.
 %
-%   Reduce the image by a factor of M in each direction.  M is an integer.
-%	Smooth the image, IM, using Gaussian
-%	smoothing of SIGMA (default 1) and then subsample by a factor of
-%	N (default 2) in both directions.  
+% S = IDECIMATE(IM, M, SD) as above but the standard deviation of the
+% smoothing kernel is set to SD.
 %
-% SEE ALSO:	kgauss
+% S = IDECIMATE(IM, M, []) as above but no smoothing is applied prior
+% to decimation.
 %
+% Notes::
+% - If the image has multiple planes, each plane is decimated.
+% - Smoothing is used to eliminate aliasing artifacts and the standard 
+%   deviation should be chosen as a function of the maximum spatial frequency
+%   in the image.
+%
+% See also ISCALE, ISMOOTH.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 

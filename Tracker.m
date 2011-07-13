@@ -70,19 +70,12 @@ classdef Tracker
         % 'movie',M     Write the frames as images into the folder M as 
         %               with sequential filenames.
         %
-        % Notes::
-        % - The 'movie' options saves frames as files NNNN.png.
-        % - When using 'movie' option ensure that the window is fully visible.
-        % - To convert frames to a movie use a command like:
-        %        ffmpeg -r 10 -i %04d.png out.avi
-        %
         % See also PointFeature.
 
             opt.radius = 20;
             opt.nslots = 800;
             opt.thresh = 0.8;
             opt.movie = [];
-            framenum = 0;
 
             opt = tb_optparse(opt, varargin);
 
@@ -207,13 +200,13 @@ classdef Tracker
                 plot_point( [t.track(k).uv], 'ws', 'printf', {'%d', [t.track(k).id]});
                 title( sprintf('frame %d', frame) );
                 drawnow
-
+                
                 if ~isempty(opt.movie)
                     f = getframe;
                     imwrite(f.cdata, sprintf('%s/%04d.png', opt.movie, framenum));
                     framenum = framenum+1;
+                    
                 end
-                
                 %pause
             end
 
@@ -254,41 +247,6 @@ classdef Tracker
             axis([0 t.dims(2) 0 t.dims(1)]);
             set(gca, 'Ydir', 'reverse');
             hold off
-        end
-
-        function display(t)
-        %Tracker.display Display value
-        %
-        % T.display() displays a compact human-readable string representation of the 
-        % Tracker object
-        %
-        % Notes::
-        % - This method is invoked implicitly at the command line when the result
-        %   of an expression is a Tracker object and the command has no trailing
-        %   semicolon.
-        %
-        % See also Tracker.char.
-            loose = strcmp( get(0, 'FormatSpacing'), 'loose');
-            if loose
-                disp(' ');
-            end
-            disp([inputname(1), ' = '])
-            if loose
-                disp(' ');
-            end
-            disp(char(t))
-            if loose
-                disp(' ');
-            end
-        end
-
-        function s = char(t)
-        %Tracker.char Convert to string
-        %
-        % S = T.char() is a compact string representation of the Tracker parameters and status.
-
-            s = sprintf('Tracker: %d tracks, next id=%d, thresh=%g, nhistory=%d', ...
-                t.N, t.id, t.thresh, numel(t.history));
         end
 
     end %methods

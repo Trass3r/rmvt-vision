@@ -1,8 +1,3 @@
-%RG_ADDTICKS Label spectral locus
-%
-% RG_ADDTICKS() adds wavelength ticks to the spectral locus.
-%
-% See also XYCOLOURSPACE.
 
 
 % Copyright (C) 1993-2011, by Peter I. Corke
@@ -21,21 +16,24 @@
 % 
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
+function sphere_paint(sph, varargin)
 
-function rg_addticks(lam1, lam2, lamd)
-
-    % well spaced points around the locus
-    lambda = [460:10:540];
-    lambda = [lambda 560:20:600];
-
-    rgb = cmfrgb(lambda*1e-9);        
-    r = rgb(:,1)./sum(rgb')';    
-    g = rgb(:,2)./sum(rgb')';    
-    hold on
-    plot(r,g, 'o')
-    hold off
-
-    for i=1:numcols(lambda)
-        text(r(i), g(i), sprintf('  %d', lambda(i)));
+    % if only a hemisphere pad the other hemisphere with grey
+    if nargin > 1
+        if strcmp(varargin(1), 'north')
+            sph = [sph; 0.3*ones(size(sph))];
+        elseif strcmp(varargin(1), 'south')
+            sph = [0.3*ones(size(sph)); sph];
+        end
     end
 
+    % flip it because the 'top' of the Matlab sphere function is
+    % the south pole...
+    sph = flipud(sph);
+
+    % create the sphere and get handle
+    sphere
+    h=findobj('Type', 'surface');
+
+    set(h,'cdata', sph, 'facecolor', 'texture');
+    colormap(gray)

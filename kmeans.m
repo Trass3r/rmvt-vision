@@ -1,25 +1,33 @@
-%KMEANS	K-means clustering
+%KMEANS K-means clustering
 %
-%	[L, C] = kmeans(x, k)
-%	[L, C] = kmeans(x, k, x0)
+% [L,C] = KMEANS(X, K, OPTIONS) is K-means clustering of multi-dimensional data
+% points X (DxN) where N is the number of points, and D is the dimension.  The
+% data is organized into K clusters based on Euclidean distance from cluster
+% centres C (DxK). L is a vector (Nx1) whose elements indicates which 
+% cluster the corresponding element of X belongs to.  
 %
-%	K-means clustering for data, x.  k is the number of
-%	clusters, and x0 if given is the inital centroid for the clusters.
-%	x can be 1- or multi-dimensional.
+% [L,C] = KMEANS(X, K, C0) as above but the initial clusters C0 (DxK) is given
+% and column I is the initial estimate of the centre of cluster I.
 %
-%   x0 can be give as a matrix with k rows and size(x,2) columns.
-%   Alternatively it can be a string:
-%       'random' randomly choose k points from x
-%       'spread' randomly choose k values within the hypercube spanned
-%           by x.
+% L = KMEANS(X, C) is similar to above but the clustering step is not performed,
+% it is assumed to have been completed previously.  C (DxK) contains the cluster
+% centroids and L (Nx1) indicates which cluster the corresponding element of X
+% is closest to.
 %
-%	On return L is a vector of length equal to size(x,1), whose value 
-%  indicates which cluster the corresponding element of x belongs to.
-%  C is the cluster centroids, one row per cluster.
+% Options::
+% 'random'   initial cluster centres are chosen randomly from the set of
+%            data points X
+% 'spread'   initial cluster centres are chosen randomly from within the 
+%            hypercube spanned by X.
 %
-% REF: Tou and Gonzalez, Pattern Recognition Principles, pp 94
+% Reference::
+% Tou and Gonzalez,
+% Pattern Recognition Principles,
+% pp 94
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -51,14 +59,10 @@ function [label,centroid,resid] = kmeans(x, K, varargin)
 % TODO update doco for assignment mode
 %      option to loop N times and take lowest residual
 %      return residual from assignment mode
-	deb = 0;
+    deb = 0;
 
     n = numcols(x);
     
-    if nargin == 2
-        z0 = 'random';
-    end
-
     if numcols(K) > 1 && numrows(x) == numrows(K)
         % kmeans(x, centres)
         % then return closest clusters
@@ -109,33 +113,33 @@ function [label,centroid,resid] = kmeans(x, K, varargin)
     z = z0;
     
 
-	%
-	% step 1
-	%
-	zp = z;             % previous centroids
-	s = zeros(1,n);
+    %
+    % step 1
+    %
+    zp = z;             % previous centroids
+    s = zeros(1,n);
     sp = s;
     
-	iterating = 1;
-	k = 1;
-	iter = 0;
+    iterating = 1;
+    k = 1;
+    iter = 0;
     
-	while iterating,
-		iter = iter + 1;
+    while iterating,
+        iter = iter + 1;
         
         tic
         t0 = toc;
 
-		%
-		% step 2
-		%
+        %
+        % step 2
+        %
 
         s = closest(x, z);
-        			
-		%
-		% step 3
-		%
-		for j=1:K
+                    
+        %
+        % step 3
+        %
+        for j=1:K
             k = find(s==j);
             if isempty(k)
                 if strcmp(opt.init, 'random')
@@ -154,29 +158,29 @@ function [label,centroid,resid] = kmeans(x, K, varargin)
             end
         end
 
-		%
-		% step 4
-		%
+        %
+        % step 4
+        %
         %  determine the change in cluster centres over the last step
-		delta = sum( sum( (z - zp).^2 ) );
+        delta = sum( sum( (z - zp).^2 ) );
 
         if opt.verbose
             t = toc;
             fprintf('%d: norm=%g, delta=%g, took %.1f seconds\n', iter, mean(maxerr), delta, t);
         end
 
-		if delta == 0,
+        if delta == 0,
             fprintf('delta to zero\n');
-			iterating = 0;
-		end
-		z = zp;
-		if opt.plot
+            iterating = 0;
+        end
+        z = zp;
+        if opt.plot
             if numrows(z) == 2
                 plot(z(1,:), z(2,:));
             else
                 plot3(z(1,:), z(2,:), z(3,:));
             end
-			pause(.1);
+            pause(.1);
         end
         
         % if no point assignments changed then we are done
@@ -185,7 +189,7 @@ function [label,centroid,resid] = kmeans(x, K, varargin)
             iterating = 0;
         end
         sp = s;
-	end
+    end
     
     if nargout == 0
         % if no output arguments display results        

@@ -1,30 +1,28 @@
-%MKCUBE		Create vertices of a cube
+%MKCUBE Create cube
 %
-%	xyz = MKCUBE
-%	xyz = MKCUBE(s)
-%	xyz = MKCUBE(s, c)
+% P = MKCUBE(S, OPTIONS) is a set of points (3x8) that define the 
+% vertices of a cube of side length S and centred at the origin.
 %
-%	[x,y,z] = MKCUBE
-%	[x,y,z] = MKCUBE(s)
-%	[x,y,z] = MKCUBE(s, c)
+% [X,Y,Z] = MKCUBE(S, OPTIONS) as above but return the rows of P as three 
+% vectors.
 %
-%	Return a 3-rows matrix where each column contains the (x,y,z) coordinates
-%	of a cube's vertices.  The side length S defaults to 1.  The centre
-%	C = (x,y,z) defaults to (0,0,0).
+% [X,Y,Z] = MKCUBE(S, 'edge', OPTIONS) is a mesh that defines the edges of
+% a cube.
 %
-%	Alternatively the function can be called with 3 output arguments
-%	which are vectors of X, Y and Z coordinates.
+% Options::
+% 'facepoint'    Add an extra point in the middle of each face, in this case
+%                the returned value is 3x14 (8 vertices + 6 face centres).
+% 'centre',C     The cube is centred at C (3x1) not the origin
+% 'T',T          The cube is arbitrarily transformed by the homogeneous 
+%                transform T
+% 'edge'         Return a set of cube edges in MATLAB mesh format rather
+%                than points.
 %
-%	xyz = MKCUBE2
-%	xyz = MKCUBE2(s)
-%	xyz = MKCUBE2(s, c)
-%
-%  [x,y,z] = mkcube(s, 'edge');
-%	Returns three matrices that can be used with mesh(x,y,z) or
-%  camera.mesh()
-%
+% See also CYLINDER, SPHERE.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -76,7 +74,7 @@ function [o1,o2,o3] = mkcube(s, varargin)
         if isvec(opt.T)
             opt.T = transl(opt.T);
         end
-        cube = transformp(opt.T, cube);
+        cube = homtrans(opt.T, cube);
     end
 
     if opt.edge == false

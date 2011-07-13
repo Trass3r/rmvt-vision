@@ -1,13 +1,15 @@
-%ISTRETCH	Image linear normalization
+%ISTRETCH Image normalization
 %
-%	g = istretch(image)
-%	g = istretch(image, newmax)
+% OUT = ISTRETCH(IM) is a normalized image in which all pixel values lie in 
+% the range 0 to 1.  That is, a linear mapping where the minimum value of 
+% IM is mapped to 0 and the maximum value of IM is mapped to 1.
 %
-%	Return a normalized image in which all pixels lie in the range
-%	0 to 1, or 0 to newmax.
+% OUT = ISTRETCH(IM,MAX) as above but pixel values lie in the range 0 to MAX.
 %
+% See also INORMHIST.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -27,11 +29,11 @@
 
 function zs = istretch(z, newmax)
 
-	if nargin == 1,
-		newmax = 1;
-	end
+    if nargin == 1
+        newmax = 1;
+    end
 
-	mn = min(z(:));
-	mx = max(z(:));
+    mn = min(z(:));
+    mx = max(z(:));
 
-	zs = (z-mn)/(mx-mn)*newmax;
+    zs = (z-mn)/(mx-mn)*newmax;

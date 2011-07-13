@@ -1,20 +1,24 @@
-%IPYRAMID	Pyramidal image decomposition
+%IPYRAMID Pyramidal image decomposition
 %
-%	p = ipyramid(im)
-%	p = ipyramid(im, sigma)
-%	p = ipyramid(im, sigma, N)
+% OUT = IPYRAMID(IM) is a pyramid decomposition of input image IM using 
+% Gaussian smoothing with standard deviation of 1.  OUT is a cell array of
+% images each one having dimensions half that of the previous image. The 
+% pyramid is computed down to a non-halvable image size.
 %
-%	Compute pyramid decomposition of input image, IM, using Gaussian
-%	smoothing of sigma (default 1) prior to each decimation.
+% OUT = IPYRAMID(IM, SIGMA) as above but the Gaussian standard deviation 
+% is SIGMA.
 %
-%	If N is specified compute only that number of steps, otherwise the
-%	pyramid is computed down to a non-halvable image size.
+% OUT = IPYRAMID(IM, SIGMA, N) as above but only N levels of the pyramid are
+% computed.
 %
-%	Result is a cell array 
+% Notes::
+% - Works for greyscale images only.
 %
-% SEE ALSO:	kgauss ishrink
+% See also ISCALESPACE, IDECIMATE, ISMOOTH.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -32,27 +36,30 @@
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
 function p = ipyramid(im, sigma, N)
-	if nargin < 2,
-		sigma = 1;
-		N = floor( log2( min(size(im) ) ) );
-	elseif nargin < 3,
-		N = floor(log2(min(size(im))));
-	end
+    if iscolor(im)
+        error('greyscale images only');
+    end
+    if nargin < 2,
+        sigma = 1;
+        N = floor( log2( min(size(im) ) ) );
+    elseif nargin < 3,
+        N = floor(log2(min(size(im))));
+    end
 
-	[height,width] = size(im);
-	K = kgauss(sigma);
+    [height,width] = size(im);
+    K = kgauss(sigma);
 
-	p{1} = im;
+    p{1} = im;
 
-	for k = 1:N,
-		[nrows,ncols] = size(im);
+    for k = 1:N,
+        [nrows,ncols] = size(im);
 
-		% smooth
-		im = conv2(im, K, 'same');
+        % smooth
+        im = conv2(im, K, 'same');
 
-		% sub sample
-		im = im(1:2:nrows,1:2:ncols);
+        % sub sample
+        im = im(1:2:nrows,1:2:ncols);
 
-		% stash it
-		p{k+1} = im;
-	end
+        % stash it
+        p{k+1} = im;
+    end

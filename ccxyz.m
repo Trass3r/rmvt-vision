@@ -1,18 +1,18 @@
-%CCXYZ	XYZ chromaticity coordinates
+%CCXYZ XYZ chromaticity coordinates
 %
-%	xyz = CCXYZ(lambda)
-%		Compute xyz chromaticity coordinates for a 
-%		specific wavelength.
+% XYZ = CCXYZ(LAMBDA) is the xyz-chromaticity coordinates for illumination
+% at wavelength LAMBDA.  If LAMBDA is a vector then each row of XYZ
+% is the chromaticity of the corresponding element of LAMBDA. 
 %
-%	xyz = CCXYZ(lambda, e)
-%		Compute xyz chromaticity coordinates for a spectral
-%		response e, where elements of e correspond to the wavelength
-%		lambda.
+% XYZ = CCXYZ(LAMBDA, E) is the xyz-chromaticity coordinates for an illumination
+% spectrum E.  E and LAMBDA are vectors of the same length and the elements of E 
+% represent the intensity of light at the corresponding wavelength in LAMBDA.
 %
-% SEE ALSO: CMFXYZ
-%
+% See also CMFXYZ.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -29,14 +29,14 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 function [x,y] = ccxyz(lambda, e)
-	xyz = cmfxyz(lambda);
-	if nargin == 1,
-		cc = xyz ./ (sum(xyz')'*ones(1,3));
-	elseif nargin == 2,
-		xyz = xyz .* (e(:)*ones(1,3));
-		xyz = sum(xyz);
-		cc = xyz ./ (sum(xyz')'*ones(1,3));
-	end
+    xyz = cmfxyz(lambda);
+    if nargin == 1,
+        cc = xyz ./ (sum(xyz')'*ones(1,3));
+    elseif nargin == 2,
+        xyz = xyz .* (e(:)*ones(1,3));
+        xyz = sum(xyz);
+        cc = xyz ./ (sum(xyz')'*ones(1,3));
+    end
 
     if nargout == 1
         x = cc;

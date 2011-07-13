@@ -1,4 +1,36 @@
-function out = ipixswitch(mask, I1, I2)
+%IPIXSWITCH Pixelwise image merge
+%
+% OUT = IPIXSWITCH(MASK, IM1, IM2) is an image where each pixel is
+% selected from the corresponding pixel in IM1 or IM2 according to the
+% corresponding values of MASK.  If the element of MASK is zero IM1 is
+% selected, otherwise IM2 is selected.
+%
+% Notes::
+% - IM1 and IM2 must have the same number of rows and columns
+% - if IM1 and IM2 are both greyscale then OUT is greyscale
+% - if either of IM1 and IM2 are color then OUT is color
+%
+% See also COLORIZE.
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
+%
+% This file is part of The Machine Vision Toolbox for Matlab (MVTB).
+% 
+% MVTB is free software: you can redistribute it and/or modify
+% it under the terms of the GNU Lesser General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% MVTB is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU Lesser General Public License for more details.
+% 
+% You should have received a copy of the GNU Leser General Public License
+% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
+
+function co = ipixswitch(mask, I1, I2)
 
     if ischar(I1)
         % image is a string color name

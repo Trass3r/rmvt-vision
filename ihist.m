@@ -1,27 +1,39 @@
-%IHIST	Image histogram (fast)
+%IHIST Image histogram
 %
-%	ihist(image)
-%	h = ihist(image)
-%	[h,x] = ihist(image)
+% IHIST(IM, OPTIONS) displays the image histogram.  For an image with  multiple
+% planes the histogram of each plane is given in a separate subplot.
 %
-%	Compute a greylevel histogram of IMAGE.
+% H = IHIST(IM, OPTIONS) is the image histogram as a column vector.  For
+% an image with multiple planes H is a matrix with one column per image plane.
 %
-%	The histogram has 256 bins spanning the greylevel range 0-255 or 0-1.
+% [H,X] = IHIST(IM, OPTIONS) as above but also returns the bin coordinates as
+% a column vectors.
 %
-%	The first form displays the histogram, the second form returns the
-%	histogram.
+% Options::
+% 'nbins'     number of histogram bins (default 256)
+% 'cdf'       compute a cumulative histogram
+% 'normcdf'   compute a normalized cumulative histogram
+% 'sorted'    histogram but with occurrence sorted in descending order
 %
-%	[h,x] = ihist(image, N)
+% Example::
 %
-%   uses N bins, for the case of a double image only.
+%    [h,x] = ihist(im);
+%    bar(x,h);
 %
-%	[h,x] = ihist(image, 'cdf')
+%    [h,x] = ihist(im, 'normcdf');
+%    plot(x,h);
 %
-%   returns a normalized cumulative histogram.
+% Notes::
+% - For a uint8 image the histogram spans the greylevel range 0-255
+% - For a floating point image the histogram spans the greylevel range 0-1
+% - For floating point images all NaN and Inf values are first removed.
+% - For a uint8 image the MEX function fhist is used
 %
-% SEE ALSO:  hist
+% See also HIST.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -40,41 +52,35 @@
 
 function [h,xbin] = ihist(im, varargin)
 
-% TODO add optparse
-%   ihist(im)
-%   ihist(im, nbins)
-%   ihist(im, options)
-%   ihist(im, nbins, options)
-
     if size(im, 3) > 1
         % color or multiband image
 
         np = size(im,3);
-        for k=1:np
-            [H(:,k),xx] = ihist(im(:,:,k), varargin{:});
-        end
         if nargout == 0
             for k=1:np
                 subplot(np, 1, k);
-                bar(xx, H(:,k));
-                xaxis(min(xx), max(xx));
+                ihist(im(:,:,k), varargin{:});
                 xlabel(sprintf('Image plane %d', k))
                 ylabel('N');
             end
-        elseif nargout == 1
-            h = H;
-        elseif nargout == 2
-            h = H;
-            x = xx;
+        else
+            for k=1:np
+                [H(:,k),xx] = ihist(im(:,:,k), varargin{:});
+            end
+            if nargout == 1
+                h = H;
+            elseif nargout == 2
+                h = H;
+                x = xx;
+            end
         end
         return
     end
 
-    if (nargin > 1) && isinteger(varargin(1))
-        nbins = varargin(1);
-    else
-        nbins = 256;
-    end
+    opt.nbins = 256;
+    opt.type = {'hist', 'cdf', 'normcdf', 'sorted'};
+
+    [opt,args] = tb_optparse(opt, varargin);
 
     if isinteger(im)
         % use quick mex function if data is integer
@@ -92,44 +98,42 @@ function [h,xbin] = ihist(im, varargin)
         if length(k) > 0
             warning('%d Infs removed', length(k));
         end
-        [n,x] = hist(z, nbins);
+        [n,x] = hist(z, opt.nbins);
         n = n'; x = x';
     end
 
     % handle options
-    if nargin > 1
-        switch varargin{1}
-        case 'cdf'
-            % compute CDF if requested
-            n = cumsum(n);
-        case 'normcdf'
-            n = cumsum(n);
-            n = n ./ n(end);
-        case 'sorted'
-            n = sort(n, 'descend');
-        end
+    switch opt.type
+    case 'cdf'
+        n = cumsum(n);
+    case 'normcdf'
+        n = cumsum(n);
+        n = n ./ n(end);
+    case 'sorted'
+        n = sort(n, 'descend');
     end
 
-    opt = varargin;
-	if nargout == 0,
-        if (nargin > 1) && ~isempty(findstr('cdf', opt{1}))
-            opt = opt(2:end);
-            plot(x, n, opt{:});
+	if nargout == 0
+        switch opt.type
+        case {'cdf','normcdf'}
+            % CDF is plotted as line graph
+            plot(x, n, args{:});
             if min(size(im)) > 1
                 xlabel('Greylevel')
             end
             ylabel('CDF');
-        else
-            bar(x, n, opt{:});
+        otherwise
+            % histogram is plotted as bar graph
+            bar(x, n, args{:});
             xaxis(min(x), max(x));
             if min(size(im)) > 1
                 xlabel('Greylevel')
             end
             ylabel('Number of pixels');
         end
-	elseif nargout == 1,
+	elseif nargout == 1
 		h = n;
-	elseif nargout == 2,
+	elseif nargout == 2
 		h = n;
 		xbin = x;
 	end

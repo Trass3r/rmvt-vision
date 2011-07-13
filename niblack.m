@@ -1,32 +1,51 @@
 %NIBLACK Adaptive thresholding
 %
-% t = niblack(im, k)
-% t = niblack(im, k, w2)
+% T = NIBLACK(IM, K, W2) is the per-pixel (local) threshold to apply to 
+% image IM.  T has the same dimensions as IM.  The threshold at each pixel is 
+% a function of the mean and standard deviation computed over a WxW window,
+% where W=2*w2+1.
 %
-% Returns t the per-pixel threshold, the binary image is
-%   im > t
+% [T,M,S] = NIBLACK(IM, K, W2) as above but returns the per-pixel mean M
+% and standard deviation S.
 %
-% The threshold at each pixel is a function of the mean and std
-% deviation:
-%   t = mean + k. std
-% computed over a WxW window, where W=2*w2+1 and w2 defaults to 7.
+% Example::
+%     t = niblack(im, -0.2, 20);
+%     idisp(im >= t);
 %
-% A common choice of k=-0.2
+% Notes::
+% - This is an efficient algorithm very well suited for binarizing
+%   text.
+% - W2 should be chosen to be half the "size" of the features to be 
+%   segmented, for example, in text segmentation, the height of a 
+%   character.
+% - A common choice of k=-0.2
 %
-% The function optionally returns the per-pixel mean and standard
-% deviation
 %
-% [t,M,S] = niblack(im, k)
-%
-% This is an efficient algorithm very well suited for binarizing
-% text.  The window should be chosen to be of similar size to the
-% characters.
-%
-% W. Niblack, An Introduction to Digitall Image Processing,
+% Reference::
+% An Introduction to Digital Image Processing,
+% W. Niblack, 
 % Prentice-Hall, 1986.
 %
-% SEE ALSO: OTSU
+% See also OTSU, ITHRESH.
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
+% This file is part of The Machine Vision Toolbox for Matlab (MVTB).
+% 
+% MVTB is free software: you can redistribute it and/or modify
+% it under the terms of the GNU Lesser General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% MVTB is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU Lesser General Public License for more details.
+% 
+% You should have received a copy of the GNU Leser General Public License
+% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
+
 function [t,M,S] = niblack(im, k, w2)
 
     if nargin < 3,

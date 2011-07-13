@@ -1,15 +1,22 @@
-%UPQ	Compute normalized central moments of polygon
+%UPQ_POLY Central polygon moments
 %
-% M = UPQ(iv, p, q)
-%	compute the pq'th normalized central moment of the polygon 
-%       whose vertices are iv.
+% M = UPQ_POLY(V, P, Q) is the PQ'th central moment of the polygon with 
+% vertices described by the columns of V.
 %
-%	Note that the points must be sorted such that they follow the 
-%	perimeter in sequence (either clockwise or anti-clockwise).
+% Notes::
+% - The points must be sorted such that they follow the perimeter in 
+%   sequence (counter-clockwise).  
+% - If the points are clockwise the moments will all be negated, so centroids
+%   will be still be correct.
+% - If the first and last point in the list are the same, they are considered
+%   as a single vertex.
+% - The central moments are invariant to translation.
 %
-% SEE ALSO: mpq, npq, imoments
+% See also UPQ, MPQ_POLY, NPQ_POLY.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 

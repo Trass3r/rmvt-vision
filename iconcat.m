@@ -1,4 +1,52 @@
+%ICONCAT Concatenate images
+%
+% C = ICONCAT(IM,OPTIONS) concatenates images from the cell array IM.  The
+% images do not have to be of the same size, and smaller images are surrounded
+% by background pixels which can be specified.
+%
+% ICONCAT(IM,OPTIONS) as above but displays the concatenated images 
+% using idisp.
+%
+% [C,U] = ICONCAT(IM,OPTIONS) as above but also returns the vector U whose
+% elements are the coordinates of the left (or top in vertical mode) edge of
+% the corresponding image.
+%
+% Options::
+% 'dir',D     direction of concatenation: 'horizontal' (default) or 'vertical'.
+% 'bgval',B   value of unset background pixels
+%
+% Notes::
+% - Works for color or greyscale images
+% - Direction can be abbreviated to first character, 'h' or 'v'
+% - In vertical mode all images are right justified
+% - In horizontal mode all images are top justified
+%
+% See also IDISP.
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
+%
+% This file is part of The Machine Vision Toolbox for Matlab (MVTB).
+% 
+% MVTB is free software: you can redistribute it and/or modify
+% it under the terms of the GNU Lesser General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% MVTB is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU Lesser General Public License for more details.
+% 
+% You should have received a copy of the GNU Leser General Public License
+% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
+
 function [out,u0] = iconcat(images, dir, bgval)
+% TODO: add a gap option
+
+    opt.dir = 'h';
+    opt.bg = NaN;
+
    % image is a cell array
     width = 0;
     height = 0;
@@ -13,7 +61,7 @@ function [out,u0] = iconcat(images, dir, bgval)
     np_prev = NaN;
     u0 = 1;
     for i=1:length(images)
-        if dir == 'v'
+        if dir(1) == 'v'
             images{i} = images{i}';
         end
         

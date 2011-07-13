@@ -1,22 +1,32 @@
-%IVAR	Fast neighbourhood variance/kurtosis/skewness 
+%IVAR Pixel window statistics
 %
-%	V = IVAR(IM, SE, OP)
-%	V = IVAR(IM, SE, OP, EDGE)
+% OUT = IVAR(IM, SE, OP) is an image where each output pixel is
+% the specified statistic over the pixel neighbourhood indicated by the
+% structuring element SE which should have odd side lengths.  The elements 
+% in the neighbourhood corresponding to non-zero elements in SE are packed into
+% a vector on which the required statistic is computed.
 %
-%	Computes the specified statistic over the pixel neighbourhood
-%	which becomes the corresponding output pixel value.
-%		OP is 'var', 'kurt', 'skew'
+% The operation OP is one of:
+% 'var'    variance
+% 'kurt'   Kurtosis or peakiness of the distribution
+% 'skew'   skew or asymmetry of the distribution
 %
-%	Edge handling flags control what happens when the processing window
-%	extends beyond the edge of the image. 	EDGE is either
-%		'border' the border value is replicated
-%		'none'	 pixels beyond the border are not included in the window
-%		'trim'	 output is not computed for pixels whose window crosses
-%			 the border, hence output image had reduced dimensions.
-%		'wrap'	 the image is assumed to wrap around
+% OUT = IVAR(IM, SE, OP, EDGE) as above but performance at edge pixels
+% can be controlled.  The value of EDGE is:
+% 'border'   the border value is replicated (default)
+% 'none'     pixels beyond the border are not included in the window
+% 'trim'     output is not computed for pixels whose window crosses
+%            the border, hence output image had reduced dimensions.
+% 'wrap'     the image is assumed to wrap around
 %
+% Notes::
+% - Is a MEX file.
+%
+% See also IRANK, IWINDOW.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -31,4 +41,5 @@
 % GNU Lesser General Public License for more details.
 % 
 % You should have received a copy of the GNU Leser General Public License
+% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.

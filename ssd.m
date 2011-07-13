@@ -1,4 +1,15 @@
-% Copyright (C) 1995-2009, by Peter I. Corke
+%SSD Sum of squared differences
+%
+% M = SSD(I1, I2) is the sum of squared differences between the 
+% two equally sized image patches I1 and I2.  The result M is a scalar that
+% indicates image similarity, a value of 0 indicates identical pixel patterns
+% and is increasingly positive as image dissimilarity increases.
+%
+% See also ZSDD, SAD, NCC, ISIMILARITY.
+
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 

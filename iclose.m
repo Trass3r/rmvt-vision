@@ -1,16 +1,21 @@
 %ICLOSE	Morphological closing
 %
-%	b = iclose(im)
-%	b = iclose(im, se)
-%	b = iclose(im, se, n)
+% OUT = ICLOSE(IM, SE) is the image IM after morphological closing with the
+% structuring element SE.  This is an dilation followed by erosion.
 %
-%	Return the image im after morphological closing with the structuring
-%	element se (default to ones(3,3).   n (default to 1) dilations then 
-%	N erosions are performed.
+% OUT = ICLOSE(IM, SE, N) as above but the structuring element SE is applied 
+% N times, that is N dilations followed by N erosions.
 %
-% SEE ALSO:	iopen imorph
+% Notes::
+% - Cheaper to apply a smaller structuring element multiple times than
+%   one large one, the effective structuing element is the Minkowski sum
+%   of the structuring element with itself N times.
+%
+% See also IOPEN, IMORPH.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 

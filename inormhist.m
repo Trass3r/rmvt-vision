@@ -1,14 +1,16 @@
-%NORMHIST	Histogram normalization
+%INORMHIST Histogram normalization
 %
-%	n = inormhist(image)
+% OUT = INORMHIST(IM) is a histogram normalized version of the image IM.
 %
-%	Returns a histogram normalized image.  Assumes that pixels lie in the
-%	range 0-255.
-%   WORKS WITH FLOAT
+% Notes::
+% - The histogram of the normalized image is approximately uniform.
+% - Highlights image detail in dark areas of an image.
 %
-% SEE ALSO:	ihist
+% See also IHIST.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -28,8 +30,8 @@ function [ni,ch] = inormhist(im)
     if size(im,3) > 1
         error('inormhist doesnt support color images');
     end
-	[cdf,x] = ihist(im, 'cdf');
-	[nr,nc] = size(im);
+    [cdf,x] = ihist(im, 'cdf');
+    [nr,nc] = size(im);
     cdf = cdf/max(cdf);
     
     if isfloat(im)

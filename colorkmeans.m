@@ -1,16 +1,45 @@
-%COLORSEG  Color image segmentation using k-means
+%COLORKMEANS Color image segmentation by clustering
 %
-%   [L,c] = colorseg(im, k)
+% L = COLORKMEANS(IM, K, OPTIONS) is a segmentation of the color image IM 
+% into K classes.  The label image L has the same row and column dimension
+% as IM and each pixel has a value in the range 0 to K-1 which indicates
+% which cluster the corresponding pixel belongs to.  A k-means clustering of
+% the chromaticity of all input pixels is performed.
 %
-% Segment the color image into k classes.
+% [L,C] = COLORKMEANS(IM, K) as above but also returns the cluster 
+% centres C (Kx2) where the I'th row is the rg-chromaticity of the I'th
+% cluster and corresponds to the label I.  A k-means clustering of the 
+% chromaticity of all input pixels is performed.
 %
-%   [L,c] = colorseg(im, k, options)
+% [L,C,R] = COLORKMEANS(IM, K) as above but also returns the residual R, the 
+% root mean square error of all pixel chromaticities with respect to their 
+% cluster centre.
 %
-% Options include:
-%   'spread' use k-means 'spread' initializer instead of random point
-%   'pick' interactively pick cluster centres
+% L = COLORKMEANS(IM, C) is a segmentation of the color image IM into K classes
+% which are defined by the cluster centres C (Kx2) in chromaticity space.
+% Pixels are assigned to the closest (Euclidean) centre.  Since cluster 
+% centres are provided the k-means segmentation step is not required.
+%
+% Options::
+%
+% Various options are possible to choose the initial cluster centres 
+% for k-means:
+% 'random'   randomly choose K points from
+% 'spread'   randomly choose K values within the rectangle spanned by the
+%            input chromaticities.
+% 'pick'     interactively pick cluster centres
+%
+% Notes::
+% - The k-means clustering algorithm used in the first three forms is
+%   computationally expensive and time consuming.
+% - Clustering is performed in rg-chromaticity space.
+% - The residual is an indication of quality of fit, low is good.
+%
+% See also
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -41,13 +70,13 @@ function [labels,C,resid] = colorseg(im, k, varargin)
         % k is cluster centres
         [L,C,resid] = kmeans([x y]', k);
     else
-        if length(varargin) > 0,
-            if varargin{1} == 'pick',
+        if length(varargin) > 0
+            if varargin{1} == 'pick'
                 z0 = pickpoints(k, im, x, y);
                 [L,C,resid] = kmeans([x y]', k, z0);
             end
         else
-            [L,C,resid] = kmeans([x y]', k);
+            [L,C,resid] = kmeans([x y]', k, varargin{:});
         end
     end
     
@@ -56,14 +85,14 @@ function [labels,C,resid] = colorseg(im, k, varargin)
     
     idisp(L);
     
-    for k=1:numrows(C),
+    for k=1:numrows(C)
         fprintf('%2d: ', k);
         fprintf('%11.4g ', C(k,:));
         fprintf('\n');
         %fprintf('%s\n', colorname(C(k,:)));
     end
     
-    if nargout > 0,
+    if nargout > 0
         labels = L;
     end
 end

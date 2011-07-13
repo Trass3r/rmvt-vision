@@ -1,4 +1,4 @@
-%Ray3D Ray in 3D space
+Ray3D Ray in 3D space
 %
 % This object represents a ray in 3D space, defined by a point on the ray
 % and a direction unit-vector.
@@ -57,12 +57,11 @@ classdef Ray3D
         % If R is a vector then then X has multiple columns, corresponding to
         % the intersection of R(i) with R2.
         %
-        % [X,E] = R.intersect(R2) as above but also returns the closest distance
-        % between the rays.
+        % [X,E] = R.intersect(R2) as above but returns the closest distance.
         %
         % X = R.intersect(P) returns the point of intersection between the
-        % ray R and the plane P=(a,b,c,d) where aX + bY + cZ + d = 0.
-        % If R is a vector then X has multiple columns, corresponding to
+        % ray R and the plane P=(a,b,c,d) such that X.P = 0.
+        % If R is a vector then then X has multiple columns, corresponding to
         % the intersection of R(i) with P.
 
             if isa(r2, 'Ray3D')
@@ -94,39 +93,37 @@ classdef Ray3D
         function [x,e] = closest(r1, P)
         %Ray3D.closest Closest distance between point and ray
         %
-        % X = R.closest(P) is the point on the ray R closest to the point P.
-        %
-        % [X,E] = R.closest(P) as above but also returns the distance E between
-        % X and P.
+        % [X,E] = R.closest(P) is the closest distance E between the point P
+        % and the ray R.  The point X on the ray R is the closest to P.
             alpha = dot(P - r.P0, r.d);
             x = r1.P0 + alpha*r1.d;
             e = norm(x-P);
         end
 
         function display(rays)
-        %Ray3D.display Display value
+        %Ray3D.display Display the value of a Ray3D object
         %
-        % R.display() displays a compact human-readable representation of the Ray3D's
-        % value.  If R is a vector then the elements are printed one per line.
+        % R.display() is a compact string representation of the Ray3D's value.  If
+        % R is a vector then the elements are printed one per line.
         %
         % Notes::
-        % - This method is invoked implicitly at the command line when the result
+        % - this method is invoked implicitly at the command line when the result
         %   of an expression is a Ray3D object and the command has no trailing
         %   semicolon.
         %
-        % See also Ray3D.char.
+        % See also Quaternion.char.
             disp(' ');
             disp([inputname(1), ' = '])
             disp(' ');
             if length(rays) > 20
-                fprintf('%d corresponding points (listing suppressed)\n', length(rays));
+                fprintf('%d corresponding points (listing suppressed)\n', length(m));
             else
                 disp( char(rays) );
             end
         end % display()
 
         function s = char(rays)
-        %Ray3D.char Convert to string
+        %Ray3D.char Create string representation of Ray3D object
         %
         % S = R.char() is a compact string representation of the Ray3D's value.
         % If R is a vector then the string has multiple lines, one per element.

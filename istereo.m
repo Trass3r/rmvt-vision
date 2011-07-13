@@ -1,35 +1,56 @@
-%STEREO Stereo matching
+%ISTEREO Stereo matching
 %
-%   [disp,sim] = stereo(L, R, w, range)
-%   [disp,sim] = stereo(L, R, w, range, metric)
+% D = ISTEREO(IML, IMR, H, RANGE, OPTIONS) is a disparity image computed
+% from the epipolar aligned stereo pair: the left image IML (HxW) and the
+% right image IMR (HxW).  D (HxW) is the disparity and the value at each 
+% pixel is the horizontal shift of the corresponding pixel in IML as observed 
+% in IMR. That is, the disparity d=D(v,u) means that IMR(v,u-d) is the same
+% world point as IML(v,u).
+%
+% H is the half size of the matching window, which can be a scalar for NxN or a
+% 2-vector [N,M] for an NxM window.
+%
+% RANGE is the disparity search range, which can be a scalar for disparities in
+% the range 0 to RANGE, or a 2-vector [DMIN DMAX] for searches in the range
+% DMIN to DMAX.
+%
+% [D,SIM] = ISTEREO(IML, IMR, W, RANGE, OPTIONS) as above but returns SIM 
+% which is the same size as D and the elements are the peak matching score 
+% for the corresponding elements of D.  For the default matching metric ZNCC
+% this varies between -1 (very bad) to +1 (perfect).
+%
+% [D,SIM,DSI] = ISTEREO(IML, IMR, W, RANGE, OPTIONS) as above but returns DSI 
+% which is the disparity space image (HxWxN) where N=DMAX-DMIN+1. The I'th 
+% plane is the similarity of IML to IMR shifted by DMIN+I-1.
+%
+% [D,SIM,P] = ISTEREO(IML, IMR, W, RANGE, OPTIONS) if the 'interp' option is 
+% given then disparity is estimated to sub-pixel precision using quadratic
+% interpolation.  In this case D is the interpolated disparity and P is
+% a structure with elements A, B, dx.  The interpolation polynomial is 
+% s = Ad^2 + Bd + C where s is the similarity score and d is disparity relative
+% to the integer disparity at which s is maximum.  P.A and P.B are matrices the
+% same size as D whose elements are the per pixel values of the interpolation
+% polynomial coefficients.  P.dx is the peak of the polynomial with respect
+% to the integer disparity at which s is maximum (in the range -0.5 to +0.5).
 %   
-% Where L and R are the left- and right-images of a stereo pair, of either
-% double or uint8 class.
+% Options::
+% 'metric',M   string that specifies the similarity metric to use which is
+%              one of 'zncc' (default), 'ncc', 'ssd' or 'sad'.
+% 'interp'     enable subpixel interpolation and D contains non-integer
+%              values (default false)
 %
-% w is the size of the matching window, which can we a scalar for wxw or a
-% 2-vector [wx wy] for a wx x wy window.
+% Notes::
+% - Images must be greyscale.
+% - Disparity values pixels within a half-window dimension (H) of the edges 
+%   will not be valid and are set to NaN.
+% - SIM = max(DSI, 3)
 %
-% range is the disparity search range, which can be a scalar for disparities in
-% the range 0 to range, or a 2-vector [dmin dmax] for searches in the range
-% dmin to dmax.
-%
-% metric is a string that specififies the similarity metric to use and can be
-% one of 'zncc' (default), 'ncc', 'ssd' or 'sad'.
-%
-% disp and sim are both images of the same size as L and R.
-% The value of disp(i,j) is the disparity for pixel L(i,j).
-% The value of sim(i,j) is the similarity score corresponding to the disparity.
-%
-% For both output images the pixels within a half-window dimension of the edges 
-% will not be valid and are set to NaN.
-%
-%   [disp,sim] = stereo(L, R, w, range, metric, interp)
-%
-% if interp is non-zero then the disparity image, disp, will be interpolated
-% to fraction pixels.
+% See also IRECTIFY, STDISP.
 
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -45,7 +66,8 @@
 % 
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
-function [disp,sim, x] = stereo(L, R, drange, h, varargin)
+
+function [disp,sim, o3] = istereo(L, R, drange, h, varargin)
 
 % TODO: score cube is float, can return it
 
@@ -70,7 +92,7 @@ function [disp,sim, x] = stereo(L, R, drange, h, varargin)
         end
     end
     % compute the score cube, 3rd dimension is disparity
-    scores = stereo_match(L, R, 2*h+1, drange(1:2), opt.metric);
+    DSI = stereo_match(L, R, 2*h+1, drange(1:2), opt.metric);
 
     % best value along disparity dimension is the peak
     %   s best score
@@ -78,9 +100,9 @@ function [disp,sim, x] = stereo(L, R, drange, h, varargin)
     %
     % both s and d are matrices same size as L and R.
     if strcmp(opt.metric, 'sad') | strcmp(opt.metric, 'ssd')
-        [s,d] = min(scores, [], 3);
+        [s,d] = min(DSI, [], 3);
     else
-        [s,d] = max(scores, [], 3);
+        [s,d] = max(DSI, [], 3);
     end
 
     d(isnan(s)) = NaN;
@@ -132,9 +154,9 @@ function [disp,sim, x] = stereo(L, R, drange, h, varargin)
 
         % now copy over the valid scores into these arrays.  What doesnt
         % get copies is a NaN
-        y_m(ci) = scores(k_m);
-        y_0(ci) = scores(k_0);
-        y_p(ci) = scores(k_p);
+        y_m(ci) = DSI(k_m);
+        y_0(ci) = DSI(k_0);
+        y_p(ci) = DSI(k_p);
 
         % figure the coefficients of the peak fitting parabola:
         %    y = Ax^2 + Bx + C
@@ -153,15 +175,19 @@ function [disp,sim, x] = stereo(L, R, drange, h, varargin)
    end
    d = d + drange(1)-1;
 
-    if nargout > 1,
-        sim = s;
-    end
     if nargout > 0,
         disp = d;
     end
+    if nargout > 1,
+        sim = s;
+    end
 
-    if opt.interp && nargout == 3,
-        x.A = A;
-        x.B = B;
-        x.dx = dx;
+    if nargout > 2
+        if opt.interp
+            o3.A = A;
+            o3.B = B;
+            o3.dx = dx;
+        else
+            o3 = DSI;
+        end
     end
