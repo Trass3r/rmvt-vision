@@ -1,4 +1,0 @@
-Hello.
-Added a line.
-Another line.
-Yet another line.

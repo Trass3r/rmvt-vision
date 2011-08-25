@@ -34,13 +34,17 @@ function [x,y,z] = rgb2xyz(R,G,B)
 		0.055648 -0.204043 1.057311];
 	ai = inv(a);
 
-	if nargin == 3,
+	if nargin == 3
 		RGB = [R G B];
 	elseif nargin == 1,
 		RGB = R;
 	else
 		error('wrong number of arguments')
 	end
+
+    if isinteger(RGB)
+        RGB = double(RGB);
+    end
 
 	XYZ = [];
     XYZ = (ai*RGB')';
