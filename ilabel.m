@@ -1,4 +1,4 @@
-%ILABEL	Label an image
+%ILABEL Label an image
 %
 % L = ILABEL(IM) performs connectivity analysis on the image IM and returns a
 % label image L, same size as IM, where each pixel value represents the integer
@@ -50,4 +50,9 @@
 % 
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
+%
+% http://www.petercorke.com
 
+if ~exist('ilabel', 3)
+    error('you need to build the MEX version of ilabel, see vision/mex/README');
+end

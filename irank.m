@@ -49,4 +49,7 @@
 % 
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
-% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
+
+if ~exist('irank', 3)
+    error('you need to build the MEX version of irank, see vision/mex/README');
+end
