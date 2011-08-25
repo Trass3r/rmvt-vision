@@ -35,8 +35,8 @@
 % nv    number of pixels in v-direction
 %
 % Note::
-%  - Camera is a reference object.
-%  - Camera objects can be used in vectors and arrays
+%  - SphericalCamera is a reference object.
+%  - SphericalCamera objects can be used in vectors and arrays
 %
 % See also Camera.
 
@@ -105,20 +105,19 @@ classdef SphericalCamera < Camera
             c.type = 'Spherical';
             c.limits = [-pi pi 0 pi];
 
-            if nargin == 0,
+            if nargin == 0
                 % default values
                 c.type = 'spherical';
                 c.name = 'spherical-default';
             end
-        end
+            
+            % process remaining options
+            opt.default = false;
 
-        function n = paramSet(c, args)
-            switch lower(args{1})
-            case 'default'
+            [opt,args] = tb_optparse(opt, varargin);
+            if opt.default
                 c.name = 'default';
                 n = 0;
-            otherwise
-                error( sprintf('unknown option <%s>', args{count}));
             end
         end
 

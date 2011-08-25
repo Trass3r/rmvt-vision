@@ -1,10 +1,10 @@
 %CatadioptricCamera  Catadioptric camera class
 %
-% A concrete class for a catadioptric camera.
+% A concrete class for a catadioptric camera, subclass of Camera.
 %
 % Methods::
 %
-% project          project world points
+% project          project world points to image plane
 %
 % plot             plot/return world point on image plane
 % hold             control hold for image plane
@@ -27,8 +27,8 @@
 % Properties (read/write)::
 % npix         image dimensions in pixels (2x1)
 % pp           intrinsic: principal point (2x1)
-% rho          intrinsic: pixel dimensions (2x1) in metres
-% f            intrinsic: focal length
+% rho          intrinsic: pixel dimensions (2x1) [metres]
+% f            intrinsic: focal length [metres]
 % p            intrinsic: tangential distortion parameters
 % T            extrinsic: camera pose as homogeneous transformation
 %
@@ -38,11 +38,11 @@
 % u0    principal point u-coordinate
 % v0    principal point v-coordinate
 %
-% Note::
+% Notes::
 %  - Camera is a reference object.
 %  - Camera objects can be used in vectors and arrays
 %
-% See also Camera.
+% See also CentralCamera, Camera.
 
 
 % Copyright (C) 1993-2011, by Peter I. Corke
@@ -103,14 +103,15 @@ classdef CatadioptricCamera < Camera
         % 'focal',F        Focal length (metres)
         % 'default'        Default camera parameters: 1024x1024, f=8mm,
         %                  10um pixels, camera at origin, optical axis
-        %                  is z-axis, u||x, v||y.
+        %                  is z-axis, u- and v-axes parallel to x- and y-axes
+        %                  respectively.
         % 'projection',M   Catadioptric model: 'equiangular' (default), 'sine',
         %                  'equisolid', 'stereographic'
         % 'k',K            Parameter for the projection model
-        % 'resolution',N   Image plane resolution: NxN or N(1)xN(2)
+        % 'resolution',N   Image plane resolution: NxN or N=[W H].
         % 'sensor',S       Image sensor size in metres (2x1)
         % 'centre',P       Principal point (2x1)
-        % 'pixel',S        Pixel size: SxS or S(1)xS(2)
+        % 'pixel',S        Pixel size: SxS or S=[W H].
         % 'noise',SIGMA    Standard deviation of additive Gaussian 
         %                  noise added to returned image projections
         % 'pose',T         Pose of the camera as a homogeneous 
@@ -130,6 +131,27 @@ classdef CatadioptricCamera < Camera
                 c.name = 'catadioptric-default';
 
             else
+                % process remaining options
+                opt.k = [];
+                opt.maxangle = [];
+                opt.projection = {'equiangular', 'sine', 'equisolid', 'stereographic'};
+                opt.default = false;
+
+                [opt,args] = tb_optparse(opt, varargin);
+
+                c.projection = opt.projection;
+                
+                if opt.default
+                    c.s = [10e-6, 10e-6];      % square pixels 10um side
+                    c.npix = [1024, 1024];  % 1Mpix image plane
+                    c.pp = [512, 512];      % principal point in the middle
+                    c.limits = [0 1024 0 1024];
+                    c.name = 'default';
+                    r = min([(c.npix-c.pp).*c.s, c.pp.*c.s]);
+                    c.k = 2*r/pi;
+                    n = 0;
+                end
+                
                 if isempty(c.k)
                     % compute k if not specified, so that hemisphere fits into
                     % image plane
@@ -145,31 +167,9 @@ classdef CatadioptricCamera < Camera
                         c.k = r / tan(pi/4);
                         r = c.k * tan(theta/2);
                     otherwise
-                        error('unknown fisheye projection model');
+                        error('unknown projection model');
                     end
                 end
-            end
-        end
-
-        function n = paramSet(c, args)
-            switch lower(args{1})
-            case 'maxangle'
-                c.maxangle = args{2}; n = 1;
-            case 'k'
-                c.k = args{2}; n = 1;
-            case 'projection'
-                c.model = args{2}; n = 1;
-            case 'default'
-                c.s = [10e-6, 10e-6];      % square pixels 10um side
-                c.npix = [1024, 1024];  % 1Mpix image plane
-                c.pp = [512, 512];      % principal point in the middle
-                c.limits = [0 1024 0 1024];
-                c.name = 'default';
-                r = min([(c.npix-c.pp).*c.s, c.pp.*c.s]);
-                c.k = 2*r/pi;
-                n = 0;
-            otherwise
-                error( sprintf('unknown option <%s>', args{count}));
             end
         end
 
@@ -198,8 +198,8 @@ classdef CatadioptricCamera < Camera
         % 'Tobj',T         Transform all points by the homogeneous transformation T before
         %                  projecting them to the camera image plane.
         % 'Tcam',T         Set the camera pose to the homogeneous transformation T before
-        %                  projecting points to the camera image plane.  Overrides the current
-        %                  camera pose C.T.
+        %                  projecting points to the camera image plane.  Temporarily overrides
+        %                  the current camera pose C.T.
         %
         % See also Camera.plot.
 
@@ -236,7 +236,7 @@ classdef CatadioptricCamera < Camera
             case 'stereographic'
                 r = c.k * tan(theta/2);
             otherwise
-                error('unknown fisheye projection model');
+                error('unknown projection model');
             end
 
             x = r .* cos(phi);

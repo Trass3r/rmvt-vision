@@ -4,20 +4,20 @@
 %
 %   The camera coordinate system is:
 %
-%       0------------> u X
+%       0------------> u, X
 %       |
 %       |
 %       |   + (principal point)
 %       |
-%       |         Z-axis is into the page.
-%       v Y
+%       |   Z-axis is into the page.
+%       v, Y
 %
 % This camera model assumes central projection, that is, the focal point
 % is at z=0 and the image plane is at z=f.  The image is not inverted.
 %
 % Methods::
 %
-% project          project world points
+% project          project world points to image plane
 %
 % plot             plot/return world point on image plane
 % hold             control hold for image plane
@@ -40,15 +40,15 @@
 % Properties (read/write)::
 % npix         image dimensions in pixels (2x1)
 % pp           intrinsic: principal point (2x1)
-% f            intrinsic: focal length
-% rho          intrinsic: pixel dimensions (2x1) in metres
+% f            intrinsic: focal length [metres]
+% rho          intrinsic: pixel dimensions (2x1) [metres]
 % T            extrinsic: camera pose as homogeneous transformation
 %
 % Properties (read only)::
 % nu    number of pixels in u-direction
 % nv    number of pixels in v-direction
 %
-% Note::
+% Notes::
 %  - Camera is a reference object.
 %  - Camera objects can be used in vectors and arrays
 %
@@ -101,33 +101,34 @@ classdef FishEyeCamera < Camera
     methods
 
         function c = FishEyeCamera(varargin)
-        %FishEyeCamera.FishEyeCamera Create central projection camera object
+        %FishEyeCamera.FishEyeCamera Create fisheyecamera object
         %
-        % C = CentralCamera() creates a central projection camera with canonic
+        % C = FishEyeCamera() creates a fisheye camera with canonic
         % parameters: f=1 and name='canonic'.
         %
-        % C = CentralCamera(OPTIONS) as above but with specified parameters.
+        % C = FishEyeCamera(OPTIONS) as above but with specified parameters.
         %
         % Options::
         % 'name',N         Name of camera
-        % 'focal',F        Focal length (metres)
+        % 'focal',F        Focal length [metres]
         % 'default'        Default camera parameters: 1024x1024, f=8mm,
         %                  10um pixels, camera at origin, optical axis
-        %                  is z-axis, u||x, v||y.
+        %                  is z-axis, u- and v-axes are parallel to x- and y-
+        %                  axes respectively.
         % 'projection',M   Fisheye model: 'equiangular' (default), 'sine',
         %                  'equisolid', 'stereographic'
         % 'k',K            Parameter for the projection model
-        % 'resolution',N   Image plane resolution: NxN or N(1)xN(2)
-        % 'sensor',S       Image sensor size in metres (2x1)
+        % 'resolution',N   Image plane resolution: NxN or N=[W H].
+        % 'sensor',S       Image sensor size [metres] (2x1)
         % 'centre',P       Principal point (2x1)
-        % 'pixel',S        Pixel size: SxS or S(1)xS(2)
+        % 'pixel',S        Pixel size: SxS or S=[W H].
         % 'noise',SIGMA    Standard deviation of additive Gaussian 
         %                  noise added to returned image projections
         % 'pose',T         Pose of the camera as a homogeneous 
         %                  transformation
         %
         % Notes::
-        % - if K is not specified it is computed such that the circular imaging region
+        % - If K is not specified it is computed such that the circular imaging region
         %   maximally fills the square image plane.
         %
         % See also Camera, CentralCamera, CatadioptricCamera, SphericalCamera.
@@ -144,7 +145,29 @@ classdef FishEyeCamera < Camera
                 c.name = 'fisheye-default';
 
             else
-                if isempty(c.k)
+                
+                % process remaining options
+                opt.k = [];
+                opt.projection = {'equiangular', 'sine', 'equisolid', 'stereographic'};
+                opt.default = false;
+
+                [opt,args] = tb_optparse(opt, varargin);
+
+                c.f = opt.focal;
+                c.projection = opt.projection;
+                
+                if opt.default
+                    c.rho = [10e-6, 10e-6];      % square pixels 10um side
+                    c.npix = [1024, 1024];  % 1Mpix image plane
+                    c.pp = [512, 512];      % principal point in the middle
+                    c.limits = [0 1024 0 1024];
+                    c.name = 'default';
+                    r = min([(c.npix-c.pp).*c.rho, c.pp.*c.rho]);
+                    c.k = 2*r/pi;
+                    n = 0;
+                end
+            
+                if isempty(opt.k)
                     % compute k if not specified, so that hemisphere fits into
                     % image plane
                     r = min([(c.npix-c.pp).*c.rho, c.pp.*c.rho]);
@@ -161,27 +184,9 @@ classdef FishEyeCamera < Camera
                     otherwise
                         error('unknown fisheye projection model');
                     end
+                else
+                    c.k = opt.k;
                 end
-            end
-        end
-
-        function n = paramSet(c, args)
-            switch lower(args{1})
-            case 'k'
-                c.k = args{2}; n = 1;
-            case 'projection'
-                c.model = args{2}; n = 1;
-            case 'default'
-                c.rho = [10e-6, 10e-6];      % square pixels 10um side
-                c.npix = [1024, 1024];  % 1Mpix image plane
-                c.pp = [512, 512];      % principal point in the middle
-                c.limits = [0 1024 0 1024];
-                c.name = 'default';
-                r = min([(c.npix-c.pp).*c.rho, c.pp.*c.rho]);
-                c.k = 2*r/pi;
-                n = 0;
-            otherwise
-                error( sprintf('unknown option <%s>', args{count}));
             end
         end
 
@@ -204,10 +209,10 @@ classdef FishEyeCamera < Camera
         % 'Tobj',T         Transform all points by the homogeneous transformation T before
         %                  projecting them to the camera image plane.
         % 'Tcam',T         Set the camera pose to the homogeneous transformation T before
-        %                  projecting points to the camera image plane.  Overrides the current
-        %                  camera pose C.T.
+        %                  projecting points to the camera image plane.  Temporarily overrides 
+        %                  the current camera pose C.T.
         %
-        % See also Camera.plot.
+        % See also FishEyeCamera.plot.
 
 
             np = numcols(P);

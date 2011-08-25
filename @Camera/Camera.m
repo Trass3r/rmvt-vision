@@ -4,18 +4,18 @@
 %
 % Methods::
 %
-% plot           plot/return world point on image plane
-% hold           control hold for image plane
+% plot           plot projection of world point to image plane
+% hold           control figure hold for image plane window
 % ishold         test figure hold for image plane
 % clf            clear image plane
 % figure         figure holding the image plane
 % mesh           draw shape represented as a mesh
 % point          draw homogeneous points on image plane
 % line           draw homogeneous lines on image plane
-% plot_camera    draw camera
+% plot_camera    draw camera in world view
 %
 % rpy            set camera attitude
-% move           copy of Camera after motion
+% move           clone Camera after motion
 % centre         get world coordinate of camera centre
 %
 % delete         object destructor
@@ -34,9 +34,14 @@
 % u0    principal point u-coordinate
 % v0    principal point v-coordinate
 %
-% Note::
+% Notes::
 %  - Camera is a reference object.
 %  - Camera objects can be used in vectors and arrays
+%  - This is an abstract class and must be subclassed and a project()
+%    method defined.
+%  - The object can create a window to display the Camera image plane, this
+%    window is protected and can only be accessed by the plot methods of
+%    this object.
 
 
 % Copyright (C) 1995-2009, by Peter I. Corke
@@ -78,17 +83,12 @@ classdef Camera < handle
         handle
         limits
         perspective
-        h_image % handle for image plane
+        h_image     % handle for image plane
         h_visualize % handle for camera 3D view
-        h_camera3D    % handle for camera animation transform
-        P           % world points, last plotted
+        h_camera3D  % handle for camera animation transform
+        P           % world points (last plotted)
         holdon
-    end
-
-    properties (GetAccess = protected, SetAccess = protected)
-    end
-
-    properties (GetAccess = private)
+        color
     end
 
     properties (Dependent = true, SetAccess = protected)
@@ -99,7 +99,7 @@ classdef Camera < handle
     end
     
     methods (Abstract)
-        p = project(c, T1, T2);
+        p = project(c, P, varargin);
     end
     
     methods
@@ -107,91 +107,92 @@ classdef Camera < handle
         function c = Camera(varargin)
         %Camera.Camera Create camera object
         %
-        % Constructor for abstact Camera class, used by subclasses.
+        % Constructor for abstact Camera class, used by all subclasses.
         %
         % C = Camera(OPTIONS) creates a default (abstract) camera with null parameters.
         %
         % Options::
         % 'name',N          Name of camera
-        % 'image',IM        Display an image rather than points
-        % 'resolution',N    Image plane resolution: NxN or N(1)xN(2)
-        % 'sensor',S        Image sensor size in metres (2x1)
+        % 'image',IM        Load image IM to image plane
+        % 'resolution',N    Image plane resolution: NxN or N=[W H]
+        % 'sensor',S        Image sensor size in metres (2x1) [metres]
         % 'centre',P        Principal point (2x1)
-        % 'pixel',S         Pixel size: SxS or S(1)xS(2)
+        % 'pixel',S         Pixel size: SxS or S=[W H]
         % 'noise',SIGMA     Standard deviation of additive Gaussian noise added to
         %                   returned image projections
         % 'pose',T          Pose of the camera as a homogeneous transformation
+        % 'color',C         Color of image plane background (default [1 1 0.8])
+        %
+        % Notes::
+        % - Normally the class plots points and lines into a set of axes that represent
+        %   the image plane.  The 'image' option paints the specified image onto the
+        %   image plane and allows points and lines to be overlaid.
         %
         % See also CentralCamera, FisheyeCamera, CatadioptricCamera, SphericalCamera.
 
             % default values
             c.type = '**abstract**';
             c.T = eye(4,4);
-            c.rho = [1 1];
             c.pp = [];
             c.limits = [-1 1 -1 1];
-            c.npix = [];
-            c.noise = [];
-            c.name = 'unnamed';
             c.perspective = false;
             c.h_image = [];
             c.h_camera3D = [];
             c.h_visualize = [];
             c.holdon = false;
-            c.image = [];
-            sensor = [];
+
 
             if nargin == 0
+                % default camera parameters
                 c.name = 'canonic';
                 c.pp = [0 0];
             elseif nargin == 1 && isa(varargin{1}, 'Camera')
                 return;
             else
-                c.name = 'noname';
+                opt.name = 'noname';
+                opt.image = [];
+                opt.resolution = [];
+                opt.centre = [];
+                opt.sensor = [];
+                opt.pixel = [1 1];
+                opt.noise = [];
+                opt.pose = [];
+                opt.color = [1 1 0.8];
+                opt.noise = [];
 
-                % TODO use tb_optparse
-                count = 1;
-                args = varargin;
-                while count <= length(args)
-                    switch lower(args{count})
-                    case 'name'
-                        c.name = args{count+1}; count = count+1;
-                    case 'image'
-                        c.image = args{count+1}; count = count+1;
-                        c.npix = [size(c.image,2) size(c.image,1)];
-                    case 'resolution'
-                        v = args{count+1}; count = count+1;
-                        if length(v) == 1
-                            v = [v v];
-                        end
-                        c.npix = v;
-                    case {'principal', 'centre'}
-                        c.pp = args{count+1}; count = count+1;
-                    case 'sensor'
-                            sensor = args{count+1}; count = count+1;
-                    case 'pixel'
-                        s = args{count+1}; count = count+1;
-                        c.rho = s;
-                    case 'noise'
-                        v = args{count+1}; count = count+1;
-                        if length(v) == 1
-                            v = [v v];
-                        end
-                        c.noise = v;
-                    case 'pose'
-                        c.T = args{count+1}; count = count+1;
-                    otherwise
-                        % if the parameter is not known by the base class, call
-                        % the parameter handler in the derived class.
-                        % it returns the number of additonal parameters consumed.
-                        n = c.paramSet(args(count:end));
-                        count = count + n;
-                    end
-                    count = count + 1;
+                [opt,args] = tb_optparse(opt, varargin);
+
+                c.name = opt.name;
+                if ~isempty(opt.image)
+                    c.image = opt.image;
+                    c.npix = [size(c.image,2) size(c.image,1)];
                 end
+                if ~isempty(opt.resolution)
+                    if length(opt.resolution) == 1
+                        c.npix = [opt.resolution opt.resolution];
+                    elseif length(opt.resolution) == 2
+                        c.npix = opt.resolution;
+                    else
+                        error('resolution must be a 1- or 2-vector');
+                    end
+                end
+
+                c.pp = opt.centre;
+                c.rho = opt.pixel;
+                if ~isempty(opt.noise)
+                    if length(opt.noise) == 1
+                        c.noise = [opt.noise opt.noise];
+                    elseif length(opt.noise) == 2
+                        c.noise = opt.noise;
+                    else
+                        error('noise must be a 1- or 2-vector');
+                    end
+                end
+                c.T = opt.pose;
             end
-            if ~isempty(sensor)
-                c.rho = sensor ./ c.npix;
+
+            if ~isempty(opt.sensor)
+                c.rho = opt.sensor ./ c.npix;
             end
             if length(c.rho) == 1
                 c.rho = ones(1,2) * c.rho;
@@ -200,7 +201,6 @@ classdef Camera < handle
                 fprintf('principal point not specified, setting it to centre of image plane\n');
                 c.pp = c.npix / 2;
             end
-            c.pp
         end
 
         function delete(c)
@@ -218,12 +218,13 @@ classdef Camera < handle
         end
 
         function display(c)
-        %Camera.display Display the parameters of a camera
+        %Camera.display Display value
         %
-        % C.display() is a compact string representation of the camera parameters.
+        % C.display() displays a compact human-readable representation of the camera 
+        % parameters.
         %
         % Notes::
-        % - this method is invoked implicitly at the command line when the result
+        % - This method is invoked implicitly at the command line when the result
         %   of an expression is a Camera object and the command has no trailing
         %   semicolon.
         %
@@ -243,7 +244,7 @@ classdef Camera < handle
         end
 
         function s = char(c, s)
-        %Camera.char Create string representation of a camera
+        %Camera.char Convert to string
         %
         % S = C.char() is a compact string representation of the camera parameters.
 
@@ -333,15 +334,15 @@ classdef Camera < handle
             end
         end
 
-        function f = figure(c)
-        %Camera.figure Return figure containing camera image plane
+        function h = figure(c)
+        %Camera.figure Return figure handle
         %
-        % F = C.figure() is the handle of the figure that contains the camera's
+        % H = C.figure() is the handle of the figure that contains the camera's
         % image plane graphics.
             fig  = get(c.h_image, 'Parent');
             figure( fig );
             if nargout > 0
-                f = fig;
+                h = fig;
             end
         end
 
@@ -390,7 +391,7 @@ classdef Camera < handle
                 axis square
                 set(fig, 'MenuBar', 'none');
                 set(fig, 'Tag', 'camera');
-                set(h, 'Color', [1 1 0.8]);
+                set(h, 'Color', h.color);
                 set(fig, 'HandleVisibility', 'off');
                 set(fig, 'name', [class(c) ':' c.name]);
             end
@@ -507,26 +508,21 @@ classdef Camera < handle
             end
         end % plot
 
-        %   C.mesh(X,Y,Z)   plot 3D world line segments  6xN
-        function v =  mesh(c, X, Y, Z, varargin)
-        %Camera.mesh Plot projection of shape defined by a mesh
+        function mesh(c, X, Y, Z, varargin)
+        %Camera.mesh Plot mesh object on image plane
         %
-        % C.mesh(P, OPTIONS) projects world points P (3xN) to the image plane and plots them.  If P is 2xN
-        % the points are assumed to be image plane coordinates and are plotted directly.
-        %
-        % Q = C.plot(P) as above but returns the image plane coordinates Q (2xN).
-        %
-        % If P has 3 dimensions (3xNxS) then it is considered a sequence of point sets and is
-        % displayed as an animation.
+        % C.mesh(X, Y, Z, OPTIONS) projects a 3D shape defined by the matrices X, Y, Z
+        % to the image plane and plots them.  The matrices X, Y, Z are of the same size
+        % and the corresponding elements of the matrices define 3D points.
         %
         % Options::
-        % 'Tobj',T         Transform all points by the homogeneous transformation T before
-        %                  projecting them to the camera image plane.
-        % 'Tcam',T         Set the camera pose to the homogeneous transformation T before
-        %                  projecting points to the camera image plane.  Overrides the current
-        %                  camera pose C.T.
+        % 'Tobj',T   Transform all points by the homogeneous transformation T before
+        %            projecting them to the camera image plane.
+        % 'Tcam',T   Set the camera pose to the homogeneous transformation T before
+        %            projecting points to the camera image plane.  Temporarily overrides
+        %            the current camera pose C.T.
         %
-        % See also cylinder, sphere, mkcube, Camera.plot, Camera.hold, Camera.clf.
+        % See also MESH, CYLINDER, SPHERE, MKCUBE, Camera.plot, Camera.hold, Camera.clf.
 
         % TODO
         % Additional options are considered MATLAB linestyle parameters and are passed 
@@ -631,7 +627,7 @@ classdef Camera < handle
         %Camera.line Plot homogeneous lines on image plane
         %
         % C.line(L) plots lines on the camera image plane which are defined by columns 
-        % of L (3xN) considered as lines in homogeneous form.
+        % of L (3xN) considered as lines in homogeneous form: a.u + b.v + c = 0.
 
             % get handle for this camera image plane
             h = c.plot_create
