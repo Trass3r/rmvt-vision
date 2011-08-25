@@ -22,11 +22,7 @@
  */
 
 #include	<stdlib.h>
-#ifdef	__Lynx__
 #include	<limits.h>
-#else
-#include	<values.h>
-#endif
 #include	<time.h>
 #include	<sys/times.h>
 #include	<math.h>
