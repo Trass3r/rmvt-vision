@@ -1,7 +1,7 @@
 %UPQ Central image moments
 %
 % M = UPQ(IM, P, Q) is the PQ'th central moment of the image IM.  That is, 
-% the sum of I(x,y) (x-x0)^P (y-y0)^Q where (x0,y0) is the centroid.
+% the sum of I(x,y).(x-x0)^P.(y-y0)^Q where (x0,y0) is the centroid.
 %
 % Notes::
 % - The central moments are invariant to translation.

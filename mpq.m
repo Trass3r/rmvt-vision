@@ -1,7 +1,7 @@
 %MPQ Image moments
 %
 % M = MPQ(IM, P, Q) is the PQ'th moment of the image IM.  That is, the sum
-% of I(x,y) x^P y^Q.
+% of I(x,y).x^P.y^Q.
 %
 % See also MPQ_POLY, NPQ, UPQ.
 
