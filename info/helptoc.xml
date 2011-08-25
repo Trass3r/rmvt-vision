@@ -1,12 +1,11 @@
-<?xml version='1.0' encoding='utf-8' ?>
-<toc version="2.0">
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+<toc version="1.0">
 
 <!-- this goes into the MVTB menu in the doc browser contents pane -->
 
 <!-- Machine Vision Toolbox -->
 <tocitem target="vision_product_page.html" image="$toolbox/matlab/icons/book_mat.gif">Machine Vision Toolbox for MATLAB
 
-<!--INSERT_HERE-->
   <!-- Help -->
 
   <!-- MATLAB Functions -->
@@ -17,7 +16,7 @@
   <tocitem target="simulink.html" image="$toolbox/matlab/icons/reficon.gif">Simulink</tocitem>
 
   <!-- Manual -->
-  <tocitem target="../vision.pdf" image="$toolbox/matlab/icons/reficon.gif">Manual</tocitem>
+  <tocitem target="../robot.pdf" image="$toolbox/matlab/icons/reficon.gif">Manual</tocitem>
 
   <!-- Examples -->
   <tocitem target="./examples/examples.html" image="$toolbox/matlab/icons/demoicon.gif">Examples</tocitem>
