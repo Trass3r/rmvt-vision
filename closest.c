@@ -22,6 +22,7 @@
 
 #define	K_OUT	plhs[0]
 #define	D_OUT	plhs[1]
+#define	D2_OUT	plhs[2]
 
 void
 mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
@@ -50,7 +51,7 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         /*****************************************************
          *      double precision
          *****************************************************/
-        double	*A, *B, *B0, *K, *D;
+        double	*A, *B, *B0, *K, *D, *D2;
         double	*bins, *binnum;
 
         A = mxGetPr(A_IN);
@@ -59,16 +60,21 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         K_OUT = mxCreateDoubleMatrix(1, nA, mxREAL);
         K = mxGetPr(K_OUT);
 
-        if (nlhs == 2) {
+        if (nlhs >= 2) {
             D_OUT = mxCreateDoubleMatrix(1, nA, mxREAL);
             D = mxGetPr(D_OUT);
         }
+        if (nlhs == 3) {
+            D2_OUT = mxCreateDoubleMatrix(1, nA, mxREAL);
+            D2 = mxGetPr(D2_OUT);
+        }
 
         for (i=0; i<nA; i++) {
-            double  min;
+            double  min, min2;
             int     which;
 
             min = mxGetInf();
+            min2 = mxGetInf();
 
             for (j=0, B=B0; j<nB; j++) {
                 register double t=0, d, *p1, *p2;
@@ -85,6 +91,8 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 if (t<min) {
                     min = t;
                     which = j;
+                } else if (t<min2) {
+                    min2 = t;
                 }
     shortcut:
                 B += N; // step through columns of B
@@ -92,8 +100,10 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             K[i] = which+1;
 
             // optionally save the distance between the points
-            if (nlhs == 2)
-                D[i] = min;
+            if (nlhs >= 2)
+                D[i] = sqrt(min);
+            if (nlhs == 3)
+                D2[i] = sqrt(min2);
 
             A += N; // step through columns of A
         }
@@ -101,7 +111,7 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         /*****************************************************
          *      single precision
          *****************************************************/
-        float	*A, *B, *B0, *K, *D;
+        float	*A, *B, *B0, *K, *D, *D2;
         float	*bins, *binnum;
 
         A = (float *)mxGetPr(A_IN);
@@ -110,16 +120,21 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         K_OUT = mxCreateNumericMatrix(1, nA, mxSINGLE_CLASS, mxREAL);
         K = (float *)mxGetPr(K_OUT);
 
-        if (nlhs == 2) {
+        if (nlhs >= 2) {
             D_OUT = mxCreateNumericMatrix(1, nA, mxSINGLE_CLASS, mxREAL);
             D = (float *)mxGetPr(D_OUT);
         }
+        if (nlhs == 3) {
+            D2_OUT = mxCreateNumericMatrix(1, nA, mxSINGLE_CLASS, mxREAL);
+            D2 = (float *)mxGetPr(D2_OUT);
+        }
 
         for (i=0; i<nA; i++) {
-            float  min;
+            float  min, min2;
             int     which;
 
             min = mxGetInf();
+            min2 = mxGetInf();
 
             for (j=0, B=B0; j<nB; j++) {
                 register float t=0, d, *p1, *p2;
@@ -136,15 +151,20 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 if (t<min) {
                     min = t;
                     which = j;
+                } else if (t<min2) {
+                    min2 = t;
                 }
+
     shortcut2:
                 B += N; // step through columns of B
             }
             K[i] = which+1;
 
             // optionally save the distance between the points
-            if (nlhs == 2)
-                D[i] = min;
+            if (nlhs >= 2)
+                D[i] = sqrt(min);
+            if (nlhs == 3)
+                D2[i] = sqrt(min2);
 
             A += N; // step through columns of A
         }
