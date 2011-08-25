@@ -15,41 +15,42 @@
 # You should have received a copy of the GNU Leser General Public License
 # along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-DEBUG = -g
-#CFLAGS="-std=gnu99"
-CFLAGS=-std=c99
+
+DISTDIR = vision2
+
+distrib: doc/vision.pdf
+	/bin/rm -rf $(DISTDIR) vision.tar.* vision.zip
+	- mkdir $(DISTDIR)
+	-cp doc/vision.pdf $(DISTDIR)
+	-cp README $(DISTDIR)
+	-cp RELEASE $(DISTDIR)
+	-cp doc/CITATION $(DISTDIR)
+	-cp -r `cat FILES` $(DISTDIR)
+	-cp makefile-mex $(DISTDIR)/Makefile
+	chmod -R a+r $(DISTDIR)
+	tar cvf vision.tar ./$(DISTDIR)
+	gzip -f vision.tar
+	zip vision ./$(DISTDIR)/*
+
+install:
+	scp vision.tar.gz vision.zip doc/vision.pdf bob:tmp
+	
+doc/vision.pdf:	doc/ref.tex
+	cd doc; $(MAKE)
 
 mex:
-	mex CFLAGS=$(CFLAGS) $(DEBUG) closest.c
-	mex CFLAGS=$(CFLAGS) $(DEBUG) fhist.c
-	mex CFLAGS=$(CFLAGS) $(DEBUG) hist2d.c
-	mex CFLAGS=$(CFLAGS) $(DEBUG) ilabel.c
-	mex CFLAGS=$(CFLAGS) $(DEBUG) imatch.c
-	mex CFLAGS=$(CFLAGS) $(DEBUG) imorph.c
-	mex CFLAGS=$(CFLAGS) $(DEBUG) irank.c
-	mex CFLAGS=$(CFLAGS) $(DEBUG) ivar.c
-	mex CFLAGS=$(CFLAGS) $(DEBUG) iwindow.c
-	mex CFLAGS=$(CFLAGS) $(DEBUG) stereo_match.c
+	mex iwindow.c
+	mex ivar.c
+	mex imorph.c
+	mex irank.c
+	mex fhist.c
+	mex imatch.c
+	mex ilabel.c
+	mex firewire.c -ldc1394_control -lraw1394
 
-	
-UNAME = $(shell uname)
-MATLAB = $(subst /bin/matlab,,$(shell which matlab))
-
-framegrabber:
-ifeq ($(UNAME), Darwin)
-    # for MacOS we use QTKit to access the camera, the code is written in ObjC++
-    # need to modify mexopts.sh to include the frameworks since they cannot be passed as
-    # options.  You need to add:
-    # -framework QTKit -framework Foundation -framework CoreVideo -framework Cocoa
-    # to the LDFLAGS line for the maci64) case
-	g++ -I ${MATLAB}/extern/include -c $(DEBUG) framegrabber_qtkit.mm
-	mex $(DEBUG) -output framegrabber -cxx framegrabber_qtkit.o 
-endif
-ifeq ($(UNAME), Linux)
-	mex $(DEBUG) CFLAGS=$(CFLAGS) -output framegrabber framegrabber_v4l2.c
-	#mex -output framegrabber framegrabber_firewire.c -ldc1394_control -lraw1394
-endif
+.c.${EXT}:
+	cmex $<
 
 clean:
-	-\rm *.mex*
+	/bin/rm *.mex*
 

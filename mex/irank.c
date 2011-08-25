@@ -29,20 +29,8 @@
  * Uses code from the package VISTA Copyright 1993, 1994 University of 
  * British Columbia.
  */
-#include <math.h>
-#include <string.h>
 #include "mex.h"
-#include "edge.h"
-
-#ifdef  __LCC__
-#define  NAN    mxGetNaN()
-#endif
-
-#ifdef _W64
-#include <float.h>
-#define  isnan  _isnan
-#define  NAN    mxGetNaN()
-#endif 
+#include <math.h>
 
 /* Input Arguments */
 
@@ -57,6 +45,13 @@
 /* Output Arguments */
 
 #define	IMM_OUT	plhs[0]
+
+enum pad {
+	PadBorder,
+	PadNone,
+	PadWrap,
+	PadTrim
+}               pad_method = PadBorder;
 
 enum op_type {
 	OpMax,
@@ -76,8 +71,6 @@ mexFunction(int nlhs, mxArray * plhs[], int nrhs, const mxArray * prhs[])
 	mxArray	*im;
     int     width, height;
 	int		histbins = HISTBINS;
-
-    pad_method = PadBorder;
 
 /*
  * 
@@ -100,8 +93,6 @@ mexFunction(int nlhs, mxArray * plhs[], int nrhs, const mxArray * prhs[])
 			pad_method = PadWrap;
 		else if (strcmp(s, "valid") == 0)
 			pad_method = PadTrim;
-        else
-            mexErrMsgTxt("IRANK bad edge option");
 		/* fall through */
 	case 4:
 		if (!mxIsNumeric(HISTBINS_IN))
@@ -184,6 +175,33 @@ mexFunction(int nlhs, mxArray * plhs[], int nrhs, const mxArray * prhs[])
 }
 
 
+/*
+ * ClampIndex
+ * 
+ * This macro implements behavior near the borders of the source image. Index is
+ * the band, row or column of the pixel being convolved. Limit is the number
+ * of bands, rows or columns in the source image. Label is a label to jump to
+ * to break off computation of the current destination pixel.
+ */
+
+#define ClampIndex(index, limit, label)	   \
+{					   \
+    if (index < 0)		    \
+	switch (pad_method) {\
+	case PadBorder:		index = 0; break;\
+	case PadNone:		goto label;    \
+	case PadWrap:		index += limit; break;    \
+	default:		continue;    \
+	}		    \
+    else if (index >= limit)	    \
+	switch (pad_method) {	    \
+	case PadBorder:		index = limit - 1; break; \
+	case PadNone:		goto label;	   \
+	case PadWrap:		index -= limit; break;	    \
+	default:		continue;	    \
+	}	    \
+}
+
 #define	SPixel(r, c)	src[r+c*src_nrows]
 #define	DPixel(r, c)	dest[r+c*dest_nrows]
 #define	MPixel(r, c)	mask[r+c*mask_nrows]
@@ -195,8 +213,8 @@ irank(const mxArray * msrc, const mxArray * mmask, const mxArray * morder, int h
 	int             src_nrows, src_ncols;
 	mxArray        *mdest;
 	double         *src, *dest, *mask, min, max, offset, scale;
-	int             row_offset, col_offset;
-	int             src_row, src_col, dest_row,
+	int             band_offset, row_offset, col_offset;
+	int             src_band, src_row, src_col, dest_band, dest_row,
 	                mask_row, mask_col, dest_col, i, j, k, iorder;
 	unsigned int	*hist, *ph, cumsum, count, nbinned;
 

@@ -13,14 +13,6 @@
 
 #define TIMING
 
-#ifdef __LCC__
-#undef TIMING
-#endif
-
-#ifdef _W64
-#undef TIMING
-#endif
-
 #ifdef TIMING
 #include <sys/time.h>
 #endif
@@ -35,16 +27,6 @@ static void compute_means( float *image_l, float *image_r, int wx, int wy, int w
 #ifdef STANDALONE
 #define INFINITY    FP_INFINITE
 #define NAN         FP_NAN
-#endif
-
-#ifdef __LCC__
-#define INFINITY    mxGetInf()
-#define NAN         mxGetNaN()
-#endif
-
-#ifdef _W64
-#define INFINITY    mxGetInf()
-#define NAN         mxGetNaN()
 #endif
 /* matrix reference macros Matlab element order (column wise) */
 #define REF(p,x,y)  p[(y)*width+x]
@@ -100,8 +82,8 @@ stereo_matching_sad(
 				sum = 0;
 
                 /* inner matching loop */
-				for (i = -wx2; i <= wx2; i++) {      // x
-					for (j = -wy2; j <= wy2; j++) {  // y
+				for (i = -wx2; i < wx2; i++) {      // x
+					for (j = -wy2; j < wy2; j++) {  // y
 						pix_l = REF(p_l, i,j);
 						pix_r = REF(p_r, i,j);
 
@@ -170,8 +152,8 @@ stereo_matching_ssd(
 				sum = 0;
 
                 /* inner matching loop */
-				for (i = -wx2; i <= wx2; i++) {      // x
-					for (j = -wy2; j <= wy2; j++) {  // y
+				for (i = -wx2; i < wx2; i++) {      // x
+					for (j = -wy2; j < wy2; j++) {  // y
 						pix_l = REF(p_l, i,j);
 						pix_r = REF(p_r, i,j);
 
@@ -240,8 +222,8 @@ stereo_matching_ncc(
 				sum_r = 0;
 
                 /* inner matching loop */
-				for (i = -wx2; i <= wx2; i++) {      // x
-					for (j = -wy2; j <= wy2; j++) {  // y
+				for (i = -wx2; i < wx2; i++) {      // x
+					for (j = -wy2; j < wy2; j++) {  // y
 						pix_l = REF(p_l, i,j);
 						pix_r = REF(p_r, i,j);
 
@@ -331,8 +313,8 @@ stereo_matching_zncc(
 				sum_r = 0;
 
                 /* inner matching loop */
-				for (i = -wx2; i <= wx2; i++) {      // x
-					for (j = -wy2; j <= wy2; j++) {  // y
+				for (i = -wx2; i < wx2; i++) {      // x
+					for (j = -wy2; j < wy2; j++) {  // y
 						pix_l = REF(p_l, i,j) - *pmean_l;
 						pix_r = REF(p_r, i,j) - *pmean_r;
 
@@ -416,15 +398,13 @@ mexFunction(
 		 int nrhs, const mxArray *prhs[])
 {
   unsigned int width_l, height_l, height_r, width_r, width, height;
-  int wx, wy, i, j, dispmin, dispmax;
+  int wx, wy, i, j, dispmin, dispmax, wx2, wy2, d, x, y;
   float *leftI, *rightI, *leftI_ptr, *rightI_ptr; 
   double *p, *scoresD;
   mwSize    dims[3];
   double Z_NAN = mxGetNaN();
   double Z_INFINITY = mxGetInf();
-#ifdef  TIMING
   struct timeval	t0, t1, t2, t3, t4;
-#endif
   char  metric[8];
 
 
