@@ -57,7 +57,7 @@ classdef ImageSource < handle
         %ImageSource.ImageSource Image source constructor
         %
         % I = ImageSource(OPTIONS) is an ImageSource object that holds parameters
-        % related to acquisition from the particular image source.
+        % related to acquisition from some particular image source.
         %
         % Options::
         % 'uint8'     Return image with uint8 pixels (default)
@@ -73,7 +73,7 @@ classdef ImageSource < handle
             opt.gamma = [];
             opt.scale = 1;
 
-            [opt,args] = tb_optparse(opt, varargin);
+            [opt,args] = tb_optparse(opt, varargin{:});
             
             imsource.imageType = opt.imageType;
             imsource.makeGrey = opt.grey;
@@ -118,14 +118,14 @@ classdef ImageSource < handle
         end
             
         function display(imsource)
-        %ImageSource.display Display status of image source object
+        %ImageSource.display Display value
         %
         % I.display() displays the state of the image source object in human
         % readable form.
         %
         % Notes::
-        % - this method is invoked implicitly at the command line when the result
-        %   of an expression is a Navigation object and the command has no trailing
+        % - This method is invoked implicitly at the command line when the result
+        %   of an expression is an ImageSource object and the command has no trailing
         %   semicolon.
 
             loose = strcmp( get(0, 'FormatSpacing'), 'loose');
