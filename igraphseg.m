@@ -31,3 +31,10 @@
 %  Pedro Felzenszwalb, 2006.
 %
 % See also ITHRESH, IMSER.
+
+function [L,M] = igraphseg(varargin)
+    if nargout == 1
+        L = graphseg(varargin{:});
+    elseif nargout == 2
+        [L,M] = graphseg(varargin{:});
+    end
