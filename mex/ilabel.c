@@ -36,8 +36,8 @@
 #include <math.h>
 
 /*
-*/
 #define DEBUG   1
+*/
 
 /*
  * TODO:
@@ -152,9 +152,13 @@ ilabel(PIXEL *im, int width, int height, int connectivity, int minsize,
     for (row=0; row<height; row++) {
         for (col=0; col<width; col++) {
             curpix = PIX(im,row,col);
+#ifdef  DEBUG
             printf("%2d ", curpix);
+#endif
         }
+#ifdef  DEBUG
         printf("\n");
+#endif
     }
 
     /*
@@ -172,8 +176,10 @@ ilabel(PIXEL *im, int width, int height, int connectivity, int minsize,
             if ((col > 0) && (curpix == prevpix))
                 curlab = prevlab;
             
+#ifdef  DEBUG
                 printf("(%d,%d) cp=%d, pp=%d, cl=%d, pl=%d\n", row, col, curpix, prevpix,
                     curlab, prevlab);
+#endif
             /*
              * check whether a label merge should happen, adjacent
              * pixels with the same value but different labels
