@@ -21,15 +21,24 @@
 % descriptor    feature descriptor (vector)
 % image_id      index of image containing feature
 %
-% Properties of a vector of SiftPointFeature objects are a vector whose elements
-% are the named property of the corresponding element of the feature vector.
+% Properties of a vector of SiftCornerFeature objects are returned as a vector.
+% If F is a vector (Nx1) of SiftCornerFeature objects then F.u is a 2xN matrix
+% with each column the corresponding u coordinate.
 %
-% Note::
+% Notes::
+% - SiftCornerFeature is a reference object.
+% - SiftCornerFeature objects can be used in vectors and arrays
 % - The SIFT algorithm is patented and not distributed with this toolbox.
 %   You can download a SIFT implementation which this class can utilize.
 %   See README.SIFT.
 %
-% See also isift, PointFeature, ScalePointFeature, SurfPointFeature.
+% References::
+%
+% "Distinctive image features from scale-invariant keypoints",
+% D.Lowe, 
+% Int. Journal on Computer Vision, vol.60, pp.91-110, Nov. 2004.
+%
+% See also ISIFT, PointFeature, ScalePointFeature, SurfPointFeature.
 
 classdef SiftPointFeature < ScalePointFeature
 
@@ -66,7 +75,8 @@ classdef SiftPointFeature < ScalePointFeature
         function plot_scale(features, varargin)
         %SiftPointFeature.plot_scale Plot feature scale
         %   
-        % F.plot_scale(OPTIONS) overlay a marker at the feature position.
+        % F.plot_scale(OPTIONS) overlay a marker to indicate feature point position and
+        % scale.
         %   
         % F.plot_scale(OPTIONS, LS) as above but the optional line style arguments LS are
         % passed to plot.
@@ -124,7 +134,9 @@ classdef SiftPointFeature < ScalePointFeature
         %   
         % M = F.match(F2, OPTIONS) is a vector of FeatureMatch objects that 
         % describe candidate matches between the two vectors of SIFT 
-        % features F and F2.
+        % features F and F2.  Correspondence is based on descriptor
+        % similarity.
+
         %
         % [M,C] = F.match(F2, OPTIONS) as above but returns a correspodence
         % matrix where each row contains the indices of corresponding features

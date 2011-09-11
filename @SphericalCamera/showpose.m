@@ -63,4 +63,4 @@ function showcam(c, T, P)
         end
     end
     hold off
-    xyzlabel
+    xlabel('x'); ylabel('y'); zlabel('z');
