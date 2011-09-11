@@ -1,19 +1,19 @@
 %Hough  Hough transform class
 %
-%
-% For every pixel   The appropriate Hough accumulator cell is incremented by the
-%   absolute value of the pixel value if it exceeds 
-%   params.edgeThresh times the maximum value found.
+% The Hough transform is a technique for finding lines in an image using
+% a voting scheme.  For every edge pixel in the input image a set of cells
+% in the Hough accumulator (voting array) are incremented.
 %
 % In this version of the Hough transform lines are described 
-% by d = y cos(theta) + x sin(theta),  where theta is the angle 
-% the line makes to horizontal axis, and d is the perpendicular distance 
-% between (0,0) and the line.  
-% A horizontal  line has theta = 0, a vertical line has theta = pi/2 or -pi/2.
+% by:
+%        d = y cos(theta) + x sin(theta)
+% where theta is the angle the line makes to horizontal axis, and d is the 
+% perpendicular distance between (0,0) and the line.  A horizontal  line has 
+% theta = 0, a vertical line has theta = pi/2 or -pi/2.
 %
-% The accumulator array has theta across the columns and offset down 
-% the rows.  Theta spans the range -pi/2 to pi/2 in H.Ntheta steps.
-% Offset is in the range -rho_max to rho_max where rho_max=max(W,H).
+% The voting array is 2-dimensional, with columns corresponding to theta and
+% rows corresponding to offset (d). Theta spans the range -pi/2 to pi/2 in Ntheta 
+% steps.  Offset is in the range -rho_max to rho_max where rho_max=max(W,H).
 %
 % Methods::
 % plot      Overlay detected lines
@@ -28,13 +28,13 @@
 % Ntheta        Number of bins in theta direction
 % A             The Hough accumulator (Nrho x Ntheta)
 % rho           rho values for the centre of each bin vertically
-% theta         theta values for the centre of each bin horizontally
-% edgeThresh    threshold on relative edge pixel strength
-% houghThresh   threshold on relative peak strength
-% suppress      radius of accumulator cells cleared around peak 
-% interpWidth   width of region used for peak interpolation
+% theta         Theta values for the centre of each bin horizontally
+% edgeThresh    Threshold on relative edge pixel strength
+% houghThresh   Threshold on relative peak strength
+% suppress      Radius of accumulator cells cleared around peak 
+% interpWidth   Width of region used for peak interpolation
 %
-% Note::
+% Notes::
 %  - Hough is a reference object.
 %
 % See also LineFeature.
@@ -76,24 +76,25 @@ classdef Hough < handle
 
     methods
         function h = Hough(IM, varargin)
-        %Hough.Hough Create Hough object
+        %Hough.Hough Create Hough transform object
         %
-        % H = Hough(E, OPTIONS) is the Hough transform of the edge image E.
+        % HT = Hough(E, OPTIONS) is the Hough transform of the edge image E.
         %
         % For every pixel in the edge image E (HxW) greater than a threshold 
         % the corresponding elements of the accumulator are incremented.  By
         % default the vote is incremented by the edge strength but votes
         % can be made equal with the option 'equal'.  The threshold is
-        % determined from the maximum edge strength value x H.edgeThresh.
+        % determined from the maximum edge strength value x HT.edgeThresh.
         %
         % Options::
-        % 'equal'            All edge pixels have equal weight
+        % 'equal'            All edge pixels have equal weight, otherwise the
+        %                    edge pixel value is the vote strength
         % 'interpwidth',W    Interpolation width (default 3)
-        % 'houghthresh',T    Set H.houghThresh (default 0.5)
-        % 'edgethresh',T     Set H.edgeThresh (default 0.1);
-        % 'suppress',W       Set H.suppress (default 0)
+        % 'houghthresh',T    Set HT.houghThresh (default 0.5)
+        % 'edgethresh',T     Set HT.edgeThresh (default 0.1);
+        % 'suppress',W       Set HT.suppress (default 0)
         % 'nbins',N          Set number of bins, if N is scalar set Nrho=Ntheta=N, else
-        %                    Ntheta=N(1), Nrho=N(2).  Default 400x401.
+        %                    N = [Ntheta, Nrho].  Default 400x401.
             opt.interpwidth = 3;
             opt.houghthresh = 0.5;
             opt.edgethresh = 0.1;
@@ -158,8 +159,10 @@ classdef Hough < handle
         function show(h)
         %Hough.show Display the Hough accumulator as image
         %
-        % S = H.show() displays the Hough vote accumulator as an image, where
-        % heat is proportional to the number of votes.
+        % S = HT.show() displays the Hough vote accumulator as an image using the
+        % hot colormap, where 'heat' is proportional to the number of votes.
+        %
+        % See also COLORMAP, HOT.
             clf
             hi = image(h.theta, h.rho, h.A/max(max(h.A)));
             set(hi, 'CDataMapping', 'scaled');
@@ -173,16 +176,16 @@ classdef Hough < handle
         end
             
         function handles = plot(h, varargin)
-        %Hough.lines Return line features
+        %Hough.plot Plot line features
         %
-        % Hough.plot() overlays all detected lines on the current figure.
+        % HT.plot() overlays all detected lines on the current figure.
         %
-        % Hough.plot(N) overlays maximum of N strongest lines on the current figure.
+        % HT.plot(N) overlays a maximum of N strongest lines on the current figure.
         %
-        % Hough.plot(N, LS) as above but the optional line style arguments LS are
+        % HT.plot(N, LS) as above but the optional line style arguments LS are
         % passed to plot.
         %
-        % H = Hough.plot() as above but returns a vector of graphics handles for each
+        % H = HT.plot() as above but returns a vector of graphics handles for each
         % line.
         %
         % See also Hough.lines.
@@ -206,21 +209,21 @@ classdef Hough < handle
         
         
         function out = lines(h, N)
-        %Hough.lines Return line features
+        %Hough.lines Find lines
         %
-        % L = Hough.lines() returns a vector of LineFeature objects that
+        % L = HT.lines() is a vector of LineFeature objects that
         % represent the dominant lines in the Hough accumulator.
         %
-        % L = Hough.lines(N) as above but returns no more than N LineFeature
+        % L = HT.lines(N) as above but returns no more than N LineFeature
         % objects.
         %
         % Lines are the coordinates of peaks in the Hough accumulator.  
         % The highest peak is found, refined to subpixel precision, then 
-        % all elements in an H.suppress radius around are zeroed so as to eliminate
+        % all elements in an HT.suppress radius around are zeroed so as to eliminate
         % multiple close minima.  The process is repeated for all peaks.
         %
         % The peak detection loop breaks early if the remaining peak has a strength
-        % less than H.houghThresh x the maximum vote value.
+        % less than HT.houghThresh times the maximum vote value.
         %
         % See also Hough.plot, LineFeature.
             if nargin < 2
@@ -377,12 +380,13 @@ classdef Hough < handle
         end % xyhough
     
         function display(h)
-        %Hough.display Display the parameters of Hough transform
+        %Hough.display Display value
         %
-        % H.display() is a compact string representation of the Hough transform parameters.
+        % HT.display() displays a compact human-readable string representation of the 
+        % Hough transform parameters.
         %
         % Notes::
-        % - this method is invoked implicitly at the command line when the result
+        % - This method is invoked implicitly at the command line when the result
         %   of an expression is a Hough object and the command has no trailing
         %   semicolon.
         %
@@ -402,9 +406,9 @@ classdef Hough < handle
         end
 
         function s = char(h)
-        %Hough.char Create string representation of a Hough transform
+        %Hough.char Convert to string
         %
-        % S = H.char() is a compact string representation of the Hough transform parameters.
+        % S = HT.char() is a compact string representation of the Hough transform parameters.
 
             s = sprintf('Hough: nd=%d, ntheta=%d, interp=%dx%d, distance=%d', ...
                 h.Nrho, h.Ntheta, h.interpWidth, h.interpWidth, h.suppress);
