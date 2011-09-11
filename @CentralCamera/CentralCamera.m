@@ -600,7 +600,7 @@ classdef CentralCamera < Camera
 
                 % transform the object
                 if ~isempty(opt.Tobj)
-                    P = transformp(opt.Tobj, P);
+                    P = homtrans(opt.Tobj, P);
                 end
 
                 % make the world points homogeneous

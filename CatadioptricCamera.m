@@ -71,7 +71,7 @@ classdef CatadioptricCamera < Camera
 
     properties
         k       % radial distortion vector
-        model   % projection model
+        projection   % projection model
         maxangle    % maximum elevation angle (above horizontal)
     end
 
@@ -108,6 +108,8 @@ classdef CatadioptricCamera < Camera
         % 'projection',M   Catadioptric model: 'equiangular' (default), 'sine',
         %                  'equisolid', 'stereographic'
         % 'k',K            Parameter for the projection model
+        % 'maxangle',A     The maximum viewing angle above the horizontal
+        %                  plane.
         % 'resolution',N   Image plane resolution: NxN or N=[W H].
         % 'sensor',S       Image sensor size in metres (2x1)
         % 'centre',P       Principal point (2x1)
@@ -116,6 +118,10 @@ classdef CatadioptricCamera < Camera
         %                  noise added to returned image projections
         % 'pose',T         Pose of the camera as a homogeneous 
         %                  transformation
+        %
+        % Notes::
+        % - The elevation angle range is from -pi/2 (below the mirror) to
+        %   maxangle above the horizontal plane.
         %
         % See also Camera, FisheyeCamera, CatadioptricCamera, SphericalCamera.
 
@@ -127,7 +133,7 @@ classdef CatadioptricCamera < Camera
                 % default values
                 c.type = 'catadioptric';
                 c.k = 1;
-                c.model = 'equiangular';
+                c.projection = 'equiangular';
                 c.name = 'catadioptric-default';
 
             else
@@ -140,6 +146,7 @@ classdef CatadioptricCamera < Camera
                 [opt,args] = tb_optparse(opt, varargin);
 
                 c.projection = opt.projection;
+                c.maxangle = opt.maxangle;
                 
                 if opt.default
                     c.s = [10e-6, 10e-6];      % square pixels 10um side
@@ -156,7 +163,7 @@ classdef CatadioptricCamera < Camera
                     % compute k if not specified, so that hemisphere fits into
                     % image plane
                     r = min([(c.npix-c.pp).*c.rho, c.pp.*c.rho]);
-                    switch c.model
+                    switch c.projection
                     case 'equiangular'
                         c.k = r / (pi/2 + c.maxangle);
                     case 'sine'
@@ -176,7 +183,7 @@ classdef CatadioptricCamera < Camera
         function s = char(c)
 
             s = sprintf('name: %s [%s]', c.name, c.type);
-            s = strvcat(s, sprintf(    '  model:          %s', c.model));
+            s = strvcat(s, sprintf(    '  model:          %s', c.projection));
             s = strvcat(s, sprintf(    '  k:              %-11.4g', c.k));
             s = strvcat(s, char@Camera(c) );
         end
@@ -226,7 +233,7 @@ classdef CatadioptricCamera < Camera
             phi = atan2( X(2,:), X(1,:) );
             theta = acos( X(3,:) ./ R );
 
-            switch c.model
+            switch c.projection
             case 'equiangular'
                 r = c.k * theta;
             case 'sine'

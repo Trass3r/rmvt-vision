@@ -82,7 +82,7 @@ classdef FishEyeCamera < Camera
 
     properties
         k       % radial distortion vector
-        model   % projection model
+        projection   % projection model
     end
 
     properties (SetAccess = private)
@@ -110,7 +110,6 @@ classdef FishEyeCamera < Camera
         %
         % Options::
         % 'name',N         Name of camera
-        % 'focal',F        Focal length [metres]
         % 'default'        Default camera parameters: 1024x1024, f=8mm,
         %                  10um pixels, camera at origin, optical axis
         %                  is z-axis, u- and v-axes are parallel to x- and y-
@@ -141,7 +140,7 @@ classdef FishEyeCamera < Camera
                 % default values
                 c.type = 'fisheye';
                 c.k = 1;
-                c.model = 'equiangular';
+                c.projection = 'equiangular';
                 c.name = 'fisheye-default';
 
             else
@@ -153,7 +152,6 @@ classdef FishEyeCamera < Camera
 
                 [opt,args] = tb_optparse(opt, varargin);
 
-                c.f = opt.focal;
                 c.projection = opt.projection;
                 
                 if opt.default
@@ -171,7 +169,7 @@ classdef FishEyeCamera < Camera
                     % compute k if not specified, so that hemisphere fits into
                     % image plane
                     r = min([(c.npix-c.pp).*c.rho, c.pp.*c.rho]);
-                    switch c.model
+                    switch c.projection
                     case 'equiangular'
                         c.k = r / (pi/2);
                     case 'sine'
@@ -193,7 +191,7 @@ classdef FishEyeCamera < Camera
         function s = char(c)
 
             s = sprintf('name: %s [%s]', c.name, c.type);
-            s = strvcat(s, sprintf(    '  model:          %s', c.model));
+            s = strvcat(s, sprintf(    '  model:          %s', c.projection));
             s = strvcat(s, sprintf(    '  k:              %-11.4g', c.k));
             s = strvcat(s, char@Camera(c) );
         end
@@ -236,7 +234,7 @@ classdef FishEyeCamera < Camera
             phi = atan2( X(2,:), X(1,:) );
             theta = acos( X(3,:) ./ R );
 
-            switch c.model
+            switch c.projection
             case 'equiangular'
                 r = c.k * theta;
             case 'sine'

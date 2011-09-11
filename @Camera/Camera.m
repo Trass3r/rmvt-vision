@@ -179,6 +179,7 @@ classdef Camera < handle
 
                 c.pp = opt.centre;
                 c.rho = opt.pixel;
+                c.color = opt.color;
                 if ~isempty(opt.noise)
                     if length(opt.noise) == 1
                         c.noise = [opt.noise opt.noise];
@@ -391,7 +392,7 @@ classdef Camera < handle
                 axis square
                 set(fig, 'MenuBar', 'none');
                 set(fig, 'Tag', 'camera');
-                set(h, 'Color', h.color);
+                set(h, 'Color', c.color);
                 set(fig, 'HandleVisibility', 'off');
                 set(fig, 'name', [class(c) ':' c.name]);
             end
