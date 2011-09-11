@@ -249,5 +249,40 @@ classdef Tracker
             hold off
         end
 
+        function display(t)
+        %Tracker.display Display value
+        %
+        % T.display() displays a compact human-readable string representation of the 
+        % Tracker object
+        %
+        % Notes::
+        % - This method is invoked implicitly at the command line when the result
+        %   of an expression is a Tracker object and the command has no trailing
+        %   semicolon.
+        %
+        % See also Tracker.char.
+            loose = strcmp( get(0, 'FormatSpacing'), 'loose');
+            if loose
+                disp(' ');
+            end
+            disp([inputname(1), ' = '])
+            if loose
+                disp(' ');
+            end
+            disp(char(t))
+            if loose
+                disp(' ');
+            end
+        end
+
+        function s = char(t)
+        %Tracker.char Convert to string
+        %
+        % S = T.char() is a compact string representation of the Tracker parameters and status.
+
+            s = sprintf('Tracker: %d tracks, next id=%d, thresh=%g, nhistory=%d', ...
+                t.N, t.id, t.thresh, numel(t.history));
+        end
+
     end %methods
 end %class
