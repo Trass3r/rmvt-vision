@@ -21,10 +21,21 @@
 % descriptor    feature descriptor (vector)
 % image_id      index of image containing feature
 %
-% Properties of a vector of SurfPointFeature objects are a vector whose elements
-% are the named property of the corresponding element of the feature vector.
+% Properties of a vector of SurfCornerFeature objects are returned as a vector.
+% If F is a vector (Nx1) of SurfCornerFeature objects then F.u is a 2xN matrix
+% with each column the corresponding u coordinate.
 %
-% See also isurf, PointFeature, ScalePointFeature, SiftPointFeature.
+% Notes::
+% - SurfCornerFeature is a reference object.
+% - SurfCornerFeature objects can be used in vectors and arrays
+%
+% Reference::
+% Herbert Bay, Andreas Ess, Tinne Tuytelaars, Luc Van Gool,
+% "SURF: Speeded Up Robust Features", 
+% Computer Vision and Image Understanding (CVIU), 
+% Vol. 110, No. 3, pp. 346--359, 2008
+%
+% See also ISURF, PointFeature, ScalePointFeature, SiftPointFeature.
 
 classdef SurfPointFeature < ScalePointFeature
 
@@ -60,7 +71,8 @@ classdef SurfPointFeature < ScalePointFeature
         function plot_scale(features, varargin)
         %SurfPointFeature.plot_scale Plot feature scale
         %   
-        % F.plot_scale(OPTIONS) overlay a marker at the feature position.
+        % F.plot_scale(OPTIONS) overlay a marker to indicate feature point position and
+        % scale.
         %
         % F.plot_scale(OPTIONS, LS) as above but the optional line style arguments LS are
         % passed to plot.
@@ -80,6 +92,11 @@ classdef SurfPointFeature < ScalePointFeature
             opt.alpha = 0.2;
             [opt,args] = tb_optparse(opt, varargin);
 
+            if length(args) == 1 && isstr(args{1})
+                opt.color = args{1};
+                args = {};
+            end
+
             holdon = ishold;
             hold on
 
@@ -88,10 +105,10 @@ classdef SurfPointFeature < ScalePointFeature
             switch (opt.display)
             case 'circle'
                 plot_circle([ [features.u_]; [features.v_] ], s*[features.scale_]', ...
-                'color', opt.color, args{:});
+                'edgecolor', opt.color, args{:});
             case 'clock'
                 plot_circle([ [features.u_]; [features.v_] ], s*[features.scale_]', ...
-                'color', opt.color, args{:});
+                'edgecolor', opt.color, args{:});
                 % plot radial lines
                 for f=features
                     plot([f.u_, f.u_+s*f.scale_*cos(f.theta_)], ...
@@ -118,7 +135,8 @@ classdef SurfPointFeature < ScalePointFeature
         %   
         % M = F.match(F2, OPTIONS) is a vector of FeatureMatch objects that 
         % describe candidate matches between the two vectors of SURF 
-        % features F and F2.
+        % features F and F2.  Correspondence is based on descriptor
+        % similarity.
         %
         % [M,C] = F.match(F2, OPTIONS) as above but returns a correspodence
         % matrix where each row contains the indices of corresponding features
@@ -127,6 +145,9 @@ classdef SurfPointFeature < ScalePointFeature
         % Options::
         % 'thresh',T    Match threshold (default 0.05)
         % 'median'      Threshold at the median distance
+        %
+        % Notes::
+        % - for no threshold set to [].
         %
         % See also FeatureMatch.
         
@@ -177,9 +198,11 @@ classdef SurfPointFeature < ScalePointFeature
             end
 
             % remove those matches over threshold
-            k = err > thresh;
-            cor(:,k) = [];
-            m(k) = [];
+            if ~isempty(thresh)
+                k = err > thresh;
+                cor(:,k) = [];
+                m(k) = [];
+            end
 
             if nargout > 1
                 corresp = cor;
@@ -196,9 +219,7 @@ classdef SurfPointFeature < ScalePointFeature
 
         function Ipts = surf(im, opt)
             if exist('surfpoints') == 3
-                if opt.verbose
-                    fprintf('MEX\n');
-                end
+                fprintf('MEX\n');
                 % do the OpenCV/MEX version
                 % put the results into the same return format as OpenSurf
                 params.extended = 0;
@@ -207,30 +228,30 @@ classdef SurfPointFeature < ScalePointFeature
                     params.hessianThreshold = opt.thresh;
                 end
 
-                % the surfpoints MEX file returns:
-                %  p 2xN feature coordinates
-                %  d 2x64/128 feature descriptors
-                %  h 1xN  sign of Hessian
-                %  inf 3xN info (scale, strength, orientation)
-                [p,d,h,inf] = surfpoints(im, params);
-                Ipts = [];
-                for i=1:numcols(p)
-                    I.x = p(1,i);
-                    I.y = p(2,i);
-                    I.descriptor = d(:,i);
-                    I.scale = inf(1,i);
-                    I.strength = inf(2,i);
-                    I.orientation = inf(3,i);
-                    Ipts = [Ipts I];
-                end
+                [p,d,l,info] = surfpoints(iint(im), params);
+
+                % returns
+                % p    point coordinates, one per column
+                % d    SURF descriptor, one per column
+                % l    sign of the Laplacian (light or dark feature)
+                % info other parameters, per row: scale, strength,
+                %      orientation
+                
+                % put the data into a vector of structs format to 
+                % match OpenSurf
+                Ipts = struct('x', num2cell(p(1,:)), ...
+                              'y', num2cell(p(2,:)), ...
+                              'scale', num2cell(info(1,:)), ...
+                              'strength', num2cell(info(2,:)), ...
+                              'orientation', num2cell(info(3,:)), ...
+                              'descriptor', num2cell(d,1)   );
+                              
             else
                 params.octaves = opt.octaves;   % for OpenSurf
                 if ~isempty(opt.thresh)
                     params.tresh = opt.thresh;      % for OpenSurf, (sic)
                 end
 
-                % the OpenSurf matlab function returns a vector of structs
-                % but does not return the sign of the Hessian
                 Ipts = OpenSurf(im, params);
             end
         end
