@@ -44,10 +44,10 @@
 
 % Copyright (c) Peter Corke 1/96
 
-function [yp,xpout] = peak(y, varargin)
+function [xpout,yp] = peak(y, varargin)
 
     % process input options
-    opt.npeaks = 2;
+    opt.npeaks = [];
     opt.scale = 1;
     opt.interp = 0;
     opt.plot = false;
@@ -83,8 +83,9 @@ function [yp,xpout] = peak(y, varargin)
     [m,i] = sort(y(k), 'descend');
     k = k(i);    % indice of the maxima
 
-    k = k(1:opt.npeaks);
-    
+    if opt.npeaks
+        k = k(1:opt.npeaks);
+    end
 
     % optionally plot the discrete data
     if opt.plot
@@ -144,7 +145,8 @@ function [yp,xpout] = peak(y, varargin)
     end
     
     % return values
-    yp = y(k)';
+    xpout = xp';
     if nargout > 1
-        xpout = xp';
+        yp = y(k)';
+
     end
