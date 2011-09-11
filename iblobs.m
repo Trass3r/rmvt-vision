@@ -122,7 +122,7 @@ function [features,labimg] = iblobs(im, varargin)
 
             % optionally follow the boundary
             if opt.boundary
-                F.edge = edgelist(im, [x y]);
+                F.edge = edgelist(im, [x y])';
                 F.perimeter = numcols(F.edge);
                 F.circularity = 4*pi*F.area/F.perimeter^2;
             end
