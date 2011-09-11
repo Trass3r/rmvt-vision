@@ -82,7 +82,7 @@ function [h,xbin] = ihist(im, varargin)
 
     [opt,args] = tb_optparse(opt, varargin);
 
-    if isinteger(im)
+    if isinteger(im) && exist('fhist')
         % use quick mex function if data is integer
         [n,x] = fhist(im);
     else
