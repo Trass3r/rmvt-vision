@@ -9,13 +9,14 @@
 % close   Close the image source
 % char    Convert the object parameters to human readable string
 %
+% Properties::
+% curFrame        The index of the frame just read
+% totalDuration   The running time of the movie (seconds)
+%
 % See also ImageSource, Video.
 %
 %
 % SEE ALSO: Video
-%
-% Based on mmread by Micah Richert
-
 
 % Copyright (C) 1993-2011, by Peter I. Corke
 %
@@ -43,13 +44,8 @@ classdef Movie < ImageSource
 
         nframes;
         
-        nrFramesCaptured
-        nrFramesTotal
-        totalDuration
+        totalDuration   % in seconds
         skippedFrames
-
-        nrVideoStreams  % number of video streams
-        nrAudioStreams  % number of audio streams
 
         curFrame
         skip
@@ -70,10 +66,10 @@ classdef Movie < ImageSource
         % 'uint8'     Return image with uint8 pixels (default)
         % 'float'     Return image with float pixels
         % 'double'    Return image with double precision pixels
-        % 'grey'      Return image is greyscale
+        % 'grey'      Return greyscale image
         % 'gamma',G   Apply gamma correction with gamma=G
         % 'scale',S   Subsample the image by S in both directions
-        % 'skip',S    read every S'th frame from the movie
+        % 'skip',S    Read every S'th frame from the movie
 
 
             % invoke the superclass constructor and process common arguments
@@ -91,6 +87,7 @@ classdef Movie < ImageSource
             m.nframes = m.movie.NumberOfFrames;
         
         end
+        
 
         function paramSet(m, varargin)
             opt.skip = 1;
@@ -103,6 +100,7 @@ classdef Movie < ImageSource
         
         % destructor
         function delete(m)
+            fprintf('Movie destructor, delete movie object\n');
             delete(m.movie);
         end
 
@@ -119,7 +117,7 @@ classdef Movie < ImageSource
         end
 
         function [out, time] = grab(m, varargin)
-        %Movie.grab Acquire image from the movie
+        %Movie.grab Acquire next frame from movie
         %
         % IM = M.grab() acquires the next image from the movie
         %
@@ -127,9 +125,11 @@ classdef Movie < ImageSource
         % specified.
         %
         % Options::
-        % 'skip',S    skip frames, and return current+S frame
-        % 'frame',F   return frame F within the movie
+        % 'skip',S    Skip frames, and return current+S frame
+        % 'frame',F   Return frame F within the movie
         %
+        % Notes::
+        % - If no output argument given the image is displayed using IDISP.
 
             opt.skip = m.skip;
             opt.frame = [];
@@ -175,13 +175,12 @@ classdef Movie < ImageSource
         end
 
         function s = char(m)
-        %Movie.char Convert camera object to string
+        %Movie.char Convert to string
         %
         % M.char() is a string representing the state of the movie object in 
         % human readable form.
 
             s = '';
-            %s = strvcat(s, sprintf('%d video streams', m.nrVideoStreams));
             s = strvcat(s, sprintf('%d x %d @ %d fps; %d frames, %f sec', m.width, m.height, m.rate,  m.nframes, m.totalDuration));
             s = strvcat(s, sprintf('cur frame %d/%d (skip=%d)', m.curFrame, m.nframes, m.skip));
         end
