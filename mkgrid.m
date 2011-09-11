@@ -1,9 +1,9 @@
 %MKGRID Create grid of points
 %
-% P = MKGRID(D, S, OPTIONS) is a set of points (3xD^2) that define a DxD planar
+% P = MKGRID(D, S, OPTIONS) is a set of points (3 x D^2) that define a DxD planar
 % grid of points with side length S.  The points are the columns of P.
-% If D is a 2-vector the grid is D(1) x D(2) points.  If S is a 2-vector the 
-% side lengths are S(1) x S(2).
+% If D is a 2-vector the grid is D(1)xD(2) points.  If S is a 2-vector the 
+% side lengths are S(1)xS(2).
 %
 % By default the grid lies in the XY plane, symmetric about the origin.
 %
