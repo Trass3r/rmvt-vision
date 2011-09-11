@@ -1,14 +1,14 @@
-%Camera.plot_camera Display a camera icon in 3D
+%Camera.plot_camera Display camera icon in world view
 %
 % C.plot_camera(OPTIONS) draw a camera as a simple 3D model in the current
 % figure.
 %
 % Options::
 % 'Tcam',T     Camera displayed in pose T (homogeneous transformation 4x4)
-% 'scale',S    Overall scale factor (default inferred from axis settings)
+% 'scale',S    Overall scale factor (default 0.2 x maximum axis dimension)
 %
 % Notes::
-% - the graphic handles are stored within the Camera object.
+% - The graphic handles are stored within the Camera object.
 
 function h = plot_camera(c, varargin)
 

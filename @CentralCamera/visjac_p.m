@@ -2,9 +2,9 @@
 %
 % J = C.visjac_p(UV, Z) is the image Jacobian (2Nx6) for the image plane 
 % points UV (2xN).  The depth of the points from the camera is given by Z
-% which is a scalar, for all points, or a vector (Nx1) for each point.
+% which is a scalar for all points, or a vector (Nx1) of depth for each point.
 %
-% The Jacobian gives the image-plane velocity in terms of camera spatial
+% The Jacobian gives the image-plane point velocity in terms of camera spatial
 % velocity. 
 %
 % Reference::

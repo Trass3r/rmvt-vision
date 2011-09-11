@@ -1,8 +1,8 @@
-%CentralCamera.visjac_p Visual motion Jacobian for point feature
+%CentralCamera.visjac_e Visual motion Jacobian for point feature
 %
 % J = C.visjac_e(E, PL) is the image Jacobian (5x6) for the ellipse
-% described by u^2 + E1v^2 - 2E2uv + 2E3u + 2E4v + E5 = 0.  The ellipse
-% lies in the world plane PL = (a,b,c,d) such that aX + bY + cZ + d = 0.
+% E (5x1) described by u^2 + E1v^2 - 2E2uv + 2E3u + 2E4v + E5 = 0.  The 
+% ellipse lies in the world plane PL = (a,b,c,d) such that aX + bY + cZ + d = 0.
 %
 % The Jacobian gives the rates of change of the ellipse parameters in 
 % terms of camera spatial velocity. 

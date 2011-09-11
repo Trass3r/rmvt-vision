@@ -2,11 +2,11 @@
 %
 % J = C.visjac_p_polar(RT, Z) is the image Jacobian (2Nx6) for the image plane 
 % points RT (2xN) described in polar form, radius and theta.  The depth of the 
-% points from the camera is given by Z which is a scalar, for all point, or a 
-% vector (Nx1) for each point.
+% points from the camera is given by Z which is a scalar for all point, or a 
+% vector (Nx1) of depths for each point.
 %
-% The Jacobian gives the image-plane polar coordinate velocity in terms of camera spatial
-% velocity. 
+% The Jacobian gives the image-plane polar point coordinate velocity in terms 
+% of camera spatial velocity. 
 %
 % Reference::
 % "Combining Cartesian and polar coordinates in IBVS",
