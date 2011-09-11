@@ -15,42 +15,21 @@
 # You should have received a copy of the GNU Leser General Public License
 # along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-
-DISTDIR = vision2
-
-distrib: doc/vision.pdf
-	/bin/rm -rf $(DISTDIR) vision.tar.* vision.zip
-	- mkdir $(DISTDIR)
-	-cp doc/vision.pdf $(DISTDIR)
-	-cp README $(DISTDIR)
-	-cp RELEASE $(DISTDIR)
-	-cp doc/CITATION $(DISTDIR)
-	-cp -r `cat FILES` $(DISTDIR)
-	-cp makefile-mex $(DISTDIR)/Makefile
-	chmod -R a+r $(DISTDIR)
-	tar cvf vision.tar ./$(DISTDIR)
-	gzip -f vision.tar
-	zip vision ./$(DISTDIR)/*
-
-install:
-	scp vision.tar.gz vision.zip doc/vision.pdf bob:tmp
-	
-doc/vision.pdf:	doc/ref.tex
-	cd doc; $(MAKE)
-
 mex:
 	mex iwindow.c
 	mex ivar.c
 	mex imorph.c
 	mex irank.c
+	mex hist2d.c
 	mex fhist.c
 	mex imatch.c
 	mex ilabel.c
+	mex stereo_match.c
 	mex firewire.c -ldc1394_control -lraw1394
 
-.c.${EXT}:
-	cmex $<
+install:
+	cp *.mex* ..
 
 clean:
-	/bin/rm *.mex*
+	-\rm *.mex*
 
