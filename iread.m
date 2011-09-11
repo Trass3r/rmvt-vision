@@ -162,7 +162,7 @@ function [I,info] = iread(filename, varargin)
                 im = loadimg(filename, opt);
             else
                 % see if it exists on the Matlab search path
-                for p=path2cell(userpath)'
+                for p=path2cell(path)'
                     if exist( fullfile(p{1}, filename) ) > 0
                         im = loadimg(fullfile(p{1}, filename), opt);
                         break;
