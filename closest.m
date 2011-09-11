@@ -33,3 +33,7 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 % - is a MEX file.
+
+if ~exist('closest', 3)
+    error('you need to build the MEX version of closest, see vision/mex/README');
+end
