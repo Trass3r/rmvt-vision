@@ -1,4 +1,4 @@
-%SurfPointFeature.support Support region of SURF feature
+%SurfPointFeature.support Support region of feature
 %
 % OUT = F.support(IM, W) is an image of the support region of the 
 % feature F, extracted from the image IM in which the feature appears.
@@ -6,8 +6,8 @@
 % orientation axis is upward.
 %
 % OUT = F.support(IMAGES, W) as above but if the features were extracted
-% from an image sequence then the feature is located in the appropriate
-% image in the same sequence IMAGES.
+% from an image sequence IMAGES then the feature is extracted from the 
+% appropriate image in the same sequence.
 %
 % [OUT,T] = F.support(IMAGES, W) as above but returns the pose of the feature
 % as a 3x3 homogeneous transform in SE(2) that comprises the feature position
@@ -35,7 +35,7 @@ function [out,TT] = support(sf, images, N)
 
     T = se2(sf.u_, sf.v_, sf.theta_) * diag([d/N,d/N,1]) * se2(-N/2, -N/2);
 
-    UV = transformp(T, [Uo(:) Vo(:)]');
+    UV = homtrans(T, [Uo(:) Vo(:)]');
     U = reshape(UV(1,:), size(Uo));
     V = reshape(UV(2,:), size(Vo));
 
