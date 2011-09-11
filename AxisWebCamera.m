@@ -1,8 +1,8 @@
-%AXISWEBCAMERA Class to read from Axis webcam
+%AXISWEBCAMERA Image from Axis webcam
 %
 % A concrete subclass of ImageSource that acquires images from a web camera
 % built by Axis Communications (www.axis.com).
-
+%
 % Methods::
 % grab    Aquire and return the next image
 % size    Size of image
@@ -10,7 +10,6 @@
 % char    Convert the object parameters to human readable string
 %
 % See also ImageSource, Video.
-
 
 % Copyright (C) 1993-2011, by Peter I. Corke
 %
@@ -39,18 +38,23 @@ classdef AxisWebCamera < ImageSource
     methods
 
         function wc = AxisWebCamera(url, varargin)
-        %AxisWebCamera.AxisWebCamera Image source constructor
+        %AxisWebCamera.AxisWebCamera Axis web camera constructor
         %
         % A = AxisWebCamera(URL, OPTIONS) is an AxisWebCamera object that acquires
         % images from an Axis Communications (www.axis.com) web camera.
         %
         % Options::
-        % 'uint8'     Return image with uint8 pixels (default)
-        % 'float'     Return image with float pixels
-        % 'double'    Return image with double precision pixels
-        % 'grey'      Return image is greyscale
-        % 'gamma',G   Apply gamma correction with gamma=G
-        % 'scale',S   Subsample the image by S in both directions.
+        % 'uint8'          Return image with uint8 pixels (default)
+        % 'float'          Return image with float pixels
+        % 'double'         Return image with double precision pixels
+        % 'grey'           Return greyscale image
+        % 'gamma',G        Apply gamma correction with gamma=G
+        % 'scale',S        Subsample the image by S in both directions.
+        % 'resolution',S   Obtain an image of size S=[W H].
+        %
+        % Notes:
+        % - The specified 'resolution' must match one that the camera is capable of,
+        %   otherwise the result is not predictable.
 
             % invoke the superclass constructor and process common arguments
             wc = wc@ImageSource(varargin);
@@ -73,17 +77,19 @@ classdef AxisWebCamera < ImageSource
             wc.color = ndims(wc.firstImage) > 2;
         end
 
+        % handle parameters not known to the superclass
         function n = paramSet(wc, args)
-            % handle parameters not known to the superclass
-            switch lower(args{1})
-            case 'resolution'
-                res = args{2};
-                res
-                wc.width = res(1);
-                wc.height = res(2);
-                n = 1;
-            otherwise
-                error( sprintf('unknown option <%s>', args{count}));
+            if nargin > 1
+                switch lower(args{1})
+                case 'resolution'
+                    res = args{2};
+                    res
+                    wc.width = res(1);
+                    wc.height = res(2);
+                    n = 1;
+                otherwise
+                    error( sprintf('unknown option <%s>', args{count}));
+                end
             end
         end
 
@@ -96,10 +102,10 @@ classdef AxisWebCamera < ImageSource
         function im = grab(wc)
         %AxisWebCamera.grab Acquire image from the camera
         %
-        % IM = A.grab() acquires an image from the web camera.
+        % IM = A.grab() is an image acquired from the web camera.
         %
         % Notes::
-        % - some web cameras have a fixed picture taking interval, and this function
+        % - Some web cameras have a fixed picture taking interval, and this function
         %   will return the most recently captured image held in the camera.
 
 
@@ -118,7 +124,7 @@ classdef AxisWebCamera < ImageSource
         end
 
         function s = char(wc)
-        %AxisWebCamera.char Convert camera object to string
+        %AxisWebCamera.char Convert to string
         %
         % A.char() is a string representing the state of the camera object in 
         % human readable form.
