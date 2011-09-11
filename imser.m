@@ -62,6 +62,15 @@ function [all,nsets] = imser(im, varargin)
 
     [opt,mser_args] = tb_optparse(opt, varargin);
 
+    % add default args if none given
+    if isempty(mser_args)
+        mser_args = {'BrightOnDark', 0, 'DarkOnBright', 1, 'MinArea', 0.0001, 'MaxArea', 0.1};
+    end
+
+    if opt.verbose
+        mser_args = [mser_args 'Verbose' ];
+    end
+
     invert = true;
     switch opt.invert
         case 'dark'
@@ -82,21 +91,15 @@ function [all,nsets] = imser(im, varargin)
         end
     end
 
-    % add default args if none given
-    if isempty(mser_args)
-        mser_args = {'MinArea', 0.0001, 'MaxArea', 0.1};
-    end
-
-
     [R,F] = vl_mser(im, mser_args{:});
-    fprintf('%d MSERs found\n', length(R));
+    fprintf('%d MSERs found\n', length(R)+1);
 
     %f1
     %idisp(im);
 
     all = zeros( size(im));
     count = 1;
-    for r=R'
+    for r=abs(R)'
         bim = im <= im(r);
         % HACK bim = im <= im(r);
         lim = ilabel(bim);
@@ -104,7 +107,6 @@ function [all,nsets] = imser(im, varargin)
 
         %sum(mser_blob(:))
 
-        count
         %idisp(mser_blob)
         all(mser_blob) =  count;
         count = count + 1;
