@@ -32,7 +32,7 @@
 
 function s = kcircle(r, w)
 
-    if ismatrix(r) 
+    if ~isscalar(r) 
         rmax = max(r(:));
         rmin = min(r(:));
     else
@@ -49,7 +49,7 @@ function s = kcircle(r, w)
 
     c = ceil(w/2);
 
-    if ismatrix(r) 
+    if ~isscalar(r) 
         s = kcircle(rmax,w) - kcircle(rmin, w);
     else
         [x,y] = find(s == 0);
