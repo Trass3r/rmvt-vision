@@ -1,5 +1,8 @@
 %BagOfWords Bag of words class
 %
+% The BagOfWords class holds sets of features for a number of images and 
+% supports image retrieval by comparing new images with those in the 'bag'.
+%
 % Methods::
 % isword        Return all features assigned to word
 % occurrences   Return number of occurrences of word
@@ -12,8 +15,18 @@
 % display       Display the parameters of the bag of words
 % char          Convert the parameters of the bag of words to a string
 %
+% Properties::
+% K         The number of clusters specified
+% nstop     The number of stop words specified
+% nimages   The number of images in the bag
+%
+% Reference::
+% 
+% J.Sivic and A.Zisserman,
+% "Video Google: a text retrieval approach to object matching in videos",
+% in Proc. Ninth IEEE Int. Conf. on Computer Vision, pp.1470-1477, Oct. 2003.
+%
 % See also PointFeature.
-
 
 % Copyright (C) 1993-2011, by Peter I. Corke
 %
@@ -31,20 +44,21 @@
 % 
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
+
 classdef BagOfWords < handle
     properties
+        features    % vector of all features in the bag (PointFeature class)
+
         K       % number of clusters
-        nstop   % number of stop words
+        C       % cluster centres (NDxNW)
+        words   % vector of word indices (NW)
 
-        C
+        nstop     % number of stop words
+        stopwords  % list of stop words
+        map        % maps word index with stop words to word index without stop words
 
-        words
-        stopwords
-        map
+        nimages       % number of images (NI)
 
-        nimages       % number of images
-
-        features
         wv          % cached word vectors
     end
 
@@ -54,13 +68,19 @@ classdef BagOfWords < handle
         %
         % B = BagOfWords(F, K) is a new bag of words created from the feature
         % vector F and with K words.  F can also be a cell array, as produced 
-        % by isurf() for an image sequence.
+        % by ISURF() for an image sequence.
+        %
+        % The features are sorted into K clusters and each cluster is termed
+        % a visual word.
         %
         % B = BagOfWords(F, B2) is a new bag of words created from the feature
         % vector F but clustered to the words (and stop words) from the existing
         % bag B2.
         %
-        % See also PointFeature, isurf.
+        % Notes::
+        % - Uses the MEX function vl_kmeans to perform clustering (vlfeat.org).
+        %
+        % See also PointFeature, ISURF.
 
             % save the feature vector
             if iscell(sf)
@@ -105,7 +125,8 @@ classdef BagOfWords < handle
         %BagOfWords.isword Features from words
         %
         % F = B.isword(W) is a vector of feature objects that are assigned to any of
-        % the words in the vector W.
+        % the word W.  If W is a vector of words the result is a vector of features
+        % assigned to all the words in W.
             k = ismember(bag.words, words);
             f = bag.features(k);
         end
@@ -113,8 +134,8 @@ classdef BagOfWords < handle
         function n = occurrence(bag, word)
         %BagOfWords.occurrence Word occurrence
         %
-        % F = B.occurrence(W) is the number of occurrences of the word W across
-        % all features.
+        % N = B.occurrence(W) is the number of occurrences of the word W across
+        % all features in the bag.
             n = sum(bag.words == word);
         end
 
@@ -123,7 +144,7 @@ classdef BagOfWords < handle
         %
         % B.remove_stop(N) removes the N most frequent words (the stop words)
         % from the bag.  All remaining words are renumbered so that the word
-        % labels are consectutive.
+        % labels are consecutive.
 
             [w,f] = count_unique(bag.words);
             [f,i] = sort(f, 'descend');
@@ -147,13 +168,14 @@ classdef BagOfWords < handle
         end
 
         function wv = wordvector(bag, k)
-        %BagOfWords.wordvector  Return word frequency vector
+        %BagOfWords.wordvector  Word frequency vector
         %
-        % WF = B.wordvector(K) is the word frequency vector for the K'th image
-        % in the bag.  The vector is Kx1.
+        % WF = B.wordvector(J) is the word frequency vector for the J'th image
+        % in the bag.  The vector is Kx1 and the angle between any two WFVs is
+        % an indication of image similarity.
         %
         % Notes::
-        % - the word vector is expensive to compute so a lazy evaluation is
+        % - The word vector is expensive to compute so a lazy evaluation is
         %   performed on the first call to this function
             if isempty(bag.wv)
                 bag.compute_wv();
@@ -165,13 +187,14 @@ classdef BagOfWords < handle
             end
         end
 
+        % compute  image-word frequency
         function W = iwf(bag)
 
-            % image-word frequency
             N = bag.nimages;  % number of images
-            % Create the word matrix W
-            %  each column is an image
-            %  each row is a word
+
+            % Create the word frequency matrix W
+            %  column correspond to images
+            %  row correspond to words
             %  each element is the number of occurences of that word in that iamge
             W = [];
             id = [bag.features.image_id];
@@ -224,10 +247,10 @@ classdef BagOfWords < handle
         end
 
         function [w,f] = wordfreq(bag)
-        %BagOfWords.wordfreq Return word frequency statistics
+        %BagOfWords.wordfreq Word frequency statistics
         %
-        % [W,F] = B.wordfreq() is a vector of word labels W and the corresponding
-        % elements of F are the frequencies of that word.
+        % [W,N] = B.wordfreq() is a vector of word labels W and the corresponding
+        % elements of N are the number of occurrences of that word.
             [w,f] = count_unique(bag.words);
         end
 
@@ -244,12 +267,13 @@ classdef BagOfWords < handle
         end
 
         function display(bag)
-        %BagOfWords.display Display the parameters of a bag of words
+        %BagOfWords.display Display value
         %
-        % B.display() is a compact string representation of a bag of words
+        % B.display() displays the parameters of the bag in a compact human
+        % readable form.
         %
         % Notes::
-        % - this method is invoked implicitly at the command line when the result
+        % - This method is invoked implicitly at the command line when the result
         %   of an expression is a BagOfWords object and the command has no trailing
         %   semicolon.
         %
@@ -270,9 +294,9 @@ classdef BagOfWords < handle
         end
 
         function s = char(bag)
-        %BagOfWords.char Create string representation of a bag of words
+        %BagOfWords.char Convert to string
         %
-        % S = H.char() is a compact string representation of a bag of words.
+        % S = B.char() is a compact string representation of a bag of words.
             s = sprintf(...
             'BagOfWords: %d features from %d images\n           %d words, %d stop words\n', ...
                 length(bag.features), bag.nimages, ...
@@ -291,16 +315,16 @@ classdef BagOfWords < handle
         function exemplars(bag, words, images, varargin)
         %BagOfWords.exemplars Display exemplars of words
         %
-        % B.exemplars(W, IM, OPTIONS) displays examples of the support regions of
+        % B.exemplars(W, IMAGES, OPTIONS) displays examples of the support regions of
         % the words specified by the vector W.  The examples are displayed as a table
         % of thumbnail images.  The original sequence of images from which the features
-        % were extracted must be provided as IM.
+        % were extracted must be provided as IMAGES.
         %
         % Options::
         % 'ncolumns',N      Number of columns to display (default 10)
         % 'maxperimage',M   Maximum number of exemplars to display from any 
         %                   one image (default 2)
-        % 'width',W         Width of each thumbnail
+        % 'width',W         Width of each thumbnail [pixels] (default 50)
 
             nwords = length(words);
             gap = 2;
