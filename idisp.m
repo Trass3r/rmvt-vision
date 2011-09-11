@@ -160,7 +160,7 @@ function idisp(im, varargin)
     if isempty(opt.colormap_std)
         if isempty(opt.colormap)
             % default colormap
-            disp('default color map');
+            %disp('default color map');
             cmap = gray(opt.ncolors);
         else
             % load a Matlab color map
@@ -169,7 +169,7 @@ function idisp(im, varargin)
         end
     else
         % a builtin shorthand color map was specified
-        disp(['builtin color map: ', opt.colormap_std]);
+        %disp(['builtin color map: ', opt.colormap_std]);
         switch opt.colormap_std
         case 'random'
             cmap = rand(opt.ncolors,3);
