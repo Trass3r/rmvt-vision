@@ -14,8 +14,9 @@
 % strength    Feature strength
 % length      Length of the line
 %
-% Properties of a vector of LineFeature objects are a vector whose elements
-% are the named property of the corresponding element of the feature vector.
+% Properties of a vector of LineFeature objects are returned as a vector.
+% If L is a vector (Nx1) of LineFeature objects then L.rho is an Nx1 vector
+% of the rho element of each feature.
 %
 % Note::
 %  - LineFeature is a reference object.
@@ -99,13 +100,13 @@ classdef LineFeature < handle
         end
 
         function display(h)
-        %LineFeature.display Display the value of a line feature
+        %LineFeature.display Display value
         %
-        % L.display() is a compact string representation of the region feature.
+        % L.display() displays a compact human-readable representation of the feature.
         % If L is a vector then the elements are printed one per line.
         %
         % Notes::
-        % - this method is invoked implicitly at the command line when the result
+        % - This method is invoked implicitly at the command line when the result
         %   of an expression is a LineFeature object and the command has no trailing
         %   semicolon.
         %
@@ -126,7 +127,7 @@ classdef LineFeature < handle
         end
 
         function ss = char(lines)
-        %LineFeature.char Create string representation of a line feature
+        %LineFeature.char Convert to string
         %
         % S = L.char() is a compact string representation of the line feature.
         % If L is a vector then the string has multiple lines, one per element.
@@ -152,7 +153,8 @@ classdef LineFeature < handle
         % L.plot(LS) as above but the optional line style arguments LS are
         % passed to plot.
         %
-        % If L is a vector then each element is plotted.
+        % Notes::
+        % - If L is a vector then each element is plotted.
 
             holdon = ishold;
             hold on
@@ -193,14 +195,15 @@ classdef LineFeature < handle
         %LineFeature.seglength Compute length of line segments
         %
         % The Hough transform identifies lines but cannot determine their length.
+        % This method examines the edge pixels in the original image and determines
+        % the longest stretch of non-zero pixels along the line.
         %
-        % L2 = L.seglength(EDGE) is a copy of the line feature object with the length
-        % of the line determined.  The longest stretch of non-zero pixels along the 
-        % line in the edge image EDGE are determined.  Small gaps, by default less 
-        % than 5 pixels, are tolerated.
+        % L2 = L.seglength(EDGE, GAP) is a copy of the line feature object with the 
+        % property length updated to the length of the line (pixels).  Small gaps, 
+        % less than GAP pixels are tolerated.
         %
-        % L2 = L.seglength(EDGE, GAP) as above but the maximum allowable gap is
-        % specified.
+        % L2 = L.seglength(EDGE) as above but the maximum allowable gap is
+        % 5 pixels.
         %
         % See also ICANNY.
 
@@ -256,7 +259,7 @@ classdef LineFeature < handle
 
                 %fprintf('  strength=%f, len=%f, total=%f\n', L.strength, contig_max, total);
                 o = LineFeature(L);     % clone the object
-                o.length = contig_max;
+                o.length_ = contig_max;
                 out = [out o];
             end
         end
