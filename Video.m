@@ -9,7 +9,7 @@
 % close   Close the image source
 % char    Convert the object parameters to human readable string
 %
-% See also ImageSource, Movie.
+% See also ImageSource, AxisWebCamera, Movie.
 
 
 % Copyright (C) 1993-2011, by Peter I. Corke
@@ -48,18 +48,23 @@ classdef Video < handle
         %Video.Video Video camera constructor
         %   
         % V = Video(CAMERA, OPTIONS) is a Video object that acquires
-        % images from the specified local video camera.
+        % images from the local video camera specified by the string CAMERA.
         %
-        % If CAMERA is '?' then a list of available cameras, and their
+        % If CAMERA is '?' a list of available cameras, and their
         % characteristics is displayed.
         %   
         % Options::
-        % 'uint8'     Return image with uint8 pixels (default)
-        % 'float'     Return image with float pixels
-        % 'double'    Return image with double precision pixels
-        % 'grey'      Return image is greyscale
-        % 'gamma',G   Apply gamma correction with gamma=G
-        % 'scale',S   Subsample the image by S in both directions.
+        % 'uint8'          Return image with uint8 pixels (default)
+        % 'float'          Return image with float pixels
+        % 'double'         Return image with double precision pixels
+        % 'grey'           Return greyscale image
+        % 'gamma',G        Apply gamma correction with gamma=G
+        % 'scale',S        Subsample the image by S in both directions.
+        % 'resolution',S   Obtain an image of size S=[W H].
+        %
+        % Notes:
+        % - The specified 'resolution' must match one that the camera is capable of,
+        %   otherwise the result is not predictable.
 
             % invoke the superclass constructor and process common arguments
             m = m@ImageSource(varargin);
@@ -102,7 +107,7 @@ classdef Video < handle
         end
 
         function s = char(m)
-        %Video.char Convert camera object to string
+        %Video.char Convert to string
         %
         % V.char() is a string representing the state of the camera object in 
         % human readable form.
