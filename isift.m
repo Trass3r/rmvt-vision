@@ -25,6 +25,7 @@
 %   array with N elements, each of which is the feature vectors for the 
 %   corresponding image in the sequence.
 % - The SIFT algorithm is patented by Univerity of British Columbia.
+% - ISURF is a functional equivalent.
 %
 % Reference::
 % David G. Lowe,
