@@ -8,8 +8,10 @@
 % error between the transformed point set P2 and P1.
 %
 % Options::
-% 'plot',D         show the points P1 and P2 at each iteration, with a
+% 'dplot',D        show the points P1 and P2 at each iteration, with a
 %                  delay of D [sec].
+% 'plot'           show the points P1 and P2 at each iteration, with a
+%                  delay of 0.5 [sec].
 % 'maxtheta',T     limit the change in rotation at each step 
 %                  to T (default 0.05 rad)
 % 'maxiter',N      stop after N iterations (default 100)
@@ -60,9 +62,15 @@ function [T,d] = icp(set1, set2, varargin)
     opt.maxtheta = []; %0.05;
     opt.maxiter = 100;
     opt.mindelta = 0.001;
-    opt.plot = 0;
+    opt.plot = false;
+    opt.dplot = 0;
     opt.distthresh = [];
     opt = tb_optparse(opt, varargin);
+    
+    if opt.plot
+        opt.dplot = 0.5;
+    end
+    
     
 	N1 = numcols(set1);	% number of model points
 	N2 = numcols(set2);
@@ -86,7 +94,7 @@ function [T,d] = icp(set1, set2, varargin)
         % optionally break correspondences if their distance is above some
         % multiple of the median distance
         if isempty(opt.distthresh)
-            set2t = set2;
+            set2_tr = set2;
         else
             k = find(distance > opt.distthresh*median(distance));
 
@@ -101,7 +109,7 @@ function [T,d] = icp(set1, set2, varargin)
         end
         
 		% display the model points and correspondences
-        if opt.plot > 0
+        if opt.dplot > 0
             usefig('ICP');
             clf
             if ndims == 2
@@ -125,7 +133,7 @@ function [T,d] = icp(set1, set2, varargin)
                     plot3( [set1_tr(1,ic) set2_tr(1,i)], [set1_tr(2,ic) set2_tr(2,i)], [set1_tr(3,ic) set2_tr(3,i)], 'g');
                 end
             end
-            pause(opt.plot)
+            pause(opt.dplot)
         end
 
 		% find the centroids of the two point sets
