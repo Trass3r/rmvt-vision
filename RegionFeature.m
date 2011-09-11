@@ -37,8 +37,14 @@
 % Note::
 %  - RegionFeature is a reference object.
 %  - RegionFeature objects can be used in vectors and arrays
-%
+%  - This class behaves differently to LineFeature and PointFeature when
+%    getting properties of a vector of RegionFeature objects.  For example
+%    R.uc will be a list not a vector.
+%    
 % See also IBLOBS, IMOMENTS.
+
+% TODO:
+% make property of object vector like Line/PointFeature
 
 
 % Copyright (C) 1993-2011, by Peter I. Corke
@@ -100,7 +106,7 @@ classdef RegionFeature < handle
         end
 
         function display(b)
-        %RegionFeature.display Display the value of a region feature
+        %RegionFeature.display Display value
         %
         % R.display() is a compact string representation of the region feature.
         % If R is a vector then the elements are printed one per line.
@@ -128,7 +134,7 @@ classdef RegionFeature < handle
         end
 
         function ss = char(b)
-        %RegionFeature.char Create string representation of region feature
+        %RegionFeature.char Convert to string
         %
         % S = R.char() is a compact string representation of the region feature.
         % If R is a vector then the string has multiple lines, one per element.
@@ -170,7 +176,10 @@ classdef RegionFeature < handle
         % R.plot_boundary(LS) as above but the optional line style arguments LS are
         % passed to plot.
         %
-        % If R is a vector then each element is plotted.
+        % Notes::
+        % - If R is a vector then each element is plotted.
+        %
+        % See also BOUNDMATCH.
 
             holdon = ishold;
             hold on
