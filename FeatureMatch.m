@@ -1,26 +1,42 @@
-%FeatureMatch Feature match object
+%FeatureMatch Feature correspondence object
 %
-% This class represents a point feature correspondence.
+% This class represents the correspondence between two PointFeature
+% objects.  A vector of FeatureMatch objects can represent the 
+% correspondence between sets of points.
 %
 % Methods::
-% show
-% plot
+% plot       Plot corresponding points
+% show       Show summary statistics of corresponding points
 %
 % ransac     Determine inliers and outliers
 % inlier     Return inlier matches
 % outlier    Return outlier matches
 % subset     Return a subset of matches
-% p          Set of corresponding points
-% p1         Points in view 1
-% p2         Points in view 2
+%
 % display    Display value of match
 % char       Convert value of match to string
 % 
+% Properties::
+% p1         Point coordinates in view 1 (2x1)
+% p2         Point coordinates in view 2 (2x1)
+% p          Point coordinates in view 1 and 2 (4x1)
+% distance   Match strength between the points
+%
+% Properties of a vector of FeatureMatch objects are returned as a vector.
+% If F is a vector (Nx1) of FeatureMatch objects then F.p1 is a 2xN matrix
+% with each column the corresponding view 1 point coordinate.
+%
 % Note::
 %  - FeatureMatch is a reference object.
 %  - FeatureMatch objects can be used in vectors and arrays
+%  - Operates with all objects derived from PointFeature, such as 
+%    ScalePointFeature, SurfPointFeature and SiftPointFeature.
 %
 % See also PointFeature, SurfPointFeature, SiftPointFeature.
+
+% TODO:
+% distance, strength should be converted to similarity
+% p should be p12
 
 
 
@@ -44,6 +60,10 @@
 classdef FeatureMatch < handle
 
     properties
+        % the trailing underscore is to distinguish these properties from the methods
+        % of almost similar name.  Finding the property of a vector of objects
+        % F.x results in a list rather than a vector.  You need to write [F.x] so we
+        % create methods to provide this.  Using dependent properties does not work.
         xy_          % x1 y1 x2 y2 of corresponding points
         distance_    % strength of match
         inlier_      % NaN indeterminate
@@ -59,6 +79,11 @@ classdef FeatureMatch < handle
         % M = FeatureMatch(F1, F2, S) is a new FeatureMatch object describing a 
         % correspondence between point features F1 and F2 with a strength of S.
         %
+        % M = FeatureMatch(F1, F2) as above but the strength is set to NaN.
+        %
+        % Notes::
+        % - Only the coordinates of the PointFeature are kept.
+        %
         % See also PointFeature, SurfPointFeature, SiftPointFeature.
 
             if nargin == 0
@@ -69,27 +94,37 @@ classdef FeatureMatch < handle
             end
 
             m.xy_ = [f1.u_ f1.v_ f2.u_ f2.v_]';
-            m.distance_ = s;
+            if nargin < 3
+                m.distance = NaN;
+            else
+                m.distance_ = s;
+            end
             m.inlier_ = NaN;
         end
 
         function v = inlier(m)
-        %FeatureMatch.inlier Return all inlier features
+        %FeatureMatch.inlier Inlier features
         %
-        % M2 = M.inlier() returns a subset of the FeatureMatch vector M that are
+        % M2 = M.inlier() is a subset of the FeatureMatch vector M that are
         % considered to be inliers.
         %
-        % See also FeatureMatch.outlier.
+        % Notes::
+        % - Inliers are not determined until after RANSAC is run.
+        %
+        % See also FeatureMatch.outlier, FeatureMatch.ransac.
             v = m([m.inlier_] == true);
         end
 
         function v = outlier(m)
-        %FeatureMatch.outlier Return all outlier features
+        %FeatureMatch.outlier Outlier features
         %
-        % M2 = M.outlier() returns a subset of the FeatureMatch vector M that are
+        % M2 = M.outlier() is a subset of the FeatureMatch vector M that are
         % considered to be outliers.
         %
-        % See also FeatureMatch.inlier.
+        % Notes::
+        % - Outliers are not determined until after RANSAC is run.
+        %
+        % See also FeatureMatch.inlier, FeatureMatch.ransac.
             v = m([m.inlier_] == false);
         end
 
@@ -98,13 +133,13 @@ classdef FeatureMatch < handle
         end
 
         function display(m)
-        %FeatureMatch.display Display the value of a match
+        %FeatureMatch.display Display value
         %
-        % M.display() is a compact string representation of the match feature.
-        % If M is a vector then the elements are printed one per line.
+        % M.display() displays a compact human-readable representation of the 
+        % feature pair.  If M is a vector then the elements are printed one per line.
         %
         % Notes::
-        % - this method is invoked implicitly at the command line when the result
+        % - This method is invoked implicitly at the command line when the result
         %   of an expression is a FeatureMatch object and the command has no trailing
         %   semicolon.
         %
@@ -121,7 +156,7 @@ classdef FeatureMatch < handle
         end % display()
 
         function s = char(matches)
-        %FeatureMatch.char Create string representation of a match
+        %FeatureMatch.char Convert to string
         %
         % S = M.char() is a compact string representation of the match object.
         % If M is a vector then the string has multiple lines, one per element.
@@ -154,16 +189,16 @@ classdef FeatureMatch < handle
         end
         
         function v = subset(m, n)
-        %FeatureMatch.subset Return a subset of matches
+        %FeatureMatch.subset Subset of matches
         %
-        % M2 = M.subset(N) returns a FeatureMatch vector with no more than N elements
+        % M2 = M.subset(N) is a FeatureMatch vector with no more than N elements
         % sampled uniformly from M.
             i = round(linspace(1, length(m), n));
             v = m(i);
         end
 
         function s = p1(m, k)
-        %FeatureMatch.p1 Return  point coordinates
+        %FeatureMatch.p1 Feature point coordinates from view 1
         %
         % P = M.p1() is a 2xN matrix containing the feature points coordinates
         % from view 1.  These are the (u,v) properties of the feature F1 passed
@@ -175,7 +210,7 @@ classdef FeatureMatch < handle
         end
         
         function s = p2(m, k)
-        %FeatureMatch.p2 Return  point coordinates
+        %FeatureMatch.p2 Feature point coordinates from view 2
         %
         % P = M.p2() is a 2xN matrix containing the feature points coordinates
         % from view 1.  These are the (u,v) properties of the feature F2 passed
@@ -189,21 +224,22 @@ classdef FeatureMatch < handle
         end
         
         function s = p(m, k)
-        %FeatureMatch.p Return  point coordinates
+        %FeatureMatch.p Feature point coordinate pairs
         %
-        % P = M.p() is a 4xN matrix containing the feature points.  Each column
-        % contains the coordinates of a pair of corresponding points [u1,v1,u2,v2].
+        % P = M.p() is a 4xN matrix containing the feature point coordinates.
+        % Each column contains the coordinates of a pair of corresponding 
+        % points [u1,v1,u2,v2].
         %
         % See also FeatureMatch.p1, FeatureMatch.p2.
             s = [m.xy_];
         end
         
         function plot(m, varargin)       
-        %FeatureMatch.plot Overlay correspondences
+        %FeatureMatch.plot Show corresponding points
         %
         % M.plot() overlays the correspondences in the FeatureMatch vector M
-        % on the current figure.  The figure must be of two images as created
-        % by passing a cell array of two images to idisp(), eg.
+        % on the current figure.  The figure must comprise views 1 and 2 side
+        % by side, for example by:
         %
         %      idisp({im1,im2})
         %      m.plot()
@@ -211,7 +247,10 @@ classdef FeatureMatch < handle
         % M.plot(LS) as above but the optional line style arguments LS are
         % passed to plot.
         %
-        % See also idisp.
+        % Notes::
+        % - Using IDISP as above adds UserData to the figure, and an error is 
+        %   created if this UserData is not found.
+        % See also IDISP.
 
             try
                 ud = get(gca, 'UserData');
@@ -234,9 +273,16 @@ classdef FeatureMatch < handle
         %FeatureMatch.ransac Apply RANSAC
         %
         % M.ransac(FUNC, OPTIONS) applies the RANSAC algorithm to fit the point
-        % correspondences to the function FUNC.  The OPTIONS are passed to the
-        % ransac function.  Elements of the FeatureMatch vector have their
-        % status updated in place to indicate whether they are inliers or outliers.
+        % correspondences to the model described by the function FUNC.  The 
+        % OPTIONS are passed to the RANSAC() function.  Elements of the 
+        % FeatureMatch vector have their status updated in place to indicate 
+        % whether they are inliers or outliers.
+        %
+        % Example::
+        %      f1 = isurf(im1);
+        %      f2 = isurf(im2);
+        %      m = f1.match(f2);
+        %      m.ransac( @fmatrix, 1e-4);
         %
         % See also FMATRIX, HOMOGRAPHY, RANSAC.
             [M,in,resid] = ransac(func, [m.xy_], varargin{:});
