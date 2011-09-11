@@ -41,4 +41,9 @@ function im = iint(in, cls)
         cls = 'uint8';
     end
 
-    im = cast(round( in * double(intmax(cls))), cls);
+    if isfloat(in)
+        % rescale to integer
+        im = cast(round( in * double(intmax(cls))), cls);
+    else
+        im = cast(in, cls);
+    end
