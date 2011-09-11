@@ -18,8 +18,9 @@
 % scale         feature scale
 % descriptor    feature descriptor (vector)
 %
-% Properties of a vector of ScalePointFeature objects are a vector whose elements
-% are the named property of the corresponding element of the feature vector.
+% Properties of a vector of ScalePointFeature objects are returned as a vector.
+% If F is a vector (Nx1) of ScalePointFeature objects then F.u is a 2xN matrix
+% with each column the corresponding point coordinate.
 %
 % See also PointFeature, SurfPointFeature, SiftPointFeature.
 
@@ -92,7 +93,12 @@ classdef ScalePointFeature < PointFeature
             opt.color = 'g';
             opt.alpha = 0.2;
             [opt,args] = tb_optparse(opt, varargin);
-
+            
+            if length(args) == 1 && isstr(args{1})
+                opt.color = args{1};
+                args = {};
+            end
+            
             holdon = ishold;
             hold on
 
