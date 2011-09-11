@@ -16,12 +16,11 @@
 % strength      feature strength
 % descriptor    feature descriptor (vector)
 %
-% Properties of a vector of PointFeature objects are a vector whose elements
-% are the named property of the corresponding element of the feature vector.
+% Properties of a vector of PointFeature objects are returned as a vector.
+% If F is a vector (Nx1) of PointFeature objects then F.u is a 2xN matrix
+% with each column the corresponding point coordinate.
 %
 % See also ScalePointFeature, SurfPointFeature, SiftPointFeature.
-
-
 
 % Copyright (C) 1993-2011, by Peter I. Corke
 %
@@ -205,13 +204,13 @@ classdef PointFeature < handle
         end
 
         function display(f)
-        %PointFeature.display Display the value of a region feature
+        %PointFeature.display Display value
         %
-        % F.display() is a compact string representation of the region feature.
+        % F.display() displays a compact human-readable representation of the feature.
         % If F is a vector then the elements are printed one per line.
         %
         % Notes::
-        % - this method is invoked implicitly at the command line when the result
+        % - This method is invoked implicitly at the command line when the result
         %   of an expression is a PointFeature object and the command has no trailing
         %   semicolon.
         %
@@ -232,7 +231,7 @@ classdef PointFeature < handle
         end % display()
 
         function ss = char(features)
-        %PointFeature.char Create string representation of region feature
+        %PointFeature.char Convert to string
         %
         % S = F.char() is a compact string representation of the point feature.
         % If F is a vector then the string has multiple lines, one per element.
