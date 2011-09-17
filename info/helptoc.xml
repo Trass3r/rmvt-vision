@@ -16,7 +16,7 @@
   <tocitem target="simulink.html" image="$toolbox/matlab/icons/reficon.gif">Simulink</tocitem>
 
   <!-- Manual -->
-  <tocitem target="../robot.pdf" image="$toolbox/matlab/icons/reficon.gif">Manual</tocitem>
+  <tocitem target="../vision.pdf" image="$toolbox/matlab/icons/reficon.gif">Manual</tocitem>
 
   <!-- Examples -->
   <tocitem target="./examples/examples.html" image="$toolbox/matlab/icons/demoicon.gif">Examples</tocitem>
