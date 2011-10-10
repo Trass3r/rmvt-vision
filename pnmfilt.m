@@ -1,16 +1,26 @@
 %PNMFILT Pipe image through PNM utility
 %
-% OUT = PNMFILT(IM, PNMCMD) pipes the image IM through a Unix filter program
-% and returns its output as an image. The program given by the string PNMCMD
-% must accept and return images in PNM format.
+% OUT = PNMFILT(CMD) runs the external program given by the string CMD
+% and the output (assumed to be PNM format) is returned as OUT.
+%
+% OUT = PNMFILT(CMD, IM) pipes the image IM through the external program
+% given by the string CMD and the output is returned as OUT.  The external 
+% program must accept and return images in PNM format.
+%
+% Examples::
+%       im = pnmfilt('ppmforge -cloud');
+%       im = pnmfilt('pnmrotate', lena);
 %
 % Notes::
 %  - Provides access to a large number of Unix command line utilities such
-%    as ImageMagick.
+%    as ImageMagick and netpbm.
+%  - The input image is passed as stdin, the output image is assumed to
+%    come from stdout.
+%  - MATLAB doesn't support i/o to pipes so the image is written to a
+%    temporary file, the command run to another temporary file, and that
+%    is read into MATLAB.
 %
 % See also PGMFILT, IREAD.
-
-
 
 % Copyright (C) 1993-2011, by Peter I. Corke
 %
@@ -29,18 +39,29 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-function im2 = pnmfilt(im, cmd)
+function im2 = pnmfilt(cmd, im)
 
 	% MATLAB doesn't support pipes, so it all has to be done via 
 	% temp files :-(
 
-	% make up two file names
-	ifile = sprintf('%s.pnm', tempname);
+    % create temporary output file
 	ofile = sprintf('%s.pnm', tempname);
 
-    imwrite(im, ifile, 'pgm');
-	%cmd
-	unix([cmd ' < ' ifile ' > ' ofile]);
+    quiet = '2> /dev/null';
 
-	im2 = double( imread(ofile) );
-	unix(['/bin/rm ' ifile ' ' ofile]);
+    if nargin < 2
+        unix([cmd ' > ' ofile ' ' quiet]);
+    else
+        % create temporary input file
+        ifile = sprintf('%s.pnm', tempname);
+        imwrite(im, ifile, 'pnm');
+        unix([cmd ' < ' ifile ' > ' ofile ' ' quiet]);
+    end
+
+	im2 = idouble( imread(ofile) );
+
+    if nargin < 2
+        unix(['/bin/rm ' ofile]);
+    else
+        unix(['/bin/rm ' ifile ' ' ofile]);
+    end
