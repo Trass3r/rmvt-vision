@@ -34,6 +34,7 @@
   */
 #include "mex.h"
 #include <math.h>
+#include    <stdint.h>
 
 /*
 #define DEBUG   1
@@ -106,7 +107,7 @@ ilabel(PIXEL *im, int width, int height, int connectivity, int minsize,
     LABEL *limage,
     LABEL **parent_out, PIXEL **color_out, unsigned int **edge_out)
 {
-    int     *blobsize, row, col, i, j, k, nlabels;
+    int     *blobsize, row, col, i, j, nlabels;
     int newlabel;
     LABEL   *lmap2;
     LABEL   prevlab, curlab;
@@ -169,12 +170,14 @@ ilabel(PIXEL *im, int width, int height, int connectivity, int minsize,
         prevlab = UNKNOWN;
         for (col=0; col<width; col++) {
             curpix = PIX(im,row,col);
-            prevpix = PIX(im,row,col-1);
             curlab = UNKNOWN;       // start with no known label
+            if (col > 0) {
+                prevpix = PIX(im,row,col-1);
+                /* if no change in pixel value then inherit label from left */
+                if (curpix == prevpix)
+                    curlab = prevlab;
+            }
 
-            /* if no change in pixel value then inherit label from left */
-            if ((col > 0) && (curpix == prevpix))
-                curlab = prevlab;
             
 #ifdef  DEBUG
                 printf("(%d,%d) cp=%d, pp=%d, cl=%d, pl=%d\n", row, col, curpix, prevpix,
@@ -458,7 +461,7 @@ lresolve(LABEL l)
 
     for (i=l; lmap[i] > 0; )
         i = lmap[i];
-#ifdef  DEBUG>1
+#ifdef  DEBUG
     if (l != i)
         printf("resolved %d to %d\n", l, i);
 #endif
@@ -596,8 +599,8 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         LABEL   *p;
         int i;
 
-        PARENT_OUT = mxCreateNumericMatrix(maxlabel, 1, mxUINT16_CLASS, mxREAL);
-        p = (LABEL *)mxGetData(PARENT_OUT);
+        PARENT_OUT = mxCreateNumericMatrix(maxlabel, 1, mxUINT32_CLASS, mxREAL);
+        p = (uint32_t *)mxGetData(PARENT_OUT);
         for (i=0; i<maxlabel; i++)
             p[i] = parents[i];
         }
