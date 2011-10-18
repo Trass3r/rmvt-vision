@@ -30,7 +30,11 @@
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
 function e = blackbody(lam, T)
-    C1 = 5.9634e-17;
-    C2 = 1.4387e-2;
+    % physical constants
+    h = 6.626068e-34; % m2 kg / s   (Planck's constant)
+    c = 2.99792458e8; % m/s         (speed of light)
+    k = 1.3806503e-23; % m^2 kg s-2 K-1  (Boltzmann's constant)
+
     lam = lam(:);
-    e = 2 * C1 ./ (lam.^5 .* (exp(C2/T./lam) - 1));
+
+    e = 2*h*c^2 ./ (lam.^5 .* (exp(h*c/k/T./lam) - 1));
