@@ -31,9 +31,9 @@
 
 function e = blackbody(lam, T)
     % physical constants
-    h = 6.626068e-34; % m2 kg / s   (Planck's constant)
     c = 2.99792458e8; % m/s         (speed of light)
-    k = 1.3806503e-23; % m^2 kg s-2 K-1  (Boltzmann's constant)
+    h = 6.626068e-34; % m2 kg / s   (Planck's constant)
+    k = 1.3806503e-23; % J K-1      (Boltzmann's constant)
 
     lam = lam(:);
 
