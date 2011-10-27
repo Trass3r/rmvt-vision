@@ -32,6 +32,10 @@
 #include "mex.h"
 #include <math.h>
 
+#ifdef  __LCC__
+#define  NAN    mxGetNaN()
+#endif
+
 /* Input Arguments */
 
 #define	IM_IN		prhs[0]
@@ -213,8 +217,8 @@ irank(const mxArray * msrc, const mxArray * mmask, const mxArray * morder, int h
 	int             src_nrows, src_ncols;
 	mxArray        *mdest;
 	double         *src, *dest, *mask, min, max, offset, scale;
-	int             band_offset, row_offset, col_offset;
-	int             src_band, src_row, src_col, dest_band, dest_row,
+	int             row_offset, col_offset;
+	int             src_row, src_col, dest_row,
 	                mask_row, mask_col, dest_col, i, j, k, iorder;
 	unsigned int	*hist, *ph, cumsum, count, nbinned;
 

@@ -34,7 +34,16 @@
   */
 #include "mex.h"
 #include <math.h>
+
+#ifdef __LCC__
+#ifdef  WIN32
+typedef unsigned int uint32_t;
+#else
+#error "LCC under WIN64 not supported"
+#endif
+#else
 #include    <stdint.h>
+#endif
 
 /*
 #define DEBUG   1
@@ -600,7 +609,11 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         int i;
 
         PARENT_OUT = mxCreateNumericMatrix(maxlabel, 1, mxUINT32_CLASS, mxREAL);
+#ifdef  __LCC__
+        p = (unsigned int *)mxGetData(PARENT_OUT);
+#else
         p = (uint32_t *)mxGetData(PARENT_OUT);
+#endif
         for (i=0; i<maxlabel; i++)
             p[i] = parents[i];
         }
