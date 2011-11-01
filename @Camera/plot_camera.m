@@ -26,9 +26,9 @@ function h = plot_camera(c, varargin)
     end
     
     if 1
-        c.h_visualize = c.drawCamera(opt.scale, arglist{:});
+        c.h_camera3D = c.drawCamera(opt.scale, arglist{:});
 
-        set(c.h_visualize, 'Matrix', opt.Tcam);
+        set(c.h_camera3D, 'Matrix', opt.Tcam);
 
     else
         % old representation as a colored pyramid
@@ -45,7 +45,7 @@ function h = plot_camera(c, varargin)
         ud.vertices = vertices;
 
         % create the camera 
-        vertices = transformp(T, vertices);
+        vertices = homtrans(T, vertices);
 
         % the first index for each face controls the face color
         faces = [
