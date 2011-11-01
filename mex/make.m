@@ -16,10 +16,13 @@
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
 fprintf('** building MEX files for MVTB\n');
-mex -outdir .. iwindow.c
-mex -outdir .. ivar.c
-mex -outdir .. imorph.c
-mex -outdir .. irank.c
-mex -outdir .. fhist.c
-mex -outdir .. imatch.c
-mex -outdir .. ilabel.c
+mex closest.c
+mex fhist.c
+mex hist2d.c
+mex ilabel.c
+mex imatch.c
+mex imorph.c
+mex irank.c
+mex ivar.c
+mex iwindow.c
+mex stereo_match.c

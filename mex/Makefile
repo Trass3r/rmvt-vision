@@ -16,19 +16,18 @@
 # along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
 mex:
-	mex iwindow.c
-	mex ivar.c
+	mex closest.c
+	mex fhist.c
+	mex hist2d.c
+	mex ilabel.c
+	mex imatch.c
 	mex imorph.c
 	mex irank.c
-	mex hist2d.c
-	mex fhist.c
-	mex imatch.c
-	mex ilabel.c
+	mex ivar.c
+	mex iwindow.c
 	mex stereo_match.c
-	mex firewire.c -ldc1394_control -lraw1394
+	#mex firewire.c -ldc1394_control -lraw1394
 
-install:
-	cp *.mex* ..
 
 clean:
 	-\rm *.mex*
