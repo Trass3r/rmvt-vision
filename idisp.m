@@ -80,6 +80,10 @@
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 function idisp(im, varargin)
 
+    if ~isnumeric(im)
+        error('expecting an image (2D or 3D matrix)');
+    end
+
     opt.ncolors = 256;
     opt.gui = true;
     opt.axes = true;
