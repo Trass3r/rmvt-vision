@@ -32,19 +32,18 @@
 % mmread brings the whole movie into memory.  Not entirely sure what
 % libavbin uses memory-wise, it takes a long time to "open" the file.
 
-classdef Video < handle
+classdef Video < ImageSource
 
     properties
-        width
-        height
-        rate
 
-        curFrame
+        video
+        adaptor
+        continuous
     end
 
     methods
 
-        function m = Video(camera)
+        function m = Video(varargin)
         %Video.Video Video camera constructor
         %   
         % V = Video(CAMERA, OPTIONS) is a Video object that acquires
@@ -61,15 +60,100 @@ classdef Video < handle
         % 'gamma',G        Apply gamma correction with gamma=G
         % 'scale',S        Subsample the image by S in both directions.
         % 'resolution',S   Obtain an image of size S=[W H].
+        % 'id',I           ID of camera
         %
         % Notes:
         % - The specified 'resolution' must match one that the camera is capable of,
         %   otherwise the result is not predictable.
 
             % invoke the superclass constructor and process common arguments
-            m = m@ImageSource(varargin);
+            m = m@ImageSource({});
+            m.video = [];
+            m.adaptor = [];
+            
+            opt.list = false;
+            opt.continuous = [];
+            nargin
+            varargin
+            [opt,args] = tb_optparse(opt, varargin);
+            m.continuous = opt.continuous;
+            if nargin > 0 && strcmp(varargin{1}, '?')
+                opt.list = true;
+            end
+            if exist('imaqhwinfo')
+                fprintf('Image acquisition toolbox detected\n');
 
-            m.curFrame = 0;
+                if opt.list
+                    % list available adaptors and cameras
+                    hwinfo = imaqhwinfo();
+                    adaptors = hwinfo.InstalledAdaptors
+                    for adaptorName=adaptors
+                        adaptor = imaqhwinfo(adaptorName{1});
+                        fprintf('Adaptor: %s\n', adaptor.AdaptorName);
+                        for i=1:numel(adaptor.DeviceInfo)
+                            info = adaptor.DeviceInfo(i);
+                            fprintf('  %s (id=%d)\n', info.DeviceName, adaptor.DeviceIDs{i});
+                            for format=info.SupportedFormats
+                                fprintf('    %s', format{1});
+                                if strcmp(format{1}, info.DefaultFormat)
+                                    fprintf(' (default)\n');
+                                else
+                                    fprintf('\n');
+                                end
+                            end
+                        end
+                    end
+                    return;
+                end
+
+                %res = regexp(a, '[0-9]+x[0-9]+', 'match')
+                %x=sscanf(res{1}, '%dx%d')
+
+                if length(args) == 0
+                    % no adaptor given, scan for first one with devices
+                    hwinfo = imaqhwinfo();
+                    adaptors = hwinfo.InstalledAdaptors;
+                    for adaptorName=adaptors
+                        adaptor = imaqhwinfo(adaptorName{1});
+                        if numel(adaptor.DeviceInfo) == 0
+                            continue;
+                        end
+                    end
+                    fprintf('Using adaptor %s\n', adaptor.AdaptorName);
+                    m.video = videoinput(adaptor.AdaptorName);
+                    m.adaptor = adaptor;
+                elseif  length(args) == 1
+                    % we were given an adaptor
+
+                    if isempty(im.id)
+                        im.id = 1;
+                    end
+                    m.vid = videoinput(camera, im.id);
+
+                    fprintf('  %s (id=%d)\n', info.DeviceName, adaptor.DeviceIDs{i});
+                    for format=info.SupportedFormats
+                        fprintf('    %s', format);
+                        if strcmp(format, info.DefaultFormat)
+                            fprintf(' (default)\n');
+                        else
+                            fprintf('\n');
+                        end
+                    end
+                end
+            else
+                error('no camera interface available');
+            end
+            set(m.video, 'ReturnedColorSpace', 'RGB');
+            sz = get(m.video, 'VideoResolution');
+            m.width = sz(1);
+            m.height = sz(2);
+            if m.continuous > 0
+                set(m.video, 'FrameGrabInterval', m.continuous);
+                start(m.video);
+            end
+        end
+        
+        function paramSet(v, a1)
         end
 
         % destructor
@@ -90,19 +174,23 @@ classdef Video < handle
         %
         % Notes::
         % - the function will block until the next frame is acquired.
-            [data, time] = FFGrab('getVideoFrame', 0, m.curFrame);
-            m.curFrame = m.curFrame + 1;
 
-            if (numel(data) > 3*width*height)
-                warning('Movie: dimensions do not match data size. Got %d bytes for %d x %d', numel(data), width, height);
-            end
-
-            if any(size(data) == 0)
-                warning('Movie: could not decode frame %d', m.curFrame);
+            if m.continuous
+                im = getdata(m.video);
             else
-                % the data ordering is wrong for matlab images, so permute it
-                data = permute(reshape(data, 3, m.width, m.height),[3 2 1]);
-                im = data;
+                im = getsnapshot(m.video);
+            end
+        end
+
+        function preview(m, control)
+            %Video.preview Control image preview
+            %
+            % V.preview(true) enables camera preview in a separate window
+            %
+            if control
+                preview(m.video);
+            else
+                closepreview(m.video);
             end
         end
 
@@ -111,14 +199,18 @@ classdef Video < handle
         %
         % V.char() is a string representing the state of the camera object in 
         % human readable form.
-
             s = '';
-            s = strvcat(s, sprintf('%d video streams', m.nrVideoStreams));
-            s = strvcat(s, sprintf('  %d x %d @ %d fps', m.width, m.height, m.rate));
-            s = strvcat(s, sprintf('  %d frames, %f sec', m.nrFramesTotal, m.totalDuration));
-            s = strvcat(s, sprintf('%d audio streams', m.nrAudioStreams));
+
+            if ~isempty(m.adaptor)
+                if m.continuous > 0
+                    mode = sprintf('(continuous, every %d frame)', m.continuous);
+                else
+                    mode = '';
+                end
+                s = strvcat(s, sprintf('Video: %s%s', m.adaptor.AdaptorName, mode));
+                s = strvcat(s, sprintf('  %d x %d', m.width, m.height));
+            end
         end
 
     end
 end
-
