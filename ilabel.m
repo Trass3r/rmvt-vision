@@ -29,6 +29,7 @@
 % - Connectivity is performed using 4 nearest neighbours by default. To use
 %   8-way connectivity pass a second argument of 8, eg. ILABEL(IM, 8).
 % - This is a "low level" function, IBLOBS is a higher level interface.
+% - Connectivity is only performed within a 2D image.
 %
 % See also IBLOBS, IMOMENTS.
 
