@@ -28,7 +28,7 @@
 function [x,y] = lambda2xy(lambda, varargin)
     cmf = cmfxyz(lambda, varargin{:});
 
-    xy = xyz2xy(cmf);
+    xy = tristim2cc(cmf);
     if nargout == 2
         x = xy(1);
         y = xy(2);

@@ -63,7 +63,7 @@ function r = colorname(a, varargin)
                 k = k + 1;
                 rgb(k,:) = A' / 255.0;
                 names{k} = lower( strtrim(line(next:end)) );
-                xy = xyz2xy( colorspace('RGB->XYZ', rgb) );
+                xy = tristim2cc( colorspace('RGB->XYZ', rgb) );
             end
         end
         s.rgb = rgb;
