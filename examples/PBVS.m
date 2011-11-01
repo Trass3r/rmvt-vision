@@ -89,7 +89,7 @@ classdef PBVS < VisualServo
             % this is the 'external' view of the points and the camera
             %plot_sphere(vs.P, 0.05, 'b')
             %cam2 = showcamera(T0);
-            vs.camera.visualize(vs.P, 'label');
+            vs.camera.plot_camera(vs.P, 'label');
             %camup([0,-1,0]);
 
             vs.history = [];
@@ -115,7 +115,7 @@ classdef PBVS < VisualServo
 
             % update the history variables
             hist.uv = uv(:);
-            vel = tr2diff(Td);
+            vel = tr2delta(Td);
             hist.vel = vel;
             hist.Tcam = vs.Tcam;
 

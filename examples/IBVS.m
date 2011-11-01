@@ -114,7 +114,7 @@ classdef IBVS < VisualServo
             % this is the 'external' view of the points and the camera
             %plot_sphere(vs.P, 0.05, 'b')
             %cam2 = showcamera(T0);
-            vs.camera.visualize(vs.P, 'label');
+            vs.camera.plot_camera(vs.P, 'label');
             %camup([0,-1,0]);
 
             vs.vel_p = [];
@@ -148,7 +148,7 @@ classdef IBVS < VisualServo
             % compute the Jacobian
             if isempty(vs.depth)
                 % exact depth from simulation (not possible in practice)
-                pt = transformp(inv(vs.Tcam), vs.P);
+                pt = homtrans(inv(vs.Tcam), vs.P);
                 J = vs.camera.visjac_p(uv, pt(3,:) );
             elseif ~isempty(Zest)
                 J = vs.camera.visjac_p(uv, Zest);
@@ -180,7 +180,7 @@ classdef IBVS < VisualServo
 
             % update the history variables
             hist.uv = uv(:);
-            vel = tr2diff(Td);
+            vel = tr2delta(Td);
             hist.vel = vel;
             hist.e = e;
             hist.en = norm(e);
@@ -232,7 +232,7 @@ classdef IBVS < VisualServo
             Zest = vs.theta;
 
             % true depth
-            P_CT = transformp(inv(vs.Tcam), vs.P);
+            P_CT = homtrans(inv(vs.Tcam), vs.P);
             Ztrue = P_CT(3,:);
 
             if vs.verbose
