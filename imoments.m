@@ -103,18 +103,18 @@ function F = imoments(varargin)
 
     %F = [m00 m10/m00 m01/m00 a b th];
     F = RegionFeature;
-    F.area = m00;
+    F.area_ = m00;
     if m00 > 0
-        F.uc = m10/m00;
-        F.vc = m01/m00;
+        F.uc_ = m10/m00;
+        F.vc_ = m01/m00;
     else
-        F.uc = NaN;
-        F.vc = NaN;
+        F.uc_ = NaN;
+        F.vc_ = NaN;
     end
     F.a = a;
     F.b = b;
-    F.shape = b/a;
-    F.theta = th;
+    F.shape_ = b/a;
+    F.theta_ = th;
     F.moments.m00 = m00;
     F.moments.m01 = m01;
     F.moments.m10 = m10;

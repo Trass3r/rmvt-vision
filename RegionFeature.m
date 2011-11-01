@@ -15,6 +15,7 @@
 % Properties::
 %  uc            centroid, horizontal coordinate
 %  vc            centroid, vertical coordinate
+%  p             centroid (uc, vc)
 %  umin          bounding box, minimum horizontal coordinate
 %  umax          bounding box, maximum horizontal coordinate
 %  vmin          bounding box, minimum vertical coordinate
@@ -25,21 +26,24 @@
 %  children      a list of indices of features that are children of this feature
 %  edgepoint     coordinate of a point on the perimeter
 %  edge          a list of edge points 2xN matrix
-%  perimeter     number of edge pixels
+%  perimeter     edge length (pixels)
 %  touch         true if region touches edge of the image
 %  a             major axis length of equivalent ellipse
 %  b             minor axis length of equivalent ellipse
 %  theta         angle of major ellipse axis to horizontal axis
 %  shape         aspect ratio b/a (always <= 1.0)
 %  circularity   1 for a circle, less for other shapes
-%  moments       a structure containing moments of order 0 to 2
+%  moments       a stru_ture containing moments of order 0 to 2
 %
 % Note::
+%  - properties uc, vc, p, class, label, touch, theta, shape, circularity,
+%    perimeter can be referenced from a vector of RegionFeature objects 
+%    and return a vector of values (not a list).
 %  - RegionFeature is a reference object.
 %  - RegionFeature objects can be used in vectors and arrays
 %  - This class behaves differently to LineFeature and PointFeature when
 %    getting properties of a vector of RegionFeature objects.  For example
-%    R.uc will be a list not a vector.
+%    R.u_ will be a list not a vector.
 %    
 % See also IBLOBS, IMOMENTS.
 
@@ -65,30 +69,30 @@
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 classdef RegionFeature < handle
     properties
-        area
-        uc       % centroid
-        vc
+        area_
+        uc_          % centroid
+        vc_
         
         umin        % the bounding box
         umax
         vmin
         vmax
 
-        class       % the class of the pixel in the original image
-        label       % the label assigned to this region
+        class_       % the class of the pixel in the original image
+        label_       % the label assigned to this region
         parent      % the label of this region's parent
         children    % a list of features that are children of this feature
         edgepoint   % (x,y) of a point on the perimeter
         edge        % list of edge points
-        perimeter   % length of edge
-        touch       % 0 if it doesnt touch the edge, 1 if it does
+        perimeter_   % length of edge
+        touch_       % 0 if it doesnt touch the edge, 1 if it does
 
         % equivalent ellipse parameters
         a           % the major axis length
         b           % the minor axis length  b<a
-        theta       % angle of major axis with respect to horizontal
-        shape       % b/a  < 1.0
-        circularity
+        theta_       % angle of major axis with respect to horizontal
+        shape_       % b/a  < 1.0
+        circularity_
 
         moments     % moments, a struct of: m00, m01, m10, m02, m20, m11
     end
@@ -100,8 +104,8 @@ classdef RegionFeature < handle
         %
         % R = RegionFeature() is a region feature object with null parameters.
 
-            b.area = [];
-            b.label = [];
+            b.area_ = [];
+            b.label_ = [];
             b.edge = [];
         end
 
@@ -142,19 +146,19 @@ classdef RegionFeature < handle
             ss = '';
             for i=1:length(b)
                 bi = b(i);
-                if isempty(bi.area)
+                if isempty(bi.area_)
                     s = '[]';
                 elseif isempty(bi.label)
-                    s = sprintf('area=%d, cent=(%.1f,%.1f), theta=%.2f, a/b=%.3f', ...
-                        bi.area, bi.uc, bi.vc, bi.theta, bi.shape);
+                    s = sprintf('area=%d, cent=(%.1f,%.1f), theta=%.2f, b/a=%.3f', ...
+                        bi.area_, bi.uc_, bi.vc_, bi.theta_, bi.shape_);
                 elseif ~isempty(bi.edge)
-                    s = sprintf('(%d) area=%d, cent=(%.1f,%.1f), theta=%.2f, a/b=%.3f, class=%d, label=%d, touch=%d, parent=%d, perim=%d, circ=%.3f', ... 
-                        i, bi.area, bi.uc, bi.vc, bi.theta, bi.shape, bi.class, bi.label, ...
-                        bi.touch, bi.parent, bi.perimeter, bi.circularity);
+                    s = sprintf('(%d) area=%d, cent=(%.1f,%.1f), theta=%.2f, b/a=%.3f, class=%d, label=%d, touch=%d, parent=%d, perim=%d, circ=%.3f', ... 
+                        i, bi.area_, bi.uc_, bi.vc_, bi.theta_, bi.shape_, bi.class_, bi.label_, ...
+                        bi.touch_, bi.parent, bi.perimeter_, bi.circularity_);
                 else
-                    s = sprintf('(%d) area=%d, cent=(%.1f,%.1f), theta=%.2f, a/b=%.3f, color=%d, label=%d, touch=%d, parent=%d', ... 
-                        i, bi.area, bi.uc, bi.vc, bi.theta, bi.shape, bi.class, bi.label, ...
-                        bi.touch, bi.parent);
+                    s = sprintf('(%d) area=%d, cent=(%.1f,%.1f), theta=%.2f, b/a=%.3f, color=%d, label=%d, touch=%d, parent=%d', ... 
+                        i, bi.area_, bi.uc_, bi.vc_, bi.theta_, bi.shape_, bi.class_, bi.label_, ...
+                        bi.touch_, bi.parent);
 
                 end
                 ss = strvcat(ss, s);
@@ -205,12 +209,12 @@ classdef RegionFeature < handle
             hold on
             for b=bb
                 %% TODO: mark with x and o, dont use markfeatures
-                %markfeatures([b.uc b.uc], 0, varargin{:});
+                %markfeatures([b.uc_ b.uc_], 0, varargin{:});
                 if isempty(varargin)
-                    plot(b.uc, b.vc, 'go');
-                    plot(b.uc, b.vc, 'gx');
+                    plot(b.uc_, b.vc_, 'go');
+                    plot(b.uc_, b.vc_, 'gx');
                 else
-                    plot(b.uc, b.vc, varargin{:})
+                    plot(b.uc_, b.vc_, varargin{:})
                 end
 
             end
@@ -244,7 +248,7 @@ classdef RegionFeature < handle
         % If R is a vector then each element is plotted.
             for b=bb
                 J = [b.moments.u20 b.moments.u11; b.moments.u11 b.moments.u02];
-                plot_ellipse(4*J/b.moments.m00, [b.uc, b.vc], varargin{:});
+                plot_ellipse(4*J/b.moments.m00, [b.uc_, b.vc_], varargin{:});
             end
         end
         
@@ -256,7 +260,7 @@ classdef RegionFeature < handle
         % point and the angle respectively.  These vectors have 400 elements
         % irrespective of region size.
 
-            dxy = bsxfun(@minus, f.edge, [f.uc f.vc]');
+            dxy = bsxfun(@minus, f.edge, [f.uc_ f.vc_]');
 
             r = norm2(dxy)';
             th = -atan2(dxy(2,:), dxy(1,:));
@@ -271,6 +275,44 @@ classdef RegionFeature < handle
                 ri = interp1(th, r, thi, 'spline');
             end
         end
+
+        % methods to provide convenient access to properties of object vectors
+        function val = uc(f)
+            val = [f.uc_];
+        end
+
+        function val = vc(f)
+            val = [f.vc_];
+        end
+
+        function val = p(f)
+            val = [[f.uc_]; [f.vc_]];
+        end
+
+        function val = class(f)
+            val = [f.class_];
+        end
+
+        function val = label(f)
+            val = [f.label_];
+        end
+
+        function val = touch(f)
+            val = [f.touch_];
+        end
+
+        function val = shape(f)
+            val = [f.shape_];
+        end
+
+        function val = circularity(f)
+            val = [f.circularity_];
+        end
+
+        function val = perimeter(f)
+            val = [f.perimeter_];
+        end
+
     end
 
 end

@@ -17,6 +17,7 @@
 %
 %  uc            centroid, horizontal coordinate
 %  vc            centroid, vertical coordinate
+%  p             centroid (uc, vc)
 %  umin          bounding box, minimum horizontal coordinate
 %  umax          bounding box, maximum horizontal coordinate
 %  vmin          bounding box, minimum vertical coordinate
@@ -27,7 +28,7 @@
 %  children      a list of indices of features that are children of this feature
 %  edgepoint     coordinate of a point on the perimeter
 %  edge          a list of edge points 2xN matrix
-%  perimeter     number of edge pixels
+%  perimeter     edge length (pixels)
 %  touch         true if region touches edge of the image
 %  a             major axis length of equivalent ellipse
 %  b             minor axis length of equivalent ellipse
@@ -35,6 +36,10 @@
 %  shape         aspect ratio b/a (always <= 1.0)
 %  circularity   1 for a circle, less for other shapes
 %  moments       a structure containing moments of order 0 to 2
+%
+% Notes::
+% - the RegionFeature objects are ordered by the raster order of the top most
+%   point (smallest v coordinate) in each blob.
 %
 % See also RegionFeature, ILABEL, IMOMENTS.
 
@@ -61,7 +66,7 @@ function [features,labimg] = iblobs(im, varargin)
 	[nr,nc] = size(im);
 
     opt.area = [0 Inf];
-    opt.shape = [0 Inf]
+    opt.shape = [0 Inf];
     opt.class = NaN;
     opt.touch = NaN;
     opt.aspect = 1;
@@ -104,8 +109,8 @@ function [features,labimg] = iblobs(im, varargin)
 		% apply various filters
 		if 	((t == opt.touch) || isnan(opt.touch)) && ...
             ((color(i) == opt.class) || isnan(opt.class)) && ...
-			(F.area >= opt.area(1)) && ...
-			(F.area <= opt.area(2)) && ...
+			(F.area_ >= opt.area(1)) && ...
+			(F.area_ <= opt.area(2)) && ...
 			(					...
 				isnan(shape) ||			...
 				(               ...
@@ -122,9 +127,12 @@ function [features,labimg] = iblobs(im, varargin)
 
             % optionally follow the boundary
             if opt.boundary
-                F.edge = edgelist(im, [x y])';
-                F.perimeter = numcols(F.edge);
-                F.circularity = 4*pi*F.area/F.perimeter^2;
+                e = edgelist(im, [x y]);
+                F.edge = e';
+
+                e = diff([e; e(1,:)])';
+                F.perimeter_ = sum( colnorm(e) );
+                F.circularity_ = 4*pi*F.area_/F.perimeter_^2;
             end
 
             % set object properties
@@ -132,11 +140,12 @@ function [features,labimg] = iblobs(im, varargin)
 			F.umax = umax;
 			F.vmin = vmin;
 			F.vmax = vmax;
-			F.touch = t;
-			F.shape = shape;
-            F.label = i;
+			F.touch_ = t;
             F.parent = parent(i);
-            F.class = color(i);
+
+			F.shape_ = shape;
+            F.label_ = i;
+            F.class_ = color(i);
 
             % save it in the feature vector
 			blob = blob+1;
