@@ -33,22 +33,17 @@ function im = col2im(col, img)
 
     ncols = numcols(col);
 
-    if ~((ncols == 1) | (ncols == 3)),
-        error('must be 1 or 3 columns');
-    end
-
-    if length(img) == 2,
+    if numel(img) == 2
         sz = img;
-    elseif length(img) == 3,
+    elseif numel(img) == 3
         sz = img(1:2);
     else
         sz = size(img);
         sz = sz(1:2);
     end
 
-    if ncols == 3,
-        sz = [sz 3];
+    if ncols > 1
+        sz = [sz ncols];
     end
 
-    sz
     im = reshape(col, sz);
