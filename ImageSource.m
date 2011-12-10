@@ -72,13 +72,18 @@ classdef ImageSource < handle
             opt.grey = false;
             opt.gamma = [];
             opt.scale = 1;
+            opt.width = [];
+            opt.height = [];
 
-            [opt,args] = tb_optparse(opt, varargin{:});
+            [opt,args] = tb_optparse(opt, varargin);
+            opt
             
             imsource.imageType = opt.imageType;
             imsource.makeGrey = opt.grey;
             imsource.gamma = opt.gamma;
             imsource.scaleFactor = opt.scale;
+            imsource.width = opt.width;
+            imsource.height = opt.height;
             
 
             % remaining arguments get passed to the subclass
