@@ -362,10 +362,10 @@ classdef CentralCamera < Camera
         % view is from the current camera pose C.T and the second is a relative motion
         % represented by the homogeneous transformation T.
         %
-        % E = C.F(C2) is the essential matrix relating two camera views described
+        % E = C.E(C2) is the essential matrix relating two camera views described
         % by camera objects C (first view) and C2 (second view).
         %
-        % E = C.F(F) is the essential matrix based on the fundamental matrix F (3x3)
+        % E = C.E(F) is the essential matrix based on the fundamental matrix F (3x3)
         % and the intrinsic parameters of camera C.
         %
         % Reference::
