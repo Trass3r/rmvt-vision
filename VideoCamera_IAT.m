@@ -41,6 +41,33 @@ classdef Video < ImageSource
         continuous
     end
 
+    methods(Static)
+        % class method to list the available video sources
+
+        function list()
+            % list available adaptors and cameras
+
+            hwinfo = imaqhwinfo();
+            adaptors = hwinfo.InstalledAdaptors
+            for adaptorName=adaptors
+                adaptor = imaqhwinfo(adaptorName{1});
+                fprintf('Adaptor: %s\n', adaptor.AdaptorName);
+                for i=1:numel(adaptor.DeviceInfo)
+                    info = adaptor.DeviceInfo(i);
+                    fprintf('  %s (id=%d)\n', info.DeviceName, adaptor.DeviceIDs{i});
+                    for format=info.SupportedFormats
+                        fprintf('    %s', format{1});
+                        if strcmp(format{1}, info.DefaultFormat)
+                            fprintf(' (default)\n');
+                        else
+                            fprintf('\n');
+                        end
+                    end
+                end
+            end
+        end
+    end
+
     methods
 
         function m = Video(varargin)
@@ -49,9 +76,6 @@ classdef Video < ImageSource
         % V = Video(CAMERA, OPTIONS) is a Video object that acquires
         % images from the local video camera specified by the string CAMERA.
         %
-        % If CAMERA is '?' a list of available cameras, and their
-        % characteristics is displayed.
-        %   
         % Options::
         % 'uint8'          Return image with uint8 pixels (default)
         % 'float'          Return image with float pixels
@@ -71,40 +95,14 @@ classdef Video < ImageSource
             m.video = [];
             m.adaptor = [];
             
-            opt.list = false;
             opt.continuous = [];
             nargin
             varargin
             [opt,args] = tb_optparse(opt, varargin);
             m.continuous = opt.continuous;
-            if nargin > 0 && strcmp(varargin{1}, '?')
-                opt.list = true;
-            end
             if exist('imaqhwinfo')
                 fprintf('Image acquisition toolbox detected\n');
 
-                if opt.list
-                    % list available adaptors and cameras
-                    hwinfo = imaqhwinfo();
-                    adaptors = hwinfo.InstalledAdaptors
-                    for adaptorName=adaptors
-                        adaptor = imaqhwinfo(adaptorName{1});
-                        fprintf('Adaptor: %s\n', adaptor.AdaptorName);
-                        for i=1:numel(adaptor.DeviceInfo)
-                            info = adaptor.DeviceInfo(i);
-                            fprintf('  %s (id=%d)\n', info.DeviceName, adaptor.DeviceIDs{i});
-                            for format=info.SupportedFormats
-                                fprintf('    %s', format{1});
-                                if strcmp(format{1}, info.DefaultFormat)
-                                    fprintf(' (default)\n');
-                                else
-                                    fprintf('\n');
-                                end
-                            end
-                        end
-                    end
-                    return;
-                end
 
                 %res = regexp(a, '[0-9]+x[0-9]+', 'match')
                 %x=sscanf(res{1}, '%dx%d')
@@ -207,8 +205,14 @@ classdef Video < ImageSource
                 else
                     mode = '';
                 end
-                s = strvcat(s, sprintf('Video: %s%s', m.adaptor.AdaptorName, mode));
-                s = strvcat(s, sprintf('  %d x %d', m.width, m.height));
+                s = strvcat(s, sprintf('Video: %s%s %d x %d', ...
+                    m.adaptor.AdaptorName, mode, m.width, m.height));
+
+                % show constructor time options
+                s2 = char@ImageSource(m);
+                if ~isempty(s2)
+                    s = strvcat(s, strcat(' - ', s2));
+                end
             end
         end
 

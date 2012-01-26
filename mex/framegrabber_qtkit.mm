@@ -1,43 +1,3 @@
-/*
- * framegrabber_qtkit.mm
- *
- * A MEX wrapper for QTKit camera interface.
- *
- * Peter Corke 26/1/2012
- * 
- * Based on CvCapture.mm distributed as part of OpenCV (modules/highgui/src)
- *
- *  Created by Nicholas Butko on 11/3/09.
- *  Copyright 2009. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice, 
- *    this list of conditions and the following disclaimer. 
- * 2. Redistributions in binary form must reproduce the above copyright notice, 
- *    this list of conditions and the following disclaimer in the documentation 
- *    and/or other materials provided with the distribution. 
- * 3. The name of the author may not be used to endorse or promote products 
- *    derived from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO 
- * EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- */
-
-/*
- * TODO
- *   STOP/START methods are pretty fragile and crash MATLAB
- */
 #include <iostream>
 #import <QTKit/QTKit.h>
 
@@ -75,7 +35,6 @@ using namespace std;
 	uint8_t* imagedata; 
 	size_t currSize; 
     size_t rowBytes;
-    int    nframes;
 
   @package;
     size_t width;
@@ -123,7 +82,7 @@ public:
 	
 	int startCaptureDevice(int cameraNum); 
 	void stopCaptureDevice(); 
-    int isRunning();
+    int inRunning();
 	
 	bool grabFrame(double timeOut); 
 	
@@ -167,16 +126,6 @@ void mexFunction(
 
     opcode = getInt(prhs[0]);
 
-    /* check for valid grabber pointer */
-    switch (opcode) {
-        case CAMERA_OP_LIST:
-        case CAMERA_OP_OPEN:
-		break;
-        default:
-	    if (grabber == NULL)
-		    mexErrMsgTxt("null pointer, device closed?");
-    }
-
     switch (opcode) {
         case CAMERA_OP_LIST:
             camera_list();
@@ -207,7 +156,7 @@ void mexFunction(
 
         case CAMERA_OP_ISRUNNING:
             if (nlhs > 0) {
-                double r = grabber->isRunning();
+                double r = grabber->started;
                 plhs[0] = mxCreateDoubleScalar(r);
             }
             break;
@@ -237,12 +186,8 @@ void mexFunction(
                 // grab the frame from QTKit using the Objective C class
                 grabber->grabFrame();
                 frame = grabber->retrieveFrame(0);
-                if (frame == NULL) {
-                    mexWarnMsgTxt("failed to grab a frame");
-                    plhs[0] = mxCreateDoubleMatrix(
-                        (mwSize) 0, (mwSize) 0, mxREAL);
-                    return;
-                }
+                if (frame == NULL)
+                    mexErrMsgTxt("failed to grab a frame");
 
                 // assign an output matrix
                 //   ret_image points to that matrix
@@ -283,8 +228,8 @@ void mexFunction(
 
             sprintf(err, "unknown operation code %d\n", opcode);
             mexErrMsgTxt(err);
-          }
         }
+    }
     return;
 }
 
@@ -346,42 +291,27 @@ int CvCaptureCAM::didStart() {
 	return started; 
 }
 
-int CvCaptureCAM::isRunning() {
-	return capture != nil;
-}
-
 
 bool CvCaptureCAM::grabFrame() {
 	return grabFrame(5); 
 }
 
 bool CvCaptureCAM::grabFrame(double timeOut) {
-    // poll the capture delegate object (in a thread kind way) until an
-    // image is available
 	
 	NSAutoreleasePool* localpool = [[NSAutoreleasePool alloc] init];
 
-	double sleepTime = 0.005;
-	double total = 0;
-    int retval = 0;
-    
-	
-    NSDate * startLoop = [NSDate date];  // time now
-    
-	while ([startLoop timeIntervalSinceNow ] > -timeOut) {  // run till now+timeOut
-        // try to grab a frame
-        if (retval=[capture updateImage])
-            break;
-        
-        // run the event loop once but block no more than sleepTime
-        NSDate *runUntil = [NSDate dateWithTimeIntervalSinceNow:sleepTime];
-        [[NSRunLoop currentRunLoop] runMode: NSDefaultRunLoopMode
-                                         beforeDate:runUntil];
-    }
+	double sleepTime = 0.005; 
+	double total = 0; 
+
+	NSDate *loopUntil = [NSDate dateWithTimeIntervalSinceNow:sleepTime];
+	while (![capture updateImage] && (total += sleepTime)<=timeOut &&
+		   [[NSRunLoop currentRunLoop] runMode: NSDefaultRunLoopMode 
+									beforeDate:loopUntil])
+		loopUntil = [NSDate dateWithTimeIntervalSinceNow:sleepTime]; 
 
 	[localpool drain];
 
-	return retval;
+	return total <= timeOut; 	
 }
 
 uint8_t* CvCaptureCAM::retrieveFrame(int) {
@@ -402,8 +332,7 @@ void CvCaptureCAM::stopCaptureDevice() {
 	
 	[mCaptureDecompressedVideoOutput setDelegate:mCaptureDecompressedVideoOutput]; 
 	[mCaptureDecompressedVideoOutput release]; 
-	[capture release];
-    capture = nil;
+	[capture release]; 
 	[localpool drain]; 
 	
 }
@@ -456,7 +385,7 @@ int CvCaptureCAM::startCaptureDevice(int cameraNum) {
 		
 		
 		mCaptureDecompressedVideoOutput = [[QTCaptureDecompressedVideoOutput alloc] init];
-		[mCaptureDecompressedVideoOutput setDelegate:capture];
+		[mCaptureDecompressedVideoOutput setDelegate:capture]; 
 		NSDictionary *pixelBufferOptions ;
 		if (width > 0 && height > 0) {
 			pixelBufferOptions = [NSDictionary dictionaryWithObjectsAndKeys:
@@ -488,7 +417,7 @@ int CvCaptureCAM::startCaptureDevice(int cameraNum) {
 		
 		[mCaptureSession startRunning];
 		
-		grabFrame(10);
+		grabFrame(60); 
 		
 		return 1; 
 	}
@@ -522,7 +451,7 @@ void  CvCaptureCAM::setProperty(int &width, int &height) {
 						  nil]; 
 	
 	[mCaptureDecompressedVideoOutput setPixelBufferAttributes:pixelBufferOptions];
-	grabFrame(10);
+	grabFrame(60); 
 	[localpool drain]; 
 }
 
@@ -546,7 +475,6 @@ void  CvCaptureCAM::setProperty(int &width, int &height) {
 	newFrame = 0; 
 	imagedata = NULL; 
 	currSize = 0;
-    nframes = 0;
 	return self; 
 }
 
@@ -556,34 +484,23 @@ void  CvCaptureCAM::setProperty(int &width, int &height) {
 	[super dealloc]; 
 }
 
-// delegate method for QTCaptureDecompressedVideoOutput
-//   invoked when a frame is available
-//    sets the newFrame property
-//    mCurrentImageBuffer points to the latest image
 - (void)captureOutput:(QTCaptureOutput *)captureOutput 
   didOutputVideoFrame:(CVImageBufferRef)videoFrame 
 	 withSampleBuffer:(QTSampleBuffer *)sampleBuffer 
 	   fromConnection:(QTCaptureConnection *)connection {
 	
-    CVBufferRetain(videoFrame);  // mark new buffer to be retained
-    // make a reference to current buffer
+    CVBufferRetain(videoFrame);
 	CVImageBufferRef imageBufferToRelease  = mCurrentImageBuffer;
     
     @synchronized (self) {
 		
-        // update current buffer to the new frame
         mCurrentImageBuffer = videoFrame;
 		newFrame = 1; 
     }
 	
-    // release the previous buffer
 	CVBufferRelease(imageBufferToRelease);
-    nframes++;
     
 }
-
-// delegate method for QTCaptureDecompressedVideoOutput
-//  invoked when a frame is dropped
 - (void)captureOutput:(QTCaptureOutput *)captureOutput 
 didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer 
 	   fromConnection:(QTCaptureConnection *)connection {
@@ -595,18 +512,14 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
 }
 
 -(int) updateImage {
-    // attempt to copy the image placed in shared memory by the captureOutput method
-    //  return 0 if no image actually available
-	if (newFrame==0)
-        return 0;
-	CVPixelBufferRef pixels; // a CoreVideo pixel buffer
+	if (newFrame==0) return 0; 
+	CVPixelBufferRef pixels; 
 	
 	@synchronized (self){
 		pixels = CVBufferRetain(mCurrentImageBuffer);
 		newFrame = 0; 
 	}
 	
-    // lock it down and get memory pointer and dimensions
 	CVPixelBufferLockBaseAddress(pixels, 0);		
 	uint32_t* baseaddress = (uint32_t*)CVPixelBufferGetBaseAddress(pixels);
 	
@@ -614,25 +527,22 @@ didDropVideoFrameWithSampleBuffer:(QTSampleBuffer *)sampleBuffer
 	height = CVPixelBufferGetHeight(pixels);
 	rowBytes = CVPixelBufferGetBytesPerRow(pixels);
 	
-    int retval = 0;
-	if (rowBytes != 0) { // if it has finite size
-        
-		// if image size has changed, realloc buffer
+	if (rowBytes != 0) { 
+		
 		if (currSize != rowBytes*height*sizeof(uint8_t)) {
 			currSize = rowBytes*height*sizeof(uint8_t); 
 			if (imagedata != NULL) free(imagedata); 
             imagedata = (uint8_t *) malloc(currSize);
 		}
 		
-        // copy pixels to imagedata
 		memcpy(imagedata, baseaddress, currSize);
-		retval = 1;
+		
 	}
 	
 	CVPixelBufferUnlockBaseAddress(pixels, 0);
 	CVBufferRelease(pixels); 
 	
-	return retval;
+	return 1; 
 }
 
 @end
@@ -642,3 +552,35 @@ getInt(const mxArray *p)
 {
     return (int) mxGetScalar(p);
 }
+
+/*
+ *  CvCapture.mm
+ *
+ *  Created by Nicholas Butko on 11/3/09.
+ *  Copyright 2009. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without 
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, 
+ *    this list of conditions and the following disclaimer. 
+ * 2. Redistributions in binary form must reproduce the above copyright notice, 
+ *    this list of conditions and the following disclaimer in the documentation 
+ *    and/or other materials provided with the distribution. 
+ * 3. The name of the author may not be used to endorse or promote products 
+ *    derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR IMPLIED 
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO 
+ * EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+

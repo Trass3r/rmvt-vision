@@ -15,19 +15,38 @@
 # You should have received a copy of the GNU Leser General Public License
 # along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-mex:
-	mex closest.c
-	mex fhist.c
-	mex hist2d.c
-	mex ilabel.c
-	mex imatch.c
-	mex imorph.c
-	mex irank.c
-	mex ivar.c
-	mex iwindow.c
-	mex stereo_match.c
-	#mex firewire.c -ldc1394_control -lraw1394
+#DEBUG = -g
 
+mex:
+	mex $(DEBUG) closest.c
+	mex $(DEBUG) fhist.c
+	mex $(DEBUG) hist2d.c
+	mex $(DEBUG) ilabel.c
+	mex $(DEBUG) imatch.c
+	mex $(DEBUG) imorph.c
+	mex $(DEBUG) irank.c
+	mex $(DEBUG) ivar.c
+	mex $(DEBUG) iwindow.c
+	mex $(DEBUG) stereo_match.c
+
+	
+UNAME = $(shell uname)
+MATLAB = $(subst /bin/matlab,,$(shell which matlab))
+
+framegrabber:
+ifeq ($(UNAME), Darwin)
+    # for MacOS we use QTKit to access the camera, the code is written in ObjC++
+    # need to modify mexopts.sh to include the frameworks since they cannot be passed as
+    # options.  You need to add:
+    # -framework QTKit -framework Foundation -framework QTKit -framework CoreVideo 
+    # -framework Cocoa
+
+	g++ -I ${MATLAB}/extern/include -c $(DEBUG) framegrabber_qtkit.mm
+	mex $(DEBUG) -output framegrabber -cxx framegrabber_qtkit.o 
+endif
+ifeq ($(UNAME), Linux)
+	mex -output framegrabber framegrabber_firewire.c -ldc1394_control -lraw1394
+endif
 
 clean:
 	-\rm *.mex*
