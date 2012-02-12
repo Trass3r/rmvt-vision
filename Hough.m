@@ -89,6 +89,10 @@ classdef Hough < handle
         % Options::
         % 'equal'            All edge pixels have equal weight, otherwise the
         %                    edge pixel value is the vote strength
+        % 'points'           Pass set of points rather than an edge image, in 
+        %                    this case E (2xN) is a set of N points, or E (3xN)
+        %                    is a set of N points with corresponding vote strengths 
+        %                    as the third row
         % 'interpwidth',W    Interpolation width (default 3)
         % 'houghthresh',T    Set HT.houghThresh (default 0.5)
         % 'edgethresh',T     Set HT.edgeThresh (default 0.1);
@@ -101,6 +105,7 @@ classdef Hough < handle
             opt.suppress = [];
             opt.nbins = [];
             opt.equal = false;
+            opt.points = false;
 
             h.Nrho = 401;
             h.Ntheta = 400;
@@ -138,21 +143,27 @@ classdef Hough < handle
                 h.suppress = (h.interpWidth-1)/2;
             end
 
-            [nr,nc] = size(IM);
-
-            % find the significant edge pixels
-            IM = abs(IM);
-            globalMax = max(IM(:));
-            i = find(IM > (globalMax*h.edgeThresh));    
-            [r,c] = ind2sub(size(IM), i);
-
-            if opt.equal
-                xyz = [c r];
+            if opt.points
+                xyz = IM';
+                nr = max(xyz(:,2));
+                nc = max(xyz(:,1));
             else
-                xyz = [c r IM(i)];
+                [nr,nc] = size(IM);
+                
+                % find the significant edge pixels
+                IM = abs(IM);
+                globalMax = max(IM(:));
+                i = find(IM > (globalMax*h.edgeThresh));
+                [r,c] = ind2sub(size(IM), i);
+                
+                if opt.equal
+                    xyz = [c r];
+                else
+                    xyz = [c r IM(i)];
+                end
             end
 
-            % now pass the x/y/strenth info to xyhough
+            % now pass the x/y/strength info to xyhough
             h.A = h.xyhough(xyz, norm2(nr,nc));
         end
 
