@@ -76,6 +76,7 @@ classdef Tracker
             opt.nslots = 800;
             opt.thresh = 0.8;
             opt.movie = [];
+            framenum = 0;
 
             opt = tb_optparse(opt, varargin);
 
@@ -200,6 +201,12 @@ classdef Tracker
                 plot_point( [t.track(k).uv], 'ws', 'printf', {'%d', [t.track(k).id]});
                 title( sprintf('frame %d', frame) );
                 drawnow
+
+                if ~isempty(opt.movie)
+                    f = getframe;
+                    imwrite(f.cdata, sprintf('%s/%04d.png', opt.movie, framenum));
+                    framenum = framenum+1;
+                end
                 
                 if ~isempty(opt.movie)
                     f = getframe;
