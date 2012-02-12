@@ -9,7 +9,7 @@
 %
 % Examples::
 %       im = pnmfilt('ppmforge -cloud');
-%       im = pnmfilt('pnmrotate', lena);
+%       im = pnmfilt('pnmrotate 30', lena);
 %
 % Notes::
 %  - Provides access to a large number of Unix command line utilities such

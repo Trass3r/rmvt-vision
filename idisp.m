@@ -80,7 +80,7 @@
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 function idisp(im, varargin)
 
-    if ~isnumeric(im)
+    if ~(isnumeric(im) || islogical(im) || iscell(im))
         error('expecting an image (2D or 3D matrix)');
     end
 

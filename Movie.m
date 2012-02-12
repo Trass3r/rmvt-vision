@@ -2,7 +2,7 @@
 %
 % A concrete subclass of ImageSource that acquires images from a web camera
 % built by Axis Communications (www.axis.com).
-
+%
 % Methods::
 % grab    Aquire and return the next image
 % size    Size of image
@@ -187,4 +187,3 @@ classdef Movie < ImageSource
 
     end
 end
-

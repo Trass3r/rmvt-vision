@@ -4,7 +4,6 @@ ccdresponse
 cie_primaries
 cmfrgb
 cmfxyz
-ccxyz
 colordistance
 colorname
 colorspace
@@ -13,7 +12,6 @@ lambda2xy
 loadspectrum
 luminos
 rg_addticks
-rgb2xyz
 rluminos
 tristim2cc
 xycolorspace
@@ -25,18 +23,13 @@ CatadioptricCamera
 FishEyeCamera
 SphericalCamera
 camcald
-invcamcal
 
 h1. Image sources
 h2. Devices
 AxisWebCamera : acquire from internet webcam
-EarthView: acquire image from Google Earth
 ImageSource : abstract superclass
 Movie : acquire from a local movie file
-VideoCamera : acquire from attached video camera or webcam
-VideoCamera_IAT
-VideoCamera_fg
-YUV
+Video : acquire from attached video camera or webcam
 
 h2. Test patterns
 mkcube
@@ -46,7 +39,7 @@ testpattern
 h1. Monadic operators
 icolor
 colorize
-igamm
+igamma
 imono
 inormhist
 istretch
@@ -79,22 +72,19 @@ ksobel
 ktriangle
 
 h2. Non-linear
-dtransform
+dxform
 irank
 ivar
 iwindow
 
 h2. Morphological
-idilate
-ierode
+imorph
 iclose
 iopen
-imorph
 hitormiss
 ithin
 iendpoint
 itriplepoint
-morphdemo
 
 h2. Similarity
 imatch
@@ -182,7 +172,6 @@ idisp
 idisplabel
 iread
 pnmfilt
-showpixels
 
 h2. Image generation
 iconcat
@@ -212,12 +201,10 @@ plot_sphere    : draw a sphere
 h2. Homogeneous coordinates
 e2h       : Euclidean coordinates to homogeneous 
 h2e       : homogeneous coordinates to Euclidean
-homline:  : homogeneous line from two points
 homtrans  : apply homogeneous transform to points
 
 h2. 3D
 icp
-Plucker
 Ray3D
 
 h2. Integral image
@@ -229,21 +216,16 @@ edgelist
 boundmatch
 
 h2. General
-about
 bresenham
 closest
-colnorm
 col2im
 distance
-filt1d
 im2col
 imeshgrid
 iscolor
 isize
 kmeans
-polydiff
+medfilt1
 ransac
 zcross
-xaxis
-yaxis
-xyzlabel
+

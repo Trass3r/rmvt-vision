@@ -44,7 +44,7 @@
 
 % Copyright (c) Peter Corke 1/96
 
-function [xpout,yp] = peak(y, varargin)
+function [yp,xpout] = peak(y, varargin)
 
     % process input options
     opt.npeaks = [];
@@ -145,8 +145,7 @@ function [xpout,yp] = peak(y, varargin)
     end
     
     % return values
-    xpout = xp';
+    yp = y(k)';
     if nargout > 1
-        yp = y(k)';
-
+        xpout = xp';
     end

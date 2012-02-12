@@ -1,19 +1,43 @@
-Installation:
-------------
+EPnP
+==========================================================
+http://cvlab.epfl.ch/software/EPnP/
 
-simply copy all the .m files into a directory 'vision' which is in your
-MATLABPATH.
+VLFeat
+==========================================================
+http://www.vlfeat.org
 
-vision.pdf is the documentation in standard Mathworks style.  It is
-formatted for double sided printing which makes for a more compact
-manual and saves trees.
+SURF
+==========================================================
 
-Citing the Toolbox:
-------------------
+1. Use the matlab based OpenSURF from 
+http://www.mathworks.com/matlabcentral/fileexchange/28300-opensurf-including-image-warp
 
-see the file CITATION
+See @SurfPointFeature/private, it's patched
 
-Home page:
----------
-	http://www.petercorke.com
+2. Use the OpenCV based SURF implementation from
+http://www.maths.lth.se/matematiklth/personal/petter/surfmex.php
 
+See @SurfPointFeature/SURFmex-v2
+
+If you place the MEX file OpenSurf.mexXYZ into @SurfPointFeatures you
+get a signicant increase in performance, but also slightly different
+results.  This package has the potential to use the GPU but I haven't
+gotten this going yet.
+
+Graphseg
+==========================================================
+
+
+graphseg.cpp is the MATLAB callable wrapper around the graph-segmentation 
+code by Felzenszwalb and Huttenlocher
+
+http://people.cs.uchicago.edu/~pff/segment/
+
+
+Path setup
+==========================================================
+
+addpath private/vgg
+addpath private/EPnP/EPnP
+addpath [private/vlfeat-0.9.9/toolbox/mex/' mexext]
+addpath private/graphseg
