@@ -47,7 +47,6 @@ classdef ImageSource < handle
     methods (Abstract)
         im = grab()
         close()
-        char()
         paramSet()
     end
 
@@ -75,8 +74,7 @@ classdef ImageSource < handle
             opt.width = [];
             opt.height = [];
 
-            [opt,args] = tb_optparse(opt, varargin);
-            opt
+            [opt,args] = tb_optparse(opt, varargin{:});
             
             imsource.imageType = opt.imageType;
             imsource.makeGrey = opt.grey;
@@ -100,17 +98,17 @@ classdef ImageSource < handle
             im2 = [];
             % apply options specified at construction time
             if imsource.scaleFactor > 1
-                im2 = im(1:imsource.scaleFactor:end, 1:imsource.scaleFactor:end, :);
+                im = im(1:imsource.scaleFactor:end, 1:imsource.scaleFactor:end, :);
             end
             if imsource.makeGrey & (ndims(im) == 3)
-                im2 = imono(im);
+                im = imono(im);
             end
             if ~isempty(imsource.imageType)
-                im2 = cast(im, imsource.imageType);
+                im = cast(im, imsource.imageType);
             end
 
             if ~isempty(imsource.gamma)
-                im2 = igamma(im, imsource.gamma);
+                im = igamma(im, imsource.gamma);
             end
 
             if isempty(im2)
@@ -122,6 +120,22 @@ classdef ImageSource < handle
             s = [imsource.height imsource.width];
         end
             
+        function s = char(imsource)
+            s = '';
+            if imsource.scaleFactor > 1
+                s = strcat(s, sprintf('subsample by %d: ', imsource.scaleFactor));
+            end
+            if imsource.makeGrey
+                s = strcat(s, 'convert to grey: ');
+            end
+            if ~isempty(imsource.imageType)
+                s = strcat(s, sprintf('cast to %s: ', imsource.imageType));
+            end
+            if ~isempty(imsource.gamma)
+                s = strcat(s, sprintf('gamma correct %f: ', imsource.gamma));
+            end
+        end
+
         function display(imsource)
         %ImageSource.display Display value
         %
