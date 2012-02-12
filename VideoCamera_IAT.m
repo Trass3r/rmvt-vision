@@ -1,15 +1,7 @@
-%VideoCamera_IAT Class to read from local video camera
+%VIDEO Class to read from local video camera
 %
 % A concrete subclass of ImageSource that acquires images from a local
-% camera using the MATLAB Image Acquisition Toolbox (imaq).  This Toolbox
-% provides a multiplatform interface to a range of cameras, and this
-% class provides a simple wrapper.
-%
-% This class is not intended to be used directly, instead use the factory
-% method Video which will return an instance of this class if the Image
-% Acquisition Toolbox is installed, for example
-%
-%         vid = VideoCamera();
+% camera.
 %
 % Methods::
 % grab    Aquire and return the next image
@@ -17,7 +9,7 @@
 % close   Close the image source
 % char    Convert the object parameters to human readable string
 %
-% See also VideoCamera, ImageSource, AxisWebCamera, Movie.
+% See also ImageSource, AxisWebCamera, Movie.
 
 
 % Copyright (C) 1993-2011, by Peter I. Corke
@@ -40,14 +32,13 @@
 % mmread brings the whole movie into memory.  Not entirely sure what
 % libavbin uses memory-wise, it takes a long time to "open" the file.
 
-classdef VideoCamera_IAT < ImageSource
+classdef Video < ImageSource
 
     properties
 
         video
         adaptor
         continuous
-        id
     end
 
     methods(Static)
@@ -79,10 +70,10 @@ classdef VideoCamera_IAT < ImageSource
 
     methods
 
-        function m = VideoCamera_IAT(varargin)
-        %VideoCamera_IAT.VideoCamera_IAT Video camera constructor
+        function m = Video(varargin)
+        %Video.Video Video camera constructor
         %   
-        % V = Video_IAT(CAMERA, OPTIONS) is a Video object that acquires
+        % V = Video(CAMERA, OPTIONS) is a Video object that acquires
         % images from the local video camera specified by the string CAMERA.
         %
         % Options::
@@ -103,16 +94,11 @@ classdef VideoCamera_IAT < ImageSource
             m = m@ImageSource({});
             m.video = [];
             m.adaptor = [];
-            m.id = [];
             
             opt.continuous = [];
-
-            opt.id = [];
+            nargin
+            varargin
             [opt,args] = tb_optparse(opt, varargin);
-            if ~isempty(opt.id)
-                m.id = opt.id;
-            end
-            
             m.continuous = opt.continuous;
             if exist('imaqhwinfo')
                 fprintf('Image acquisition toolbox detected\n');
@@ -137,21 +123,20 @@ classdef VideoCamera_IAT < ImageSource
                 elseif  length(args) == 1
                     % we were given an adaptor
 
-                    if isempty(m.id)
-                        m.id = 1;
+                    if isempty(im.id)
+                        im.id = 1;
                     end
-                    m.video = videoinput(args{1}, m.id);
-                    m.adaptor = imaqhwinfo(args{1});
+                    m.vid = videoinput(camera, im.id);
 
-%                     fprintf('  %s (id=%d)\n', info.DeviceName, adaptor.DeviceIDs{i});
-%                     for format=info.SupportedFormats
-%                         fprintf('    %s', format);
-%                         if strcmp(format, info.DefaultFormat)
-%                             fprintf(' (default)\n');
-%                         else
-%                             fprintf('\n');
-%                         end
-%                     end
+                    fprintf('  %s (id=%d)\n', info.DeviceName, adaptor.DeviceIDs{i});
+                    for format=info.SupportedFormats
+                        fprintf('    %s', format);
+                        if strcmp(format, info.DefaultFormat)
+                            fprintf(' (default)\n');
+                        else
+                            fprintf('\n');
+                        end
+                    end
                 end
             else
                 error('no camera interface available');
@@ -174,14 +159,14 @@ classdef VideoCamera_IAT < ImageSource
         end
 
         function close(m)
-        %VideoCamera_IAT.close Close the image source
+        %Video.close Close the image source
         %
         % V.close() closes the connection to the camera.
 
         end
 
         function [im, time] = grab(m, opt)
-        %VideoCamera_IAT.grab Acquire image from the camera
+        %Video.grab Acquire image from the camera
         %
         % IM = V.grab() acquires an image from the camera.
         %
@@ -196,7 +181,7 @@ classdef VideoCamera_IAT < ImageSource
         end
 
         function preview(m, control)
-            %VideoCamera_IAT.preview Control image preview
+            %Video.preview Control image preview
             %
             % V.preview(true) enables camera preview in a separate window
             %
@@ -208,7 +193,7 @@ classdef VideoCamera_IAT < ImageSource
         end
 
         function s = char(m)
-        %VideoCamera_IAT.char Convert to string
+        %Video.char Convert to string
         %
         % V.char() is a string representing the state of the camera object in 
         % human readable form.
@@ -220,8 +205,8 @@ classdef VideoCamera_IAT < ImageSource
                 else
                     mode = '';
                 end
-                s = strvcat(s, sprintf('Video: %s[%d] %s %d x %d', ...
-                    m.adaptor.AdaptorName, m.id, mode, m.width, m.height));
+                s = strvcat(s, sprintf('Video: %s%s %d x %d', ...
+                    m.adaptor.AdaptorName, mode, m.width, m.height));
 
                 % show constructor time options
                 s2 = char@ImageSource(m);

@@ -1,18 +1,21 @@
-%GAUSS	Gaussian differential kernel
+%KDGAUSS Derivative of Gaussian kernel
 %
-%	M = DGAUSS(SIGMA)
-%	M = DGAUSS(SIGMA, W)
+% K = KDGAUSS(SIGMA) is a 2-dimensional derivative of Gaussian kernel (WxW)
+% of width (standard deviation) SIGMA and centred within the matrix K whose 
+% half-width H = 3xSIGMA and W=2xH+1.
 %
-%	Returns a unit volume Gaussian differential function of standard deviation 
-%	SIGMA.  The Gaussian is centered within the matrix whose half size
-%	is W, that is, M is (2W+1) x (2W+1).
+% K = KDGAUSS(SIGMA, H) as above but the half-width is explictly specified.
 %
-%	If W is not specified it defaults to 2*SIGMA.
+% Notes::
+% - This kernel is the horizontal derivative of the Gaussian, dG/dx.
+% - The vertical derivative, dG/dy, is K'.
+% - This kernel is an effective edge detector.
 %
-% SEE ALSO:	gauss ilog conv2
-%
+% See also KGAUSS, KDOG, KLOG, ICONV.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -32,14 +35,14 @@
 function m = dgauss(sigma, w)
 
 
-	if nargin == 1,
-		w = ceil(3*sigma);
-	end
-	ww = 2*w + 1;
+    if nargin == 1,
+        w = ceil(3*sigma);
+    end
+    ww = 2*w + 1;
 
-	[x,y] = meshgrid(-w:w, -w:w);
+    [x,y] = meshgrid(-w:w, -w:w);
 
-	m = -x/sigma^2 /(2*pi) .*  exp( -(x.^2 + y.^2)/2/sigma^2);
+    m = -x/sigma^2 /(2*pi) .*  exp( -(x.^2 + y.^2)/2/sigma^2);
 
-	%m = m / sum(sum(m));
+    %m = m / sum(sum(m));
 

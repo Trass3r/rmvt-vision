@@ -1,14 +1,17 @@
-%RLUMINOS		Relative luminosity
+%RLUMINOS Relative photopic luminosity function
 %
-%	R = RLUMINOS(lamda)
+% P = RUMINOS(LAMBDA) is the relative photopic luminosity function for the 
+% wavelengths in LAMBDA.  If LAMBDA is a vector, then P is a vector whose 
+% elements are the relative luminosity at the corresponding elements of LAMBDA.
 %
-%	Return photopic luminosity (0..1) for wavelength specified.  
-%	If lambda is a column vector then so is R.
+% Relative luminosity lies in the interval 0 to 1 which indicate the intensity 
+% with which wavelengths are perceived by the light-adapted human eye.
 %
-% SEE ALSO:	cmfxyz
-%
+% See also LUMINOS.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -25,5 +28,5 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 function lu = rluminos(lambda)
-	xyz = cmfxyz(lambda);
-	lu = xyz(:,2);	% photopic luminosity is the Y color matching function
+    xyz = cmfxyz(lambda);
+    lu = xyz(:,2);  % photopic luminosity is the Y color matching function

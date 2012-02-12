@@ -1,16 +1,19 @@
-%RADGRAD	Compute radially aligned gradient
+%RADGRAD Radial gradient
 %
-%	[gr,gt] = radgrad(im)
-%	[gr,gt] = radgrad(im, center)
+% [GR,GT] = RADGRAD(IM) is the radial and tangential gradient of the image IM.
+% At each pixel the image gradient vector is resolved into the radial and 
+% tangential directions.
 %
-% At each pixel compute the dot product of image gradient vector with a
-% vector radially from the specified center point.  If center point is not
-% specified the image is displayed and a point can be selected.
+% [GR,GT] = RADGRAD(IM, CENTRE) as above but the centre of the image is
+% specified as CENTRE=[X,Y] rather than the centre pixel of IM.
 %
-% If no output argument is used the result is displayed graphically.
-% Return tangential gradient, gt, as well as radial, gr.
+% RADGRAD(IM) as above but the result is displayed graphically.
+%
+% See also ISOBEL.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -28,31 +31,32 @@
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
 function [gr,gt] = radgrad(im, center)
-	
-	if nargin == 1,
-		idisp(im);
-		[xc,yc] = ginput(1);
-	else
-		xc = center(1);
-		yc = center(2);
-	end
+    
+    [nr,nc] =size(im);
 
-	[nr,nc] =size(im);
-	[X,Y] = meshgrid(1:nc, 1:nr);
-	X = X - xc;
-	Y = Y - yc;
-	H = sqrt(X.^2 + Y.^2);
-	sth = Y ./ H;
-	cth = X ./ H;
-	[ih,iv] = isobel(im);
+    if nargin == 1
+        xc = nr/2;
+        yc = nc/2;
+    else
+        xc = center(1);
+        yc = center(2);
+    end
 
-	g = sth .* iv + cth .* ih;
+    [X,Y] = meshgrid(1:nc, 1:nr);
+    X = X - xc;
+    Y = Y - yc;
+    H = sqrt(X.^2 + Y.^2);
+    sth = Y ./ H;
+    cth = X ./ H;
+    [ih,iv] = isobel(im);
 
-	if nargout == 0,
-		idisp(g);
-	elseif nargout == 1,
-		gr = g;
-	elseif nargout == 2,
-		gr = g;
-		gt = cth .* iv + sth .* ih;
-	end
+    g = sth .* iv + cth .* ih;
+
+    if nargout == 0
+        idisp(g);
+    elseif nargout == 1
+        gr = g;
+    elseif nargout == 2
+        gr = g;
+        gt = cth .* iv + sth .* ih;
+    end

@@ -1,14 +1,15 @@
-%NPQ	Compute central moments of polygon
+%NPQ Normalized central image moments
 %
-% M = NPQ(iv, p, q)
-%	compute the pq'th central moment of the polygon whose vertices are iv.
+% M = NPQ(IM, P, Q) is the PQ'th normalized central moment of the image IM.
+% That is UPQ(IM,P,Q)/MPQ(IM,0,0).
 %
-%	Note that the points must be sorted such that they follow the 
-%	perimeter in sequence (either clockwise or anti-clockwise).
+% Notes::
+% - The normalized central moments are invariant to translation and scale.
 %
-% SEE ALSO: mpq, upq, imoments
+% See also NPQ_POLY, MPQ, UPQ.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -24,11 +25,11 @@
 % 
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
+function m = npq(im, p, q)
 
-function m = npq(iv, p, q)
-
-	if (p+q) < 2,
-		error('normalized moments: p+q >= 2');
+	if (p+q) < 2
+		error('normalized moments only valid for p+q >= 2');
 	end
+
 	g = (p+q)/2 + 1;
-	m = upq(iv, p, q) / mpq(iv, 0, 0)^g;
+	m = upq(im, p, q) / mpq(im, 0, 0)^g;

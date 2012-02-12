@@ -1,17 +1,24 @@
-%ISIMILARITY	Image similarity measure
+%ISIMILARITY Locate template in image
 %
-%	m = isimilarity(im1, im2, c1, c2, w)
+% S = ISIMILARITY(T, IM) is an image where each pixel is the ZNCC similarity
+% of the template T (MxM) to the MxM neighbourhood surrounding the
+% corresonding input pixel in IM.  S is same size as IM.
 %
-% return similarity of windows in IM1 and IM2.  Window centres are
-% C1 and C2 and of side length 2W+1
-% Uses the zero-mean normalized cross-correlation between the two
-% equally sized image patches w1 and w2.  Result is in the range -1 to 1, with
-% 1 indicating identical pixel patterns.
+% S = ISIMILARITY(T, IM, METRIC) as above but the similarity metric is specified
+% by the function METRIC which can be any of @sad, @ssd, @ncc, @zsad, @zssd.
 %
+% Notes::
+% - Similarity is not computed where the window crosses the image
+%   boundary, and these output pixels are set to NaN.
+% - The ZNCC function is a MEX file and therefore the fastest
+% - User provided similarity metrics can be provided, the function accepts
+%   two regions and returns a scalar similarity score.
 %
-% SEE ALSO:	zncc
+% See also IMATCH, SAD, SSD, NCC, ZSAD, ZSSD, ZNCC.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -27,15 +34,24 @@
 % 
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
-function m = isimilarity(im1, im2, c1, c2, w)
 
-	[nr,nc] = size(im1);
+function S = isimilarity(T, im, metric)
 
-	if (c1(1)+w>nc) | (c2(1)+w>nc) | (c1(1)-w<1) | (c2(1)-w<1) ...
-		| (c1(2)+w>nr) | (c2(2)+w>nr) | (c1(2)-w<1) | (c2(2)-w<1),
-			m = 0;
-	else
+%TODO add all the other similarity metrics, including rank and census
 
-		m = zncc(im1(c1(2)-w:c1(2)+w,c1(1)-w:c1(1)+w), ...
-			im2(c2(2)-w:c2(2)+w,c2(1)-w:c2(1)+w));
-	end
+    if nargin < 3
+        metric = @zncc;
+    end
+    [nr,nc] = size(im);
+    hc = floor( (numcols(T)-1)/2 );
+    hr = floor( (numrows(T)-1)/2 );
+    hr1 = hr+1;
+    hc1 = hc+1;
+
+    S = NaN(size(im));
+    
+    for c=hc1:nc-hc1
+        for r=hr1:nr-hr1
+            S(r,c) = metric(T, im(r-hr:r+hr,c-hc:c+hc));
+        end
+    end

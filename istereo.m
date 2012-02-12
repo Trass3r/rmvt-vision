@@ -1,29 +1,29 @@
 %ISTEREO Stereo matching
 %
-% D = ISTEREO(LEFT, RIGHT, RANGE, H, OPTIONS) is a disparity image computed
-% from the epipolar aligned stereo pair: the left image LEFT (HxW) and the
-% right image RIGHT (HxW).  D (HxW) is the disparity and the value at each 
+% D = ISTEREO(IML, IMR, H, RANGE, OPTIONS) is a disparity image computed
+% from the epipolar aligned stereo pair: the left image IML (HxW) and the
+% right image IMR (HxW).  D (HxW) is the disparity and the value at each 
 % pixel is the horizontal shift of the corresponding pixel in IML as observed 
-% in IMR. That is, the disparity d=D(v,u) means that the pixel at RIGHT(v,u-d)
-% is the same world point as the pixel at LEFT(v,u).
+% in IMR. That is, the disparity d=D(v,u) means that IMR(v,u-d) is the same
+% world point as IML(v,u).
+%
+% H is the half size of the matching window, which can be a scalar for NxN or a
+% 2-vector [N,M] for an NxM window.
 %
 % RANGE is the disparity search range, which can be a scalar for disparities in
 % the range 0 to RANGE, or a 2-vector [DMIN DMAX] for searches in the range
 % DMIN to DMAX.
 %
-% H is the half size of the matching window, which can be a scalar for NxN or a
-% 2-vector [N,M] for an NxM window.
-%
-% [D,SIM] = ISTEREO(LEFT, RIGHT, RANGE, H, OPTIONS) as above but returns SIM 
+% [D,SIM] = ISTEREO(IML, IMR, W, RANGE, OPTIONS) as above but returns SIM 
 % which is the same size as D and the elements are the peak matching score 
 % for the corresponding elements of D.  For the default matching metric ZNCC
 % this varies between -1 (very bad) to +1 (perfect).
 %
-% [D,SIM,DSI] = ISTEREO(LEFT, RIGHT, RANGE, H, OPTIONS) as above but returns DSI 
+% [D,SIM,DSI] = ISTEREO(IML, IMR, W, RANGE, OPTIONS) as above but returns DSI 
 % which is the disparity space image (HxWxN) where N=DMAX-DMIN+1. The I'th 
-% plane is the similarity of IML to IMR shifted to the left by DMIN+I-1.
+% plane is the similarity of IML to IMR shifted by DMIN+I-1.
 %
-% [D,SIM,P] = ISTEREO(LEFT, RIGHT, RANGE, H, OPTIONS) if the 'interp' option is 
+% [D,SIM,P] = ISTEREO(IML, IMR, W, RANGE, OPTIONS) if the 'interp' option is 
 % given then disparity is estimated to sub-pixel precision using quadratic
 % interpolation.  In this case D is the interpolated disparity and P is
 % a structure with elements A, B, dx.  The interpolation polynomial is 
@@ -38,30 +38,12 @@
 %              one of 'zncc' (default), 'ncc', 'ssd' or 'sad'.
 % 'interp'     enable subpixel interpolation and D contains non-integer
 %              values (default false)
-% 'vshift',V   move the right image V pixels vertically with respect to left.
-%
-% Example::
-%
-% Load the left and right images
-%         L = iread('rocks2-l.png', 'reduce', 2);
-%         R = iread('rocks2-r.png', 'reduce', 2);
-% then compute stereo disparity and display it
-%         d = istereo(L, R, [40, 90], 3);
-%         idisp(d);
-%
-% References::
-%  - Robotics, Vision & Control, Section 14.3,
-%    P. Corke, Springer 2011.
 %
 % Notes::
 % - Images must be greyscale.
 % - Disparity values pixels within a half-window dimension (H) of the edges 
 %   will not be valid and are set to NaN.
-% - The C term of the interpolation polynomial is not computed or returned.
-% - The A term is high where the disparity function has a sharp peak.
-% - Disparity and similarity score can be obtained from the disparity space
-%   image by [SIM,D] = max(DSI, [], 3)
-%
+% - SIM = max(DSI, 3)
 %
 % See also IRECTIFY, STDISP.
 
@@ -91,7 +73,6 @@ function [disp,sim, o3] = istereo(L, R, drange, h, varargin)
 
     opt.metric = 'zncc';
     opt.interp = false;
-    opt.vshift = 0;
 
     opt = tb_optparse(opt, varargin);
 
@@ -99,18 +80,17 @@ function [disp,sim, o3] = istereo(L, R, drange, h, varargin)
     L = imono(L);
     R = imono(R);
 
-    opt.vshift = round(opt.vshift);
-    if opt.vshift ~= 0
-        if opt.vshift > 0
-            L = L(1:end-opt.vshift,:);
-            R = R(opt.vshift:end,:);
+    if length(drange) > 2
+        vshift = drange(3);
+        if vshift > 0
+            L = L(vshift:end,:);
+            R = R(1:end-vshift,:);
         else
             vshift = -vshift;
-            L = L(opt.vshift:end,:);
-            R = R(1:end-opt.vshift,:);
+            L = L(1:end-vshift,:);
+            R = R(vshift:end,:);
         end
     end
-        
     % compute the score cube, 3rd dimension is disparity
     DSI = stereo_match(L, R, 2*h+1, drange(1:2), opt.metric);
 

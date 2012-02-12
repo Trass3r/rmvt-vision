@@ -1,10 +1,14 @@
-%IM2COL Convert a mono or RGB image to pixel per row format
+%IM2COL Convert an image to pixel per row format
 %
-%   col = im2col(im)
+% OUT = IM2COL(IM) returns the image (HxWxP) as a pixel vector (NxP) where
+% each row is a pixel value (1xP).  The pixels are in image column order 
+% and there are N=WxH rows.
 %
+% See also COL2IM.
 
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 

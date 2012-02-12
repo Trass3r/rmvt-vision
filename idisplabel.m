@@ -1,24 +1,20 @@
 %IDISPLABEL  Display an image with mask
 %
-%  idisplabel(im, labelimage, labels)
+% IDISPLABEL(IM, LABELIMAGE, LABELS) displays only those image pixels which 
+% belong to a specific class.  IM is a greyscale NxM or color NxMx3 image, and
+% LABELIMAGE is an NxM image containing integer pixel class labels for the
+% corresponding pixels in IM.  The pixel classes to be displayed are given by
+% the elements of LABELS which is a scalar a vector of class labels.  
+% Non-selected pixels are displayed as white.
 %
-% Display only those image pixels which belong to a specific class.
+% IDISPLABEL(IM, LABELIMAGE, LABELS, BG) as above but the grey level of the 
+% non-selected pixels is specified by BG in the range 0 to 1.
 %
-%  im is a greyscale NxM or color NxMx3 image.  
-%  labelimage is NxM and contains integer pixel class labels
-%  labels is a scalar or list of class labels
-%
-%  idisplabel(im, labelimage, labels, bg)
-%
-%  set non-selected pixels to the color [bg bg bg]
-%
-% All 
-% SEE ALSO: idisp, idisp2, colorize, colorseg
-
+% See also IBLOBS, ICOLORIZE, COLORSEG.
 
 function idisplabel(im, label, select, bg)
 
-    if isscalar(select),
+    if isscalar(select)
         mask = label == select;
     else
         mask = zeros(size(label));
@@ -27,14 +23,14 @@ function idisplabel(im, label, select, bg)
         end
     end
     
-    if nargin < 4,
+    if nargin < 4
         bg = 1;
     end
     
-    if ndims(im) == 3,
+    if ndims(im) == 3
         mask = cat(3, mask, mask, mask);
     end
     
     im(~mask) = bg;
-    image(im);
+    idisp(im, 'nogui');
     shg

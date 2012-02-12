@@ -1,12 +1,16 @@
-%BRESENHAM Return list of points on line
+%BRESENHAM Generate a line
 %
-%   p = bresenham(x1, y1, x2, y2)
-%   p = bresenham(p1, p2)
+% P = BRESENHAM(X1, Y1, X2, Y2) is a list of integer coordinates for 
+% points lying on the line segement (X1,Y1) to (X2,Y2).  Endpoints 
+% must be integer.
 %
-% Return a list of integer point coordinates for the line from
-% (x1,y1) to (x2,y2).  Endpoints must be integer.
+% P = BRESENHAM(P1, P2) as above but P1=[X1,Y1] and P2=[X2,Y2].
+%
+% See also ICANVAS.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 

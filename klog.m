@@ -1,13 +1,16 @@
-%KLOG	Laplacian of Gaussian kernel
+%KLOG Laplacian of Gaussian kernel
 %
-%	L = klog(sigma, w)
+% K = KLOG(SIGMA) is a 2-dimensional Laplacian of Gaussian kernel of
+% width (standard deviation) SIGMA and centred within the matrix K whose 
+% half-width is H=3xSIGMA, and W=2xH+1.
 %
-%	Return a Laplacian of Gaussian (LOG) kernel of width (2w+1) with
-%	the specified sigma.
+% K = KLOG(SIGMA, H) as above but the half-width H is specified.
 %
-% SEE ALSO:	zcross
+% See also KGAUSS, KDOG, KDGAUSS, ICONV, ZCROSS.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -26,12 +29,11 @@
 
 function il = klog(sigma, w)
 
-	if nargin == 1,
-		w = ceil(3*sigma);
-	end
-	ww = 2*w + 1;
+    if nargin == 1,
+        w = ceil(3*sigma);
+    end
 
-	[x,y] = meshgrid(-w:w, -w:w);
+    [x,y] = meshgrid(-w:w, -w:w);
 
-	il = -1/(pi*sigma^4) * (1 - (x.^2 + y.^2)/(2*sigma^2)) .*  ...
-		exp(-(x.^2+y.^2)/(2*sigma^2));
+    il = 1/(pi*sigma^4) * ( (x.^2 + y.^2)/(2*sigma^2) -1 ) .*  ...
+        exp(-(x.^2+y.^2)/(2*sigma^2));

@@ -11,8 +11,11 @@
 %	w is the matching window half width, match window is 2*w+1 (default 5) 
 %	thresh is the minimum similarity measure for the match to be 
 %	 accepted (default 0.6)
+%JUNK
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 

@@ -1,18 +1,30 @@
-%ISMOOTH	Smooth with Gaussian kernel
+%ISMOOTH Gaussian smoothing
 %
-%	ims = ismooth(im, sigma)
-%	ims = ismooth(im, sigma, w)
+% OUT = ISMOOTH(IM, SIGMA) is the image IM after convolution with a
+% Gaussian kernel of standard deviation SIGMA.
 %
-%	Smooths all planes of the input image im with a unit volume Gaussian 
-%	function of standard deviation sigma.
+% OUT = ISMOOTH(IM, SIGMA, OPTIONS) as above but the OPTIONS are passed
+% to CONV2.
 %
-%   The dimension of the Gaussian kernel, w,  can be optionally specified.
+% Options::
+% 'full'    returns the full 2-D convolution (default)
+% 'same'    returns OUT the same size as IM
+% 'valid'   returns  the valid pixels only, those where the kernel does not
+%           exceed the bounds of the image.
 %
-%	The resulting image is the same size as the input image.
+% Notes::
+% - By default (option 'full') the returned image is larger than the
+%   passed image.
+% - Smooths all planes of the input image
+% - The Gaussian kernel has a unit volume
+% - If input image is integer it is converted to float, convolved, then
+%   converted back to integer.
 %
-% SEE ALSO:	kgauss
+% See also  ICONV, KGAUSS.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -29,12 +41,25 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
 function ims = ismooth(im, sigma, varargin)
 
-	m = kgauss(sigma, varargin{:});
+    if isfloat(im)
+        is_int = false;
+    else
+        is_int = true;
+        im = idouble(im);
+    end
 
-	for i=1:size(im,3),
-		ims(:,:,i) = conv2(im(:,:,i), m, 'same');
-	end
+    m = kgauss(sigma, varargin{:});
+
+    for i=1:size(im,3),
+        ims(:,:,i) = conv2(im(:,:,i), m, 'same');
+    end
+
+    if is_int
+        ims = iint(ims);
+     end
+
+    if nargout == 0
+        idisp(ims);
+    end

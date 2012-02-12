@@ -1,15 +1,14 @@
 %IPAD Pad an image with constants
 %
 % OUT = IPAD(IM, SIDES, N) is a padded version of the image IM with a block 
-% of NaN values N pixels wide on the sides of IM as specified by SIDES.
-%
-% OUT = IPAD(IM, SIDES, N, V) as above but pads with pixels of value V.
-%
-% SIDES is a string containing one or more of the characters:
+% of NaN values N pixels wide on the sides of IM as specified by SIDES which 
+% is a string containing one or more of the characters:
 % 't'   top
 % 'b'   bottom
 % 'l'   left
 % 'r'   right
+%
+% OUT = IPAD(IM, SIDES, N, V) as above but pads with pixels of value V.
 %
 % Examples::
 %
@@ -44,20 +43,6 @@ function out = ipad(in, sides, n, val)
 
     if nargin < 4
         val = NaN;
-    end
-    
-    if ndims(in) > 2
-        % multiplane case
-        d = size(in);
-        nimages = prod(d(3:end));
-        out = [];
-        for i=1:nimages
-            out(:,:,i) = ipad(in(:,:,i), sides, n, val);
-        end
-
-        d2 = size(out);
-        out = reshape(out, [d2(1) d2(2) d(3:end)]);
-        return
     end
     
     out = in;

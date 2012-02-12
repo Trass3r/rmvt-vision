@@ -1,14 +1,38 @@
-%CMFRGB	Color matching function
+%CMFRGB Color matching function
 %
-%	RGB = CMFRGB(lambda)
-%	RGB = CMFRGB(lambda, spect)
+% Tthe color matching function is the tristimulus required to match a 
+% particular wavelength excitation.
 %
-%	Return the CIE color matching function, where each row of RGB
-%	corresponds to the elements of lambda.
+% RGB = CMFRGB(LAMBDA) is the CIE color matching function (Nx3) for illumination
+% at wavelength LAMBDA (Nx1) [m].  If LAMBDA is a vector then each row of RGB
+% is the color matching function of the corresponding element of LAMBDA. 
 %
-% SEE ALSO:  CCXYZ
+% RGB = CMFRGB(LAMBDA, E) is the CIE color matching (1x3) function for an 
+% illumination spectrum defined by intensity E (Nx1) and wavelength 
+% LAMBDA (Nx1) [m].
+%
+% Notes::
+% - Data from http://cvrl.ioo.ucl.ac.uk
+% - The Stiles & Burch 2-deg CMFs are based on measurements made on
+%   10 observers. The data are referred to as pilot data, but probably
+%   represent the best estimate of the 2 deg CMFs, since, unlike the CIE
+%   2 deg functions (which were reconstructed from chromaticity data),
+%   they were measured directly.
+% - From Table I(5.5.3) of Wyszecki & Stiles (1982). (Table 1(5.5.3)
+%   of Wyszecki & Stiles (1982) gives the Stiles & Burch functions in
+%   250 cm-1 steps, while Table I(5.5.3) of Wyszecki & Stiles (1982)
+%   is gives them in interpolated 1 nm steps.)
+% - These CMFs differ slightly from those of Stiles & Burch (1955). As
+%   noted in footnote a on p. 335 of Table 1(5.5.3) of Wyszecki &
+%   Stiles (1982), the CMFs have been "corrected in accordance with
+%   instructions given by Stiles & Burch (1959)" and renormalized to
+%   primaries at 15500 (645.16), 19000 (526.32), and 22500 (444.44) cm-1
+%
+% See also CCXYZ.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -25,26 +49,9 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-% The Stiles & Burch 2-deg CMFs are based on measurements made in
-% 10 observers. The data are referred to as pilot data, but probably
-% represent the best estimate of the 2 deg CMFs, since, unlike the CIE
-% 2 deg functions (which were reconstructed from chromaticity data),
-% they were measured directly.
-% 
-% From Table I(5.5.3) of Wyszecki & Stiles (1982). (Table 1(5.5.3)
-% of Wyszecki & Stiles (1982) gives the Stiles & Burch functions in
-% 250 cm-1 steps, while Table I(5.5.3) of Wyszecki & Stiles (1982)
-% is gives them in interpolated 1 nm steps.)
-% 
-% These CMFs differ slightly from those of Stiles & Burch (1955). As
-% noted in footnote a on p. 335 of Table 1(5.5.3) of Wyszecki &
-% Stiles (1982), the CMFs have been "corrected in accordance with
-% instructions given by Stiles & Burch (1959)" and renormalized to
-% primaries at 15500 (645.16), 19000 (526.32), and 22500 (444.44) cm-1
-% (nm). [http://cvrl.ioo.ucl.ac.uk]
 
 function rgb = cmfrgb(lambda, spect)
-	ciedat = [
+    ciedat = [
   390e-9,  1.83970e-003, -4.53930e-004,  1.21520e-002
   395e-9,  4.61530e-003, -1.04640e-003,  3.11100e-002
   400e-9,  9.62640e-003, -2.16890e-003,  6.23710e-002
@@ -115,7 +122,7 @@ function rgb = cmfrgb(lambda, spect)
   725e-9,  4.53770e-003, -3.90030e-005,  5.02770e-006
   730e-9,  3.17420e-003, -2.65110e-005,  4.12510e-006];
 
-	rgb = interp1(ciedat(:,1), ciedat(:,2:4), lambda, 'spline', 0);
-	if nargin == 2,
-		rgb = spect(:)' * rgb / numrows(ciedat);
-	end
+    rgb = interp1(ciedat(:,1), ciedat(:,2:4), lambda, 'spline', 0);
+    if nargin == 2,
+        rgb = spect(:)' * rgb / numrows(ciedat);
+    end

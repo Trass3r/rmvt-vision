@@ -1,17 +1,19 @@
-%KCIRCLE 	Create circular structuring element
+%KCIRCLE Circular structuring element
 %
-%	s = kcircle(r)
-%	s = kcircle(r, w)
+% K = KCIRCLE(R) is a square matrix SxS where S=2R+1 of zeros with a maximal 
+% centered circular region of radius R pixels set to one.
 %
-%	Return a square matrix of zeros with a central circular region of 
-%	radius r of ones.  Matrix size is (2r+1) x (2r+1) or w*w.
+% K = KCIRCLE(R,S) as above but S is explicitly specified.
 %
-%	If r is a 2-element vector then it returns an annulus of ones, and
-%	the two numbers are interpretted as inner and outer radii.
+% Notes::
+% - If R is a 2-element vector the result is an annulus of ones, and
+%   the two numbers are interpretted as inner and outer radii.
 %
-% SEE ALSO: ones imorph
+% See also ONES, KTRIANGLE, IMORPH.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -30,29 +32,29 @@
 
 function s = kcircle(r, w)
 
-	if ismatrix(r) 
-		rmax = max(r(:));
-		rmin = min(r(:));
-	else
-		rmax = r;
-	end
+    if ~isscalar(r) 
+        rmax = max(r(:));
+        rmin = min(r(:));
+    else
+        rmax = r;
+    end
 
 
-	if nargin == 2
+    if nargin == 2
         w = w*2 + 1;
     elseif nargin == 1
-	    w = 2*rmax+1;
-	end
-	s = zeros(w,w);
+        w = 2*rmax+1;
+    end
+    s = zeros(w,w);
 
     c = ceil(w/2);
 
-	if ismatrix(r) 
-		s = kcircle(rmax,w) - kcircle(rmin, w);
-	else
-		[x,y] = find(s == 0);
-		x = x - c;
-		y = y - c;
-		l = find(x.^2+y.^2-r^2 <= 0.5);
-		s(l) = 1;
-	end
+    if ~isscalar(r) 
+        s = kcircle(rmax,w) - kcircle(rmin, w);
+    else
+        [x,y] = find(s == 0);
+        x = x - c;
+        y = y - c;
+        l = find(x.^2+y.^2-r^2 < 0.5);
+        s(l) = 1;
+    end

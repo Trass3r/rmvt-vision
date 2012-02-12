@@ -1,16 +1,19 @@
-%CCDRESPONSE	CCD spectral response
+%CCDRESPONSE    CCD spectral response
 %
-% 	r = CCDRESPONSE(lam)
+% R = CCDRESPONSE(LAMBDA) is the spectral response of a typical silicon
+% imaging sensor at the wavelength LAMBDA.  The response is normalized
+% in the range 0 to 1.  If LAMBDA is a vector then R is a vector of the
+% same length whose elements are the response at the corresponding element
+% of LAMBDA.
 %
-%  	Return a vector of CCD response (0-1) for given lambda value.  
-%	Lambda may be a vector.
+% Reference::
+% An ancient Fairchild data book for a sensor with no IR filter fitted.
 %
-% REF:  Data taken from a Fairchild data book (no IR filter fitted)
-%
-% SEE ALSO:	rluminos
-%
+% See also RLUMINOS.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -27,14 +30,14 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 function cc = ccdresponse(lam)
-	tab = [300 0
-	350 0
-	400 5
-	500 30
-	600 60
-	700 85
-	800 100
-	900 85
-	1000 50
-	];
-	cc = spline(tab(:,1)*1e-9,tab(:,2),lam)/100;
+    tab = [300 0
+    350 0
+    400 5
+    500 30
+    600 60
+    700 85
+    800 100
+    900 85
+    1000 50
+    ];
+    cc = spline(tab(:,1)*1e-9,tab(:,2),lam)/100;

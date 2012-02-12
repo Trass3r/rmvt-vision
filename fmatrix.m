@@ -1,35 +1,29 @@
-%FMATRIX	estimate the fundamental matrix
+%FMATRIX Estimate fundamental matrix
 %
-%	F = FMATRIX(Pa, Pb [, how])
+% F = FMATRIX(P1, P2, OPTIONS) is the fundamental matrix (3x3) that
+% relates two sets of corresponding points P1 (2xN) and P2 (2xN) from
+% two different camera views.
 %
-%	Given two sets of corresponding points Pa and Pb (each an nx2 matrix)
-%	return the fundamental matrix relating the two sets of observations.
+% Notes::
+% - The points must be corresponding, no outlier rejection is performed.
+% - Contains a RANSAC driver, which means it can be passed to ransac().
+% - F is a rank 2 matrix, that is, it is singular.
 %
-%	The epipolar line is F*[pa 1] and corresponding points pb will lie
-%	on this line.
+% Reference::
+% Hartley and Zisserman,
+% 'Multiple View Geometry in Computer Vision',
+% page 270.
 %
-% SEE ALSO: homography frefine epiline epidist
+% Author::
+% Based on fundamental matrix code by
+% Peter Kovesi,
+% School of Computer Science & Software Engineering,
+% The University of Western Australia,
+% http://www.csse.uwa.edu.au/,
+%
+% See also RANSAC, HOMOGRAPHY, EPILINE, EPIDIST.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
-%
-% This file is part of The Machine Vision Toolbox for Matlab (MVTB).
-% 
-% MVTB is free software: you can redistribute it and/or modify
-% it under the terms of the GNU Lesser General Public License as published by
-% the Free Software Foundation, either version 3 of the License, or
-% (at your option) any later version.
-% 
-% MVTB is distributed in the hope that it will be useful,
-% but WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-% GNU Lesser General Public License for more details.
-% 
-% You should have received a copy of the GNU Leser General Public License
-% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
-
-
-
-function [F, resid] = fmatrix(p1, p2)
+function [F,resid] = fmatrix(p1, p2)
 
     % RANSAC integration
     if isstruct(p1)
@@ -163,6 +157,7 @@ function out = ransac_driver(ransac)
     switch cmd
     case 'size'
         % return sample size
+        % 7 is technically possible but results are not so good...
         out.s = 8;
     case 'condition'
         if numrows(ransac.X) == 4
@@ -208,7 +203,7 @@ end
 % Note that this code allows for F being a cell array of fundamental matrices of
 % which we have to pick the best one. (A 7 point solution can return up to 3
 % solutions)
-	
+    
 % Copyright (c) 2004-2005 Peter Kovesi
 % School of Computer Science & Software Engineering
 % The University of Western Australia
@@ -233,7 +228,7 @@ function [bestInliers, bestF] = funddist(F, x, t);
     
     
     if iscell(F)  % We have several solutions each of which must be tested
-		  
+          
         nF = length(F);   % Number of solutions to test
         bestF = F{1};     % Initial allocation of best solution
         ninliers = 0;     % Number of inliers

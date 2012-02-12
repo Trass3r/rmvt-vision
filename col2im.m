@@ -1,16 +1,18 @@
-%COL2IM Convert pixel per row format to image
+%COL2IM Convert pixel vector to image
 %
-%   im = col2im(col, imsize)
-%   im = col2im(col, img)
+% OUT = COL2IM(PIX, IMSIZE) is an image (HxWxP) comprising the pixel values in 
+% PIX (NxP) with one row per pixel where N=HxW.  IMSIZE is a 2-vector (N,M).
 %
-% The input, col, is has 1 pixel/row, either 1 (mono) or 3 (RGB) values 
-% per row.
+% OUT = COL2IM(PIX, IM) as above but the dimensions of OUT are the same as IM.
 %
-%  The result is an NxM or NxMx3 images.  imsize is the dimensions [N,M]
-% or an image of size NxM or NxMx3, which are used to get the first
-% two dimensions.  The number of elements in col must match.
+% Notes::
+% - The number of rows in PIX must match the product of the elements of IMSIZE.
+%
+% See also IM2COL.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -31,22 +33,17 @@ function im = col2im(col, img)
 
     ncols = numcols(col);
 
-    if ~((ncols == 1) | (ncols == 3)),
-        error('must be 1 or 3 columns');
-    end
-
-    if length(img) == 2,
+    if numel(img) == 2
         sz = img;
-    elseif length(img) == 3,
+    elseif numel(img) == 3
         sz = img(1:2);
     else
         sz = size(img);
         sz = sz(1:2);
     end
 
-    if ncols == 3,
-        sz = [sz 3];
+    if ncols > 1
+        sz = [sz ncols];
     end
 
-    sz
     im = reshape(col, sz);

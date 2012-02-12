@@ -47,6 +47,7 @@ classdef ImageSource < handle
     methods (Abstract)
         im = grab()
         close()
+        char()
         paramSet()
     end
 
@@ -59,16 +60,12 @@ classdef ImageSource < handle
         % related to acquisition from some particular image source.
         %
         % Options::
-        % 'width',W    Set image width to W
-        % 'height',H   Set image height to H
-        % 'uint8'      Return image with uint8 pixels (default)
-        % 'int16'      Return image with int16 pixels
-        % 'int32'      Return image with int32 pixels
-        % 'float'      Return image with float pixels
-        % 'double'     Return image with double precision pixels
-        % 'grey'       Return image is greyscale
-        % 'gamma',G    Apply gamma correction with gamma=G
-        % 'scale',S    Subsample the image by S in both directions.
+        % 'uint8'     Return image with uint8 pixels (default)
+        % 'float'     Return image with float pixels
+        % 'double'    Return image with double precision pixels
+        % 'grey'      Return image is greyscale
+        % 'gamma',G   Apply gamma correction with gamma=G
+        % 'scale',S   Subsample the image by S in both directions.
 
             % set default options
             opt.imageType = {'uint8', 'float', 'double'};
@@ -79,6 +76,7 @@ classdef ImageSource < handle
             opt.height = [];
 
             [opt,args] = tb_optparse(opt, varargin);
+            opt
             
             imsource.imageType = opt.imageType;
             imsource.makeGrey = opt.grey;
@@ -102,24 +100,17 @@ classdef ImageSource < handle
             im2 = [];
             % apply options specified at construction time
             if imsource.scaleFactor > 1
-                im = im(1:imsource.scaleFactor:end, 1:imsource.scaleFactor:end, :);
+                im2 = im(1:imsource.scaleFactor:end, 1:imsource.scaleFactor:end, :);
             end
             if imsource.makeGrey & (ndims(im) == 3)
-                im = imono(im);
+                im2 = imono(im);
             end
             if ~isempty(imsource.imageType)
-                switch imsource.imageType
-                case 'double'
-                    im = idouble(im);
-                case 'float'
-                    im = idouble(im, 'float');
-                otherwise
-                    im = cast(im, imsource.imageType);
-                end
+                im2 = cast(im, imsource.imageType);
             end
 
             if ~isempty(imsource.gamma)
-                im = igamma(im, imsource.gamma);
+                im2 = igamma(im, imsource.gamma);
             end
 
             if isempty(im2)
@@ -131,22 +122,6 @@ classdef ImageSource < handle
             s = [imsource.height imsource.width];
         end
             
-        function s = char(imsource)
-            s = '';
-            if imsource.scaleFactor > 1
-                s = strcat(s, sprintf('subsample by %d: ', imsource.scaleFactor));
-            end
-            if imsource.makeGrey
-                s = strcat(s, 'convert to grey: ');
-            end
-            if ~isempty(imsource.imageType)
-                s = strcat(s, sprintf('cast to %s: ', imsource.imageType));
-            end
-            if ~isempty(imsource.gamma)
-                s = strcat(s, sprintf('gamma correct %f: ', imsource.gamma));
-            end
-        end
-
         function display(imsource)
         %ImageSource.display Display value
         %

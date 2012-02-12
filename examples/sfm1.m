@@ -67,7 +67,7 @@ for i=2:nsteps
 
     % relpose is the transform from camera 1 to camera 2
     %  we want (R,t) components of the inverses
-    [R,t] = tr2rt(inv(relpose));
+    [R,t] = t2rt(inv(relpose));
     
     % the camera matrix is (M,p4)
     C = camera.C;
@@ -110,7 +110,7 @@ for i=2:nsteps
 
     r1 = camera.ray(p(:,iwp,i-1));
     r2 = camera.move(dT_est).ray(p(:,iwp,i));
-    worldpoint(:,i-1) = homtrans( T_est(:,:,i-1), r1.intersect(r2) );
+    worldpoint(:,i-1) = transformp( T_est(:,:,i-1), r1.intersect(r2) );
 
     if i == 20
         %break
@@ -157,7 +157,7 @@ figure
 plotp(worldpoint, '.');
 grid
 hold on
-plotp( homtrans(inv(T(:,:,1)), P(:,iwp)), 'rd', 'MarkerFaceColor', 'r');
+plotp( transformp(inv(T(:,:,1)), P(:,iwp)), 'rd', 'MarkerFaceColor', 'r');
 zm=mean(worldpoint')';
 plotp( zm, 'go', 'MarkerFaceColor', 'g');
 

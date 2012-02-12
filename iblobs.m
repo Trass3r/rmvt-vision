@@ -1,46 +1,50 @@
-%IBLOBS	Compute blob features
+%IBLOBS	Blob features
 %
-%	F = iblobs(image)
-%	F = iblobs(image, args)
+% F = IBLOBS(IM, OPTIONS) is a vector of RegionFeature objects that
+% describe each connected region in the image IM.
 %
-%	Arguments are provided pairwise with a string followed by a value:
+% Options::
+%  'aspect',A        set pixel aspect ratio, default 1.0
+%  'connect',C	     set connectivity, 4 (default) or 8
+%  'greyscale'	     compute greyscale moments 0 (default) or 1
+%  'boundary'        compute boundary (default off)
+%  'area',[A1,A2]    accept only blobs with area in interval A1 to A2
+%  'shape',[S1,S2]   accept only blobs with shape in interval S1 to S2
+%  'touch'           ignore blobs that touch the edge (default accept)
+%  'class',C         accept only blobs of pixel value C (default all)
 %
-%		'aspect'	set pixel aspect ratio, default 1.0
-%		'connect'	set connectivity, 4 (default) or 8
-%		'greyscale'	compute greyscale moments 0 (default) or 1
-%		'moments''	compute moments 0 (default)
+% The RegionFeature object has many properties including:
 %
-%	and some arguments act as filters on the blob's whose features will
-%	be returned:
+%  uc            centroid, horizontal coordinate
+%  vc            centroid, vertical coordinate
+%  p             centroid (uc, vc)
+%  umin          bounding box, minimum horizontal coordinate
+%  umax          bounding box, maximum horizontal coordinate
+%  vmin          bounding box, minimum vertical coordinate
+%  vmax          bounding box, maximum vertical coordinate
+%  area          the number of pixels
+%  class         the value of the pixels forming this region
+%  label         the label assigned to this region
+%  children      a list of indices of features that are children of this feature
+%  edgepoint     coordinate of a point on the perimeter
+%  edge          a list of edge points 2xN matrix
+%  perimeter     edge length (pixels)
+%  touch         true if region touches edge of the image
+%  a             major axis length of equivalent ellipse
+%  b             minor axis length of equivalent ellipse
+%  theta         angle of major ellipse axis to horizontal axis
+%  shape         aspect ratio b/a (always <= 1.0)
+%  circularity   1 for a circle, less for other shapes
+%  moments       a structure containing moments of order 0 to 2
 %
-%		'area', [min max] acceptable size range
-%		'shape', [min max] acceptable shape range
-%		'touch'		ignore blobs that touch the edge
-%		'color', pix	accept only blobs of this pixel value
+% Notes::
+% - the RegionFeature objects are ordered by the raster order of the top most
+%   point (smallest v coordinate) in each blob.
 %
-%	The return is a vector of structures with elements:
-%
-%		area	 is the number of pixels (for a binary image)
-%		(x, y)   is the centroid with respect to top-left point which
-%			 is (1,1)
-%		(a, b)   are axis lengths of the "equivalent ellipse"
-%		theta    the angle of the major ellipse axis to the 
-%		         horizontal axis.
-%		m00		zeroth moment
-%		m01, m10	first order moments
-%		m02, m11, m20	second order moments
-%		shape	 shape factor, b/a
-%		minx
-%		maxx
-%		miny
-%		maxy
-%		parent  parent blob (0 is edge)
-%		color   color of this blob
-%		label   label assigned to this blob
-%
-% SEE ALSO: ilabel imoments
+% See also RegionFeature, ILABEL, IMOMENTS.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -57,127 +61,114 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-
-function [F,labimg] = iblobs(im, varargin)
+function [features,labimg] = iblobs(im, varargin)
 	
 	[nr,nc] = size(im);
 
+    opt.area = [0 Inf];
+    opt.shape = [0 Inf];
+    opt.class = NaN;
+    opt.touch = NaN;
+    opt.aspect = 1;
+    opt.connect = 4;
+    opt.greyscale = false;
+    opt.moments = false;
+    opt.boundary = false;
 
-	i = 1;
-	area_max = Inf;
-	area_min = 0;
-	shape_max = Inf;
-	shape_min = 0;
-	touch = NaN;
-	aspect = 1.0;
-	connect = 4;
-    color_filter = NaN;
-	greyscale_opt = false;
-    moments_opt = false;
-    boundary_opt = false;
-
-	while i <= length(varargin),
-		%disp(varargin{i})
-		switch varargin{i},
-		case 'area',	area_filt = varargin{i+1};
-				area_max = area_filt(2);
-				area_min = area_filt(1);
-				i = i+1;
-		case 'shape',	shape_filt = varargin{i+1};
-				shape_max = shape_filt(2);
-				shape_min = shape_filt(1);
-				i = i+1;
-		case 'color', 	color_filter = varargin{i+1}; i = i+1;
-		case 'touch', 	touch = varargin{i+1}; i = i+1;
-		case 'aspect', 	aspect = varargin{i+1}; i = i+1;
-		case 'connect',	connect = varargin{i+1}; i = i+1;
-		case 'greyscale',	greyscale_opt = varargin{i+1}; i = i+1;
-		case 'moments',	moments_opt = varargin{i+1}; i = i+1;
-		case 'boundary',	boundary_opt = true;
-		end
-		i = i+ 1;
-	end
+    opt = tb_optparse(opt, varargin);
 
     % HACK ilabel should take int image
-	[li,nl,parent,color,edge] = ilabel(im, connect);
+	[li,nl,parent,color,edge] = ilabel(im, opt.connect);
 
-	count = 0;
+	blob = 0;
 	for i=1:nl,
 		binimage = (li == i);
 
-		% determine the blob extent and touch status
+		% determine the blob extent
 		[y,x] = find(binimage);
+		umin = min(x); umax = max(x);
+		vmin = min(y); vmax = max(y);
 
-		minx = min(x); maxx = max(x);
-		miny = min(y); maxy = max(y);
+        % it touches the edge if its parent is 0
 		t = (parent(i) == 0);
 
-		if greyscale_opt,
-			% compute greyscale moments
-			mf = imoments(binimage .* im);
+        % compute the moments
+		if opt.greyscale
+			F = imoments(binimage .* im, 'aspect', opt.aspect);
 		else
-			mf = imoments(binimage);
+			F = imoments(binimage, 'aspect', opt.aspect);
 		end
-		if mf.a == 0,
+
+        % compute shape property, accounting for degenerate case
+		if F.a == 0,
 			shape = NaN;
 		else
-			shape = mf.b / mf.a;
+			shape = F.b / F.a;
 		end
 
 		% apply various filters
-		if 	((t == touch) || isnan(touch)) && ...
-            ((color(i) == color_filter) || isnan(color_filter)) && ...
-			(mf.area >= area_min) && ...
-			(mf.area <= area_max) && ...
+		if 	((t == opt.touch) || isnan(opt.touch)) && ...
+            ((color(i) == opt.class) || isnan(opt.class)) && ...
+			(F.area_ >= opt.area(1)) && ...
+			(F.area_ <= opt.area(2)) && ...
 			(					...
 				isnan(shape) ||			...
-				(	~isnan(shape) &&		...
-					(shape >= shape_min) &&	...
-					(shape <= shape_max)	...
+				(               ...
+					(shape >= opt.shape(1)) &&	...
+					(shape <= opt.shape(2))	...
 				)				...
-			),
+			)
 
-			ff = mf;
+            % this blob matches the filter
+
+            % record a perimeter point
             [y,x] = ind2sub(size(im), edge(i));
-            ff.edgepoint = [x y];    % a point on the perimeter
+            F.edgepoint = [x y];    % a point on the perimeter
 
-            if boundary_opt
-                ff.edge = edgelist(im, [x y]);
-                ff.perimeter = numrows(ff.edge);
-                ff.circularity = 4*pi*ff.area/ff.perimeter^2;
+            % optionally follow the boundary
+            if opt.boundary
+                e = edgelist(im, [x y]);
+                F.edge = e';
+
+                e = diff([e; e(1,:)])';
+                F.perimeter_ = sum( colnorm(e) );
+                F.circularity_ = 4*pi*F.area_/F.perimeter_^2;
             end
 
-			ff.minx = minx;
-			ff.maxx = maxx;
-			ff.miny = miny;
-			ff.maxy = maxy;
-			ff.touch = t;
-			ff.shape = shape;
-            ff.label = i;
-            ff.parent = parent(i);
-            ff.color = color(i);
-			count = count+1;
-			Feature(count) = ff;
+            % set object properties
+			F.umin = umin;
+			F.umax = umax;
+			F.vmin = vmin;
+			F.vmax = vmax;
+			F.touch_ = t;
+            F.parent = parent(i);
+
+			F.shape_ = shape;
+            F.label_ = i;
+            F.class_ = color(i);
+
+            % save it in the feature vector
+			blob = blob+1;
+			features(blob) = F;
 		end
 	end
 
+    if blob == 0
+        features = [];
+    end
+
     % add children property
-    for i=1:length(Feature)
-        parent = f.parent;
-        for f2=Feature
-            if f2.label == parent
-                f2.children = [f2.children i];
+    % the numbers in the children property refer to elements in the feature vector
+    for i=1:length(features)
+        parent = features(i).parent;
+        for F=features
+            if F.label == parent
+                F.children = [F.children i];
             end
         end
     end
-	%fprintf('%d blobs in image, %d after filtering\n', nl, count);
-    if nargout > 0
-        if count > 0
-            F = Feature;
-        else
-            F = [];
-        end
-    end
+
+	%fprintf('%d blobs in image, %d after filtering\n', nl, blob);
     if nargout > 1
         labimg = li;
     end

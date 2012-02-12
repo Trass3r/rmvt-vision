@@ -1,19 +1,22 @@
-% CAMCALD	Compute camera calibration from data points
+% CAMCALD Camera calibration from data points
 %
-%	C = CAMCALD(D)
-%	[C, E] = CAMCALD(D)
+% C = CAMCALD(D) is the camera matrix (3x4) determined by least squares 
+% from corresponding world and image-plane points.  D is a table 
+% of points with rows of the form [X Y Z U V] where (X,Y,Z) is the 
+% coordinate of a world point and [U,V] is the corresponding image 
+% plane coordinate. 
+%
+% [C,E] = CAMCALD(D) as above but E is the maximum residual error after 
+% back substitution [pixels]. 
 % 
-%	Solve the camera calibration using a least squares technique.  Input is 
-%	a table of data points, D, with each row of the form [X Y Z u v]
-%	where (x,y,z) is the world coordinate, and (u,v) is the image 
-%	plane coordinate.
+% Notes:
+% - This method cannot handle lense distortion.
 %
-%	Output is a 3x4 camera calibration matrix.  Optional return, E, is 
-%	the maximum residual error after back substitution (unit of pixels). 
-%
-% SEE ALSO: CAMCALP, CAMERA, CAMCALT, INVCAMCAL
+% See also CentralCamera.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -47,22 +50,22 @@ function [C, resid] = camcald(XYZ, uv)
 %
 % the row pair are one row at this point
 %
-	A = [ XYZ' ones(n,1) zeros(n,4) -repmat(uv(1,:)', 1,3).*XYZ' ...
-	      zeros(n,4) XYZ' ones(n,1) -repmat(uv(2,:)', 1,3).*XYZ'  ];
+    A = [ XYZ' ones(n,1) zeros(n,4) -repmat(uv(1,:)', 1,3).*XYZ' ...
+          zeros(n,4) XYZ' ones(n,1) -repmat(uv(2,:)', 1,3).*XYZ'  ];
 %
 % reshape the matrix, so that the rows interleave
 %
-	A = reshape(A',11, n*2)';
+    A = reshape(A',11, n*2)';
     if rank(A) < 11,
         error('Rank deficient,  perhaps points are coplanar or collinear');
     end
 
-	B = reshape( uv, 1, n*2)';
+    B = reshape( uv, 1, n*2)';
 
-	C = A\B;	% least squares solution
-	resid = max(max(abs(A * C - B)));
+    C = A\B;    % least squares solution
+    resid = max(max(abs(A * C - B)));
     if resid > 1,
         warning('Residual greater than 1 pixel');
     end
-	fprintf('maxm residual %f pixels.\n', resid);
-	C = reshape([C;1]',4,3)';
+    fprintf('maxm residual %f pixels.\n', resid);
+    C = reshape([C;1]',4,3)';

@@ -29,10 +29,8 @@
  * Uses code from the package VISTA Copyright 1993, 1994 University of 
  * British Columbia.
  */
-#include <math.h>
-#include <string.h>
 #include "mex.h"
-#include "edge.h"
+#include <math.h>
 
 /* Input Arguments */
 
@@ -44,6 +42,13 @@
 /* Output Arguments */
 
 #define	IMM_OUT	plhs[0]
+
+enum pad {
+	PadBorder,
+	PadNone,
+	PadWrap,
+	PadTrim
+} pad_method = PadBorder;
 
 #define	BUFLEN	100
 
@@ -58,8 +63,6 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	mxArray	*im;
     int     width, height;
 	char	s[BUFLEN];
-
-    pad_method = PadBorder;
 
 	/* Check for proper number of arguments */
 
@@ -79,8 +82,6 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			pad_method = PadWrap;
 		else if (strcmp(s, "valid") == 0)
 			pad_method = PadTrim;
-        else
-            mexErrMsgTxt("IWINDOW bad edge option");
 		/* fall through */
 	case 3:
 		if (!mxIsChar(FUNC_IN))
@@ -150,7 +151,7 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 	/* Do the actual computations in a subroutine */
 
-	r = iwindow(im, SE_IN);
+	r = iwindow(IM_IN, SE_IN);
 	if (nlhs == 1)
 		plhs[0] = r;
 
@@ -161,6 +162,34 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	return;
 }
 
+
+/*
+ *  ClampIndex
+ *
+ *  This macro implements behavior near the borders of the source image.
+ *  Index is the band, row or column of the pixel being convolved.
+ *  Limit is the number of bands, rows or columns in the source image.
+ *  Label is a label to jump to to break off computation of the current
+ *  destination pixel.
+ */
+
+#define ClampIndex(index, limit, label)	   \
+{					   \
+    if (index < 0)		    \
+	switch (pad_method) {\
+	case PadBorder:	index = 0; break;\
+	case PadNone:		goto label;    \
+	case PadWrap:		index += limit; break;    \
+	default:			continue;    \
+	}		    \
+    else if (index >= limit)	    \
+	switch (pad_method) {	    \
+	case PadBorder:	index = limit - 1; break; \
+	case PadNone:		goto label;	   \
+	case PadWrap:		index -= limit; break;	    \
+	default:			continue;	    \
+	}	    \
+}
 
 #define	SPixel(r, c)	src[r+c*src_nrows]
 #define	DPixel(r, c)	dest[r+c*dest_nrows]

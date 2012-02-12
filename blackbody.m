@@ -1,20 +1,18 @@
-%BLACKBODY	Compute blackbody emission spectrum
+%BLACKBODY Compute blackbody emission spectrum
 %
-% 	E = BLACKBODY(lambda, T)
+% E = BLACKBODY(LAMBDA, T) is the blackbody radiation power density [W/m^3]
+% at the wavelength LAMBDA [m] and temperature T [K].
 %
-%	 Return blackbody radiation in (W/m^3) given lambda in (m) and 
-%	temperature in (K).
+% If LAMBDA is a column vector, then E is a column vector whose 
+% elements correspond to to those in LAMBDA.  For example:
 %
-%  	If lambda is a column vector, then E is a column vector whose 
-%	elements correspond to to those in lambda.
-%
-%  	e.g.	l = [380:10:700]'*1e-9;	% visible spectrum
-%	 	e = blackbody(l, 6500);	% solar spectrum
-%	 	plot(l, e)
-%
-%
+%    l = [380:10:700]'*1e-9; % visible spectrum
+%    e = blackbody(l, 6500); % emission of sun
+%    plot(l, e)
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -32,7 +30,11 @@
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
 function e = blackbody(lam, T)
-	C1 = 5.9634e-17;
-	C2 = 1.4387e-2;
-	lam = lam(:);
-	e = 2 * C1 ./ (lam.^5 .* (exp(C2/T./lam) - 1));
+    % physical constants
+    c = 2.99792458e8; % m/s         (speed of light)
+    h = 6.626068e-34; % m2 kg / s   (Planck's constant)
+    k = 1.3806503e-23; % J K-1      (Boltzmann's constant)
+
+    lam = lam(:);
+
+    e = 2*h*c^2 ./ (lam.^5 .* (exp(h*c/k/T./lam) - 1));

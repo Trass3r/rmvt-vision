@@ -15,7 +15,9 @@
 %
 % SEE ALSO:	webcam, idisp
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -30,4 +32,5 @@
 % GNU Lesser General Public License for more details.
 % 
 % You should have received a copy of the GNU Leser General Public License
+% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.

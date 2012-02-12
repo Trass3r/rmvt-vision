@@ -1,17 +1,18 @@
 %EPILINE Draw epipolar lines
 %
-%	h = epiline(F, p)
-%	h = epiline(F, p, ls)
+% EPILINE(F, P) draws epipolar lines in current figure based on points P (2xN)
+% and the fundamental matrix F (3x3).  Points are specified by the columns of P.
 %
-% Draw epipolar lines in current figure based on points specified
-% rowwise in p and on the fundamental matrix F.  Optionally specify
-% the line style.
+% EPILINE(F, P, LS) as above but draw lines using the line style arguments LS.
 %
-% The return argument is a vector of graphics handles for the lines.
-%
-% SEE ALSO:	fmatrix epidist
+% H = EPILINE(F, P, LS) as above but return a vector of graphic handles, one
+% per line drawn.
+% 
+% See also FMATRIX, EPIDIST.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -30,25 +31,25 @@
 
 function handles = epiline(F, p, ls)
 
-	% get plot limits from current graph
-	xlim = get(gca, 'XLim');
-	xmin = xlim(1);
-	xmax = xlim(2);
+    % get plot limits from current graph
+    xlim = get(gca, 'XLim');
+    xmin = xlim(1);
+    xmax = xlim(2);
 
-	if nargin < 3,
-		ls = 'r';
-	end
-	h = [];
-	% for all input points
-	for i=1:numrows(p),
-		l = F*[p(i,:) 1]';
-		y = (-l(3) - l(1)*xlim) / l(2);
-		hold on
-		hh = plot(xlim, y, ls);
-		h = [h; hh];
-		hold off
-	end
+    if nargin < 3,
+        ls = 'r';
+    end
+    h = [];
+    % for all input points
+    for i=1:numrows(p),
+        l = F*[p(i,:) 1]';
+        y = (-l(3) - l(1)*xlim) / l(2);
+        hold on
+        hh = plot(xlim, y, ls);
+        h = [h; hh];
+        hold off
+    end
 
-	if nargout > 0,
-		handles = h;
-	end
+    if nargout > 0,
+        handles = h;
+    end

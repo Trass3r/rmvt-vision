@@ -1,15 +1,8 @@
 %ISIFT SIFT feature extractor
 %
-% SF = ISIFT(IM, OPTIONS) is a vector of SiftPointFeature objects
+% SF = ISIFT(IM, OPTIONS) returns a vector of SiftPointFeature objects
 % representing scale and rotationally invariant interest points in the
 % image IM.
-%
-% Options::
-% 'nfeat',N      set the number of features to return (default Inf)
-% 'suppress',R   set the suppression radius (default 0)
-% 'id',V         set the image_id of all features
-%
-% Properties and methods::
 %
 % The SiftPointFeature object has many properties including:
 %  u            horizontal coordinate
@@ -18,32 +11,25 @@
 %  descriptor   feature descriptor (128x1)
 %  sigma        feature scale
 %  theta        feature orientation [rad]
-%  image_id     a value passed as an option to ISIFT
 %
-% The SiftPointFeature object has many methods including:
-%  plot         Plot feature position
-%  plot_scale   Plot feature scale
-%  distance     Descriptor distance
-%  match        Match features
-%  ncc          Descriptor similarity
-%
-% See SiftPointFeature and PointFeature classes for more details.
+% Options::
+% 'nfeat',N      set the number of features to return (default Inf)
+% 'suppress',R   set the suppression radius (default 0)
 % 
 % Notes::
-% - Greyscale images only, double or integer pixel format.
+% - Greyscale images only.
 % - Features are returned in descending strength order.
 % - Wraps a MEX file from www.vlfeat.org
 % - Corners are processed in order from strongest to weakest.
 % - If IM is HxWxN it is considered to be an image sequence and F is a cell 
 %   array with N elements, each of which is the feature vectors for the 
 %   corresponding image in the sequence.
-% - The SIFT algorithm is covered by US Patent 6,711,293 (March 23, 2004) held
-%   by the Univerity of British Columbia.
+% - The SIFT algorithm is patented by Univerity of British Columbia.
 % - ISURF is a functional equivalent.
 %
 % Reference::
-% "Distinctive image features from scale-invariant keypoints",
 % David G. Lowe,
+% "Distinctive image features from scale-invariant keypoints",
 % International Journal of Computer Vision, 60, 2 (2004), pp. 91-110.
 %
 % See also SiftPointFeature, ISURF, ICORNER.
@@ -90,7 +76,7 @@ function features = isift(im, varargin)
     end
 
     % convert color image to greyscale
-    if iscolor(im)
+    if ndims(im) ==3 && size(im, 3) == 3
        im = imono(im);
     end
 

@@ -2,15 +2,10 @@
 %
 % N = ISIZE(IM,D) is the size of the D'th dimension of IM.
 %
-% [W,H] = ISIZE(IM) is the image width W and height H.
+% [W,H] = ISIZE(IM) is the image height H and width W.
 %
-% WH = ISIZE(IM) is the image size WH = [W H].
-%
-% [W,H,P] = ISIZE(IM) is the image width W,  height H and and number of
+% [W,H,P] = ISIZE(IM) is the image height H and width W and number of
 % planes P.  Even if the image has only two dimensions P will be one.
-%
-% Notes::
-% - A simple convenience wrapper on the MATLAB function SIZE.
 %
 % See also SIZE.
 
@@ -35,19 +30,14 @@
 function [o1,o2,o3] = isize(im, idx)
 
     if nargin == 2
-        % isize(im, dim)
         o1 = size(im, idx);
     else
-        % isize(im)
         s = size(im);
-        if nargout == 1
-            o1 = [s(2) s(1)];  % width height
-        elseif nargout == 2
-            o1 = s(2);  % width
+        o1 = s(2);      % width, number of columns
+        if nargout > 1
             o2 = s(1);  % height, number of rows
-        elseif nargout == 3
-            o1 = s(2);  % width
-            o2 = s(1);  % height, number of rows
+        end
+        if nargout > 2
             if ndims(im) == 2
                 o3 = 1;
             else

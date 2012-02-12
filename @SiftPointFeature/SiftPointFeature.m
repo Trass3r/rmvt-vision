@@ -1,12 +1,11 @@
 %SiftCornerFeature SIFT point corner feature object
 %
-% A subclass of OrientedScalePointFeature for SIFT features.
+% A subclass of PointFeature for SIFT features.
 %
 % Methods::
 % plot         Plot feature position
 % plot_scale   Plot feature scale
 % distance     Descriptor distance
-% ncc          Descriptor similarity
 % match        Match features
 % ncc          Descriptor similarity
 % uv           Return feature coordinate
@@ -39,11 +38,12 @@
 % D.Lowe, 
 % Int. Journal on Computer Vision, vol.60, pp.91-110, Nov. 2004.
 %
-% See also ISIFT, PointFeature, ScalePointFeature, OrientedScalePointFeature, SurfPointFeature.
+% See also ISIFT, PointFeature, ScalePointFeature, SurfPointFeature.
 
-classdef SiftPointFeature < OrientedScalePointFeature
+classdef SiftPointFeature < ScalePointFeature
 
     properties
+        theta_
         image_id_
     end % properties
 
@@ -53,25 +53,81 @@ classdef SiftPointFeature < OrientedScalePointFeature
         %   
         % F = SiftPointFeature() is a point feature object with null parameters.
         %   
-        % F = SiftPointFeature(U, V) is a point feature object with specified
+        % F = PointFeature(U, V) is a point feature object with specified
         % coordinates.
         %   
-        % F = SiftPointFeature(U, V, STRENGTH) as above but with specified strength.
-        %
-        % F = SiftPointFeature(U, V, STRENGTH, SCALE) as above but with specified 
-        % feature scale.
-        %
-        % F = SiftPointFeature(U, V, STRENGTH, SCALE, THETA) as above but with specified 
-        % feature orientation.
+        % F = PointFeature(U, V, STRENGTH) as above but with specified strength.
         %
         % See also isift.
 
-            f = f@OrientedScalePointFeature(varargin{:});  % invoke the superclass constructor
+
+            f = f@ScalePointFeature(varargin{:});  % invoke the superclass constructor
+        end
+
+        function val = theta(features)
+            val = [features.theta_];
         end
 
         function val = image_id(features)
             val = [features.image_id_];
         end
+
+        function plot_scale(features, varargin)
+        %SiftPointFeature.plot_scale Plot feature scale
+        %   
+        % F.plot_scale(OPTIONS) overlay a marker to indicate feature point position and
+        % scale.
+        %   
+        % F.plot_scale(OPTIONS, LS) as above but the optional line style arguments LS are
+        % passed to plot.
+        %   
+        % If F is a vector then each element is plotted.
+        %   
+        % Options::
+        % 'circle'    Indicate scale by a circle (default)
+        % 'clock'     Indicate scale by circle with one radial line for orientation
+        % 'arrow'     Indicate scale and orientation by an arrow
+        % 'disk'      Indicate scale by a translucent disk
+        % 'color',C   Color of circle or disk (default green)
+        % 'alpha',A   Transparency of disk, 1=opaque, 0=transparent (default 0.2)
+
+            opt.display = {'circle', 'clock', 'arrow', 'disk'};
+            opt.color = 'g';
+            opt.alpha = 0.2;
+            [opt,args] = tb_optparse(opt, varargin);
+
+            holdon = ishold;
+            hold on
+
+            s = 20/sqrt(pi);    % circle of same area as 20s x 20s square support region
+
+            switch (opt.display)
+            case 'circle'
+                plot_circle([ [features.u_]; [features.v_] ], s*[features.scale_]', ...
+                'color', opt.color, args{:});
+            case 'clock'
+                plot_circle([ [features.u_]; [features.v_] ], s*[features.scale_]', ...
+                'color', opt.color, args{:});
+                % plot radial lines
+                for f=features
+                    plot([f.u_, f.u_+s*f.scale_*cos(f.theta_)], ...
+                        [f.v_, f.v_+s*f.scale_*sin(f.theta_)], ...
+                        'color', opt.color, args{:});
+                end
+            case 'disk'
+                plot_circle([ [features.u_]; [features.v_] ], s*[features.scale_]', ...
+                        'fillcolor', opt.color, 'alpha', opt.alpha);
+            case 'arrow'
+                for f=features
+                    quiver(f.u_, f.v_, s*f.scale_.*cos(f.theta_), ...
+                            s*f.scale_.*sin(f.theta_), ...
+                            'color', opt.color, args{:});
+                end
+            end
+            if ~holdon
+                hold off
+            end
+        end % plot
 
         function [m,corresp] = match(f1, f2)
         %SiftPointFeature.match Match SIFT point features
@@ -132,13 +188,7 @@ classdef SiftPointFeature < OrientedScalePointFeature
         % provide convenient access to them
 
         function [k,d] = sift(varargin)
-            try
             [k,d] = sift(varargin{:});
-            catch me
-                if strcmp(me.identifier, 'MATLAB:UndefinedFunction')
-                    error('MVTB:SiftPointFeature:notinstalled', 'Contributed software for SIFT features is not installed')
-                end
-            end
         end
     end
 

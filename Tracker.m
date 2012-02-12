@@ -70,19 +70,12 @@ classdef Tracker
         % 'movie',M     Write the frames as images into the folder M as 
         %               with sequential filenames.
         %
-        % Notes::
-        % - The 'movie' options saves frames as files NNNN.png.
-        % - When using 'movie' option ensure that the window is fully visible.
-        % - To convert frames to a movie use a command like:
-        %        ffmpeg -r 10 -i %04d.png out.avi
-        %
         % See also PointFeature.
 
             opt.radius = 20;
             opt.nslots = 800;
             opt.thresh = 0.8;
             opt.movie = [];
-            framenum = 0;
 
             opt = tb_optparse(opt, varargin);
 
@@ -207,13 +200,13 @@ classdef Tracker
                 plot_point( [t.track(k).uv], 'ws', 'printf', {'%d', [t.track(k).id]});
                 title( sprintf('frame %d', frame) );
                 drawnow
-
+                
                 if ~isempty(opt.movie)
                     f = getframe;
                     imwrite(f.cdata, sprintf('%s/%04d.png', opt.movie, framenum));
                     framenum = framenum+1;
+                    
                 end
-                
                 %pause
             end
 

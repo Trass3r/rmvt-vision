@@ -1,3 +1,39 @@
+%XYCOLORSPACE Display spectral locus
+%
+% XYCOLORSPACE() display a fully colored spectral locus in terms of CIE x and y 
+% coordinates.
+%
+% XYCOLORSPACE(P) as above but plot the points whose xy-chromaticity
+% is given by the columns of P.
+%
+% [IM,AX,AY] = XYCOLORSPACE() as above returns the spectral locus as an
+% image IM, with corresponding x- and y-axis coordinates AX and AY 
+% respectively.
+%
+% Notes::
+% - The colors shown within the locus only approximate the true colors, due
+%   to the gamut of the display device.
+%
+% See also RG_ADDTICKS.
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
+%
+% This file is part of The Machine Vision Toolbox for Matlab (MVTB).
+% 
+% MVTB is free software: you can redistribute it and/or modify
+% it under the terms of the GNU Lesser General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+% 
+% MVTB is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU Lesser General Public License for more details.
+% 
+% You should have received a copy of the GNU Leser General Public License
+% along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
+
 % Based on code by Pascal Getreuer 2006
 % Demo for colorspace.m - the CIE xyY "tongue"
 
@@ -35,11 +71,11 @@ function [im,ax,ay] = xycolorspace(cxy)
     
     CIEColor(~cat(3,in,in,in)) = 1; % set outside pixels to white
 
-    if nargout == 0,
+    if nargout == 0
         % Render the colors on the tongue
         image(x,y,CIEColor)
         if nargin == 1
-            markfeatures(cxy, 0, '*', {10, 'k'});
+            plot_point(cxy, 'k*', 'textsize', 10, 'sequence', 'textcolor', 'k');
         end
     
         set(gca, 'Ydir', 'normal');

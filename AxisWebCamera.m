@@ -57,7 +57,7 @@ classdef AxisWebCamera < ImageSource
         %   otherwise the result is not predictable.
 
             % invoke the superclass constructor and process common arguments
-            wc = wc@ImageSource(varargin{:});
+            wc = wc@ImageSource(varargin);
 
             % set default size params if not set
             if isempty(wc.width)
@@ -114,17 +114,12 @@ classdef AxisWebCamera < ImageSource
                 % instance creation time
                 im = wc.convert( wc.firstImage );
                 wc.firstImage = [];
-            else
+                return;
+            end
 
-                url = sprintf('%s/axis-cgi/jpg/image.cgi?resolution=%dx%d', wc.url, wc.width, wc.height);
-                im = wc.convert( imread(url) );
-            end
-            
-            if nargout > 0
-                out = im;
-            else
-                idisp(im);
-            end
+            url = sprintf('%s/axis-cgi/jpg/image.cgi?resolution=%dx%d', wc.url, wc.width, wc.height);
+            url
+            im = wc.convert( imread(url) );
 
         end
 

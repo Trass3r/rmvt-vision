@@ -1,19 +1,24 @@
 %IGAMMA	Gamma correction
 %
-%	g = igamma(image, gamma)
+% OUT = IGAMMA(IM, GAMMA) is a gamma corrected version of IM.  All pixels
+% are raised to the power GAMMA.  Gamma encoding can be performed with 
+% GAMMA > 1 and decoding with GAMMA < 1.
 %
-%	Return a gamma corrected version of IMAGE.  All pixels
-%	are raised to the power GAMMA.
+% OUT = IGAMMA(IM, 'sRGB') is a gamma decoded version of IM using the sRGB 
+% decoding function (JPEG images sRGB encoded).
 %
-%  For images of type double the pixels are assumed in the range 0 to 1.
-%  For images of type int the pixels are assumed in the range 0 to max
-%  integer value.
-%
-%	g = igamma(image, 'sRGB')
-%
-%  In this form the sRGB decoding function is applied
+% Notes::
+% - Gamma encoding is typically performed in a camera with GAMMA=0.45.
+% - Gamma decoding is typically performed in the display with GAMMA=2.2.
+% - For images with multiple planes the gamma correction is applied to all 
+%   planes.
+% - For images of type double the pixels are assumed to be in the range 0 to 1.
+% - For images of type int the pixels are assumed in the range 0 to max integer 
+%   value.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 

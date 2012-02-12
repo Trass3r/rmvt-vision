@@ -1,4 +1,6 @@
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -15,15 +17,28 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 im = mksq(64, 1);
+%im = zeros(64,64);
+%im(32,:) = 1;
+f1
 idisp(im)
 disp('create a square')
 pause
 
-im = ilap(im);
-idisp(im);
+f2
+edge = icanny(im);
+%edge = zeros(64,64);
+%edge(32,:) = 1;
+idisp(edge);
 disp('take Laplacian to get 4 line segments')
 pause
 
-figure
-ihough(im)
+f3
+h = Hough(edge)
 disp('now show the Hough accumulator in which 4 peaks can be seen')
+h.show()
+
+f2
+h.plot(4,'g')
+h.peaks(4)
+f1
+h.plot(4,'g')

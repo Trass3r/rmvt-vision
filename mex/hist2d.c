@@ -37,9 +37,6 @@ hist2d(double *x,
 #define OUT_VX plhs[1]
 #define OUT_VY plhs[2]
 
-// TODO
-//  handle uint8 images
-//  allow second argument to be standard MATLAB range a:b:c
 void
 mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
@@ -47,9 +44,7 @@ mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
    unsigned int mx,nx,my,ny,mh,nh,m,n,i,ndx,ndy;
 
    if (nrhs < 2)
-      mexErrMsgTxt("hist2d: Two input arguments required.");
-   if ( !(mxIsDouble(IN_X) && mxIsDouble(IN_Y)) )
-      mexErrMsgTxt("hist2d: Arguments must be double.");
+      mexErrMsgTxt("Two input arguments required.");
    
    px = mxGetPr(IN_X);
    mx = mxGetM(IN_X);

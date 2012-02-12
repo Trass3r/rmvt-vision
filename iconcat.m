@@ -1,34 +1,25 @@
 %ICONCAT Concatenate images
 %
-% C = ICONCAT(IM,OPTIONS) concatenates images from the cell array IM.
+% C = ICONCAT(IM,OPTIONS) concatenates images from the cell array IM.  The
+% images do not have to be of the same size, and smaller images are surrounded
+% by background pixels which can be specified.
 %
 % ICONCAT(IM,OPTIONS) as above but displays the concatenated images 
-% using IDISP.
+% using idisp.
 %
 % [C,U] = ICONCAT(IM,OPTIONS) as above but also returns the vector U whose
 % elements are the coordinates of the left (or top in vertical mode) edge of
-% the corresponding image within the concatenated image.
+% the corresponding image.
 %
 % Options::
 % 'dir',D     direction of concatenation: 'horizontal' (default) or 'vertical'.
-% 'bgval',B   value of padding pixels (default NaN)
-%
-% Examples::
-%
-% Horizontally concatenate three images
-%         c = iconcat({im1, im2, im3}, 'h'); 
-%
-% Find the first column of each of the three images
-%         [c,u] = iconcat({im1, im2, im3}, 'h'); 
-% where u is a 3-vector such that im3 starts in the u(3)'rd column of c.
+% 'bgval',B   value of unset background pixels
 %
 % Notes::
-% - The images do not have to be of the same size, and smaller images are 
-%   surrounded by background pixels which can be specified.
-% - Works for color or greyscale images.
-% - Direction can be abbreviated to first character, 'h' or 'v'.
-% - In vertical mode all images are right justified.
-% - In horizontal mode all images are top justified.
+% - Works for color or greyscale images
+% - Direction can be abbreviated to first character, 'h' or 'v'
+% - In vertical mode all images are right justified
+% - In horizontal mode all images are top justified
 %
 % See also IDISP.
 
@@ -54,11 +45,7 @@ function [out,u0] = iconcat(images, dir, bgval)
 % TODO: add a gap option
 
     opt.dir = 'h';
-    if isinteger(images{1})
-        opt.bg = 0;
-    else
-        opt.bg = NaN;
-    end
+    opt.bg = NaN;
 
    % image is a cell array
     width = 0;
@@ -86,11 +73,11 @@ function [out,u0] = iconcat(images, dir, bgval)
         end
         width = width + nc;
         height = max(height, nr);
-        if i ~= length(images)
-            u0(i+1) = u0(i) + nc;
+        if i > 1
+            u0(i) = u0(i-1) + nc;
         end
     end
-    composite = bgval*ones(height, width, np, class(images{1}));
+    composite = bgval*ones(height, width, np);
 
     u = 1;
     for i=1:length(images)
@@ -101,8 +88,7 @@ function [out,u0] = iconcat(images, dir, bgval)
     if dir == 'v'
         composite = permute(composite, [2 1 3]);
     end
-    
-    
+        
     
     if nargout == 0
         idisp(composite)

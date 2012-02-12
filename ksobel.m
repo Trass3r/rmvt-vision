@@ -1,14 +1,19 @@
-%KSOBEL	Sobel edge detector
+%KSOBEL Sobel edge detector
 %
-%	If Dx is specified this x-derivative kernel is used instead
-%	of the default:
-%			-1  0  1
-%			-2  0  2
-%			-1  0  1
+% K = KSOBEL() is the Sobel x-derivative kernel:
+%           |-1  0  1|
+%           |-2  0  2|
+%           |-1  0  1|
 %
-%	The resulting image is the same size as the input image.
+% Notes::
+% - This kernel is an effective horizontal edge detector
+% - The Sobel vertical derivative is K'
+%
+% See also ISOBEL.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -27,6 +32,6 @@
 
 function k = ksobel
 
-    k = [	-1 0 1
-			-2 0 2
-			-1 0 1];
+    k = [   -1 0 1
+            -2 0 2
+            -1 0 1];

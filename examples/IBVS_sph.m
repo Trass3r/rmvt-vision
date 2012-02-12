@@ -174,7 +174,7 @@ classdef IBVS_sph < VisualServo
 
             % update the history variables
             hist.pt = pt(:);
-            vel = tr2delta(Td);
+            vel = tr2diff(Td);
             hist.vel = vel;
             hist.e = e;
             hist.en = norm(e);

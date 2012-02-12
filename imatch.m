@@ -1,20 +1,33 @@
-%IMATCH Fast window matching
+%IMATCH Template matching
 %
-%	[xm,score] = imatch(IM1, IM2, x, y, w2, search)
+% XM = IMATCH(IM1, IM2, X, Y, H, S) is the matching subimage of IM1 (template)
+% within the image IM2.  The template in IM1 is centred at (X,Y) and its 
+% half-width is H.  
 %
-%  Template in IM1 is centered at (x,y), find the best match in IM2 within 
-% the region specified by search.  Matching window half-width is w2.
+% The template is searched for within IM2 inside a rectangular region, centred 
+% at (X,Y) and of size S.  If S is a scalar the search region is [-S, S, -S, S] % relative to (X,Y).  More generally S is a 4-vector S=[xmin, xmax, ymin, ymax]
+% relative to (X,Y).
 %
-% search is the search bounds [xmin xmax ymin ymax] or 
-% if a scalar it is [-s s -s s]
+% The return value is XM=[DX,DY,CC] where (DX,DY) are the x- and y-offsets 
+% relative to (X,Y) and CC is the similarity score (zero-mean normalized cross
+% correlation) for the best match in the search region.
 %
-%  xm is [dx, dy, cc] which are the x- and y-offsets relative to (x, y) 
-% and cc is the match (zero-mean normalized cross correlation) score for
-% the best match in the search region.
+% [XM,SCORE] = IMATCH(IM1, IM2, X, Y, W2, S) works as above but also
+% returns a matrix of matching score values for each template position tested.
+% The rows correspond to horizontal positions of the template, and columns the
+% vertical position.
 %
-% score is a matrix of matching score values of dimensions given by search
+% Notes::
+% - Useful for tracking a template in an image sequence.
+% - Is a MEX file.
+% - IM1 and IM2 must be the same size.
+% - ZNCC matching is used, a perfect match score is 1.0
+%
+% See also ISIMILARITY.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -31,3 +44,6 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
+if ~exist('imatch', 3)
+    error('you need to build the MEX version of imatch, see vision/mex/README');
+end

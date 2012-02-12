@@ -1,15 +1,15 @@
-%UPQ	Compute normalized central moments of polygon
+%UPQ Central image moments
 %
-% M = UPQ(iv, p, q)
-%	compute the pq'th normalized central moment of the polygon 
-%       whose vertices are iv.
+% M = UPQ(IM, P, Q) is the PQ'th central moment of the image IM.  That is, 
+% the sum of I(x,y).(x-x0)^P.(y-y0)^Q where (x0,y0) is the centroid.
 %
-%	Note that the points must be sorted such that they follow the 
-%	perimeter in sequence (either clockwise or anti-clockwise).
+% Notes::
+% - The central moments are invariant to translation.
 %
-% SEE ALSO: mpq, npq, imoments
+% See also UPQ_POLY, MPQ, NPQ.
 
-% Copyright (C) 1995-2009, by Peter I. Corke
+
+% Copyright (C) 1993-2011, by Peter I. Corke
 %
 % This file is part of The Machine Vision Toolbox for Matlab (MVTB).
 % 
@@ -26,10 +26,12 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-function m = upq(iv, p, q)
+function m = upq(im, p, q)
 
-	m00 = mpq(iv, 0, 0);
-	xc = mpq(iv, 1, 0) / m00;
-	yc = mpq(iv, 0, 1) / m00;
+    [X,Y] = imeshgrid(im);
 
-	m = mpq(iv - ones(numrows(iv),1)*[xc yc], p, q);
+	m00 = mpq(im, 0, 0);
+	xc = mpq(im, 1, 0) / m00;
+	yc = mpq(im, 0, 1) / m00;
+
+    m = sum(sum( im.*(X-xc).^p.*(Y-yc).^q ) );
