@@ -1,7 +1,9 @@
-disp('- Machine Vision Toolbox for Matlab (release 3)')
+release = load('RELEASE');
+fprintf('- Machine Vision Toolbox for Matlab (release %.1f)\n', release);
 tbpath = fileparts(which('blackbody'));
 addpath( fullfile(tbpath, 'examples') );
 addpath( fullfile(tbpath, 'images') );
+addpath( fullfile(tbpath, 'mex') );
 % add the contrib code to the path
 p = fullfile(tbpath, 'contrib/vgg');
 if exist(p)
