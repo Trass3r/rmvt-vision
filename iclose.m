@@ -1,18 +1,18 @@
 %ICLOSE	Morphological closing
 %
-% OUT = ICLOSE(IM, SE) is the image IM after morphological closing with the
-% structuring element SE.  This is an dilation followed by erosion.
+% OUT = ICLOSE(IM, SE, OPTIONS) is the image IM after morphological closing 
+% with the structuring element SE.  This is a dilation followed by an erosion.
 %
-% OUT = ICLOSE(IM, SE, N) as above but the structuring element SE is applied 
-% N times, that is N dilations followed by N erosions.
+% OUT = ICLOSE(IM, SE, N, OPTIONS) as above but the structuring element 
+% SE is applied N times, that is N erosions followed by N dilations.
 %
 % Notes::
 % - Cheaper to apply a smaller structuring element multiple times than
 %   one large one, the effective structuing element is the Minkowski sum
 %   of the structuring element with itself N times.
+% - Windowing options of IMORPH can be passed.
 %
-% See also IOPEN, IMORPH.
-
+% See also IOPEN, IDILATE, IERODE, IMORPH.
 
 
 % Copyright (C) 1993-2011, by Peter I. Corke
@@ -33,19 +33,7 @@
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
 
-function b = iclose(a, se, n)
+function b = iclose(a, se, varargin)
 
-	if nargin < 3,
-		n = 1;
-	end
-	if nargin < 2,
-		se = ones(3,3);
-	end
-
-	b = a;
-	for i=1:n,
-		b = imorph(b, se, 'max');
-	end
-	for i=1:n,
-		b = imorph(b, se, 'min');
-	end
+    b = idilate(a, se, varargin{:});
+    b = ierode(b, se, varargin{:});
