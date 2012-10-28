@@ -1,8 +1,7 @@
-function VisualServoTest(testCase)
-      tests = functiontests(localfunctions);
-end
+function VisualServoTest
+    initTestSuite;
     
-function camera_test(testCase)
+function camera_test
     cam = CentralCamera('default');
     s = cam.char();
     cam
@@ -35,9 +34,8 @@ function camera_test(testCase)
     %J = cam.visjac_l(P);
     %J = cam.visjac_e(P);
     cam.flowfield([1 0 0 0 0 0]');
-end
 
-function epipolar_test(testCase)
+function epipolar_test
     return
     F = fmatrix(uv1, uv2)
     %[F,r] = fmatrix(uv1, uv2)
@@ -95,6 +93,7 @@ function epipolar_test(testCase)
     homtrans(H, uv1)-uv2
 
     H = ransac(@homography, [uv1 uv2], .01)
-end
-%function sphcamera_test(testCase)
-%function panocamera_test(testCase)
+
+%function sphcamera_test
+%function panocamera_test
+

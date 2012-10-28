@@ -1,19 +1,18 @@
-function PointFeatureTest(testCase)
-    tests = functiontests(localfunctions);
-end
+function PointFeatureTest
+  initTestSuite;
 
 
-function Corner_test(testCase)
+function Corner_test
 
     b1 = iread('building2-1.png', 'grey', 'double');
     C = icorner(b1, 'nfeat', 200);
-    verifyEqual(testCase, length(C), 200);
+    assertEqual(length(C), 200);
     ss = char(C);
     C(1:5).u;
     C(1:5).v;
     C(1:5).strength;
     d = C(1:5).descriptor
-    verifySize(testCase, d, [3 5]);
+    assertIsSize(d, [3 5]);
 
 
     C = icorner(b1, 'nfeat', 200, 'suppress', 10);
@@ -25,21 +24,20 @@ function Corner_test(testCase)
     C = icorner(b1, 'nfeat', 200, 'k', 0.06);
     C = icorner(b1, 'nfeat', 200, 'patch',3);
     d = C(1:5).descriptor
-    verifySize(testCase, d, [9 5]);
+    assertIsSize(d, [9 5]);
 
     idisp(b1);
     C.plot();
-end
 
-function ScaleSpace_test(testCase)
+function ScaleSpace_test
     im = iread('scale-space.png', 'double');
 
     [G,L,s] = iscalespace(im, 60, 2);
-    verifySize(testCase, G, [200 200 60]);
-    verifySize(testCase, L, [200 200 59]);
-    verifySize(testCase, s, [60 1]);
+    assertIsSize(G, [200 200 60]);
+    assertIsSize(L, [200 200 59]);
+    assertIsSize(s, [60 1]);
     f = iscalemax(L, s)
-    verifyEqual(testCase, length(f), 6);
+    assertEqual(length(f), 6);
     ss = char(f);
     f(1:5).u;
     f(1:5).v;
@@ -49,9 +47,9 @@ function ScaleSpace_test(testCase)
     idisp(im);
     f.plot('r')
     f.plot_scale('r')
-end
 
-function SIFT_test(testCase)
+
+function SIFT_test
     b1 = iread('building2-1.png', 'grey', 'double');
     s = isift(b1)
     ss = char(s);
@@ -68,13 +66,12 @@ function SIFT_test(testCase)
     s.plot_scale('r')
 
     s = isift(b1, 'nfeat', 50)
-    verifyEqual(testCase, length(s), 50);
-    verifySize(testCase, s, [128 50]);
+    assertEqual(length(s), 50);
+    assertIsSize(s, [128 50]);
 
     s = isift(b1, 'suppress', 5)
-end
 
-function SURF_test(testCase)
+function SURF_test
     b1 = iread('building2-1.png', 'grey', 'double');
     s = isurf(b1)
     ss = char(s);
@@ -85,8 +82,8 @@ function SURF_test(testCase)
     s(1:5).theta;
 
     s = isurf(b1, 'nfeat', 50)
-    verifyEqual(testCase, length(s), 50);
-    verifySize(testCase, s, [128 50]);
+    assertEqual(length(s), 50);
+    assertIsSize(s, [128 50]);
 
     s = isurf(b1, 'suppress', 5)
-end
+
