@@ -1,15 +1,13 @@
-%IGAMM	Gamma correction
+%IGAMMA	Gamma correction
 %
-% OUT = IGAMM(IM, GAMMA) is a gamma corrected version of the image IM.  All 
+% OUT = IGAMMA(IM, GAMMA) is a gamma corrected version of the image IM.  All 
 % pixels are raised to the power GAMMA.  Gamma encoding can be performed with 
 % GAMMA > 1 and decoding with GAMMA < 1.
 %
-% OUT = IGAMM(IM, 'sRGB') is a gamma decoded version of IM using the sRGB 
+% OUT = IGAMMA(IM, 'sRGB') is a gamma decoded version of IM using the sRGB 
 % decoding function (JPEG images sRGB encoded).
 %
 % Notes::
-% - This function was once called igamma(), but that name taken by MATLAB
-%   method for double class objects.
 % - Gamma decoding should be applied to any color image prior to colometric
 %   operations.
 % - The exception to this is colorspace conversion using COLORSPACE which
@@ -45,7 +43,7 @@
 % You should have received a copy of the GNU Leser General Public License
 % along with MVTB.  If not, see <http://www.gnu.org/licenses/>.
 
-function g = igamm(im, gam)
+function g = igamma(im, gam)
 
     if strcmpi(gam, 'srgb')
         % sRGB decompress
